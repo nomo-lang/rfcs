@@ -1,5 +1,7 @@
 # RFC NNNN：<标题>
 
+> 语言 / Language: 中文 | [English](../en/0000-template.md)
+
 ## 元信息
 
 | 字段 | 内容 |

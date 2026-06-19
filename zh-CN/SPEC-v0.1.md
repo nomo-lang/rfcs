@@ -1,5 +1,7 @@
 # Nomo v0.1 规格基线
 
+> 语言 / Language: 中文 | [English](../en/SPEC-v0.1.md)
+
 > **状态**：Draft baseline
 > **用途**：作为本 RFC 仓库内所有 RFC 的共同讨论基线。
 > **原则**：先定义可实现、可测试、可交付的 v0.1 闭环，再通过 RFC 演进语言能力。

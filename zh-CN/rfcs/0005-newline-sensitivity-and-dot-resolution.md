@@ -1,5 +1,7 @@
 # RFC 0005：换行敏感语法与 `.` 命名空间消解
 
+> 语言 / Language: 中文 | [English](../../en/rfcs/0005-newline-sensitivity-and-dot-resolution.md)
+
 ## 元信息
 
 | 字段 | 内容 |

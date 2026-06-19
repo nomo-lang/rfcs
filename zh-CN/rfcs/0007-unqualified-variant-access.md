@@ -1,5 +1,7 @@
 # RFC 0007：限定式变体访问是否可简化为非限定形式
 
+> 语言 / Language: 中文 | [English](../../en/rfcs/0007-unqualified-variant-access.md)
+
 ## 元信息
 
 | 字段 | 内容 |

@@ -1,5 +1,7 @@
 # RFC 0004：可变借用唯一性检查的真实难度
 
+> 语言 / Language: 中文 | [English](../../en/rfcs/0004-mutable-borrow-uniqueness.md)
+
 ## 元信息
 
 | 字段 | 内容 |

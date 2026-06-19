@@ -1,5 +1,7 @@
 # RFC 0002：`match` 不支持 `_` 通配分支带来的嵌套啰嗦
 
+> 语言 / Language: 中文 | [English](../../en/rfcs/0002-match-wildcard-and-nesting.md)
+
 ## 元信息
 
 | 字段 | 内容 |

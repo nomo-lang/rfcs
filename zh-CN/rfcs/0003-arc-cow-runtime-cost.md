@@ -1,5 +1,7 @@
 # RFC 0003：ARC + 写时复制（COW）的运行时实现成本
 
+> 语言 / Language: 中文 | [English](../../en/rfcs/0003-arc-cow-runtime-cost.md)
+
 ## 元信息
 
 | 字段 | 内容 |

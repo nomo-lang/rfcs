@@ -1,5 +1,7 @@
 # RFC 0006：`Option`/`Result` 标准库与编译器内建认知的循环依赖
 
+> 语言 / Language: 中文 | [English](../../en/rfcs/0006-option-result-lang-items.md)
+
 ## 元信息
 
 | 字段 | 内容 |
