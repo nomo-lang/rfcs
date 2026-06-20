@@ -1,6 +1,7 @@
 # RFC NNNN: <Title>
 
 > 语言 / Language: [中文](../zh-CN/0000-template.md) | English
+> After copying this template into a real RFC, change the language switch link to the matching `../../zh-CN/rfcs/NNNN-title.md`.
 
 ## Metadata
 
@@ -12,10 +13,11 @@
 | Author | <author> |
 | Created | YYYY-MM-DD |
 | Related topics | <e.g. error handling, pattern matching, name resolution> |
-| Related RFCs | <e.g. [RFC 0001](./rfcs/0001-example.md), none> |
+| Related RFCs | <e.g. [RFC 0001](./0001-example.md), none> |
 
 > Status field values: `Draft` / `Proposed` / `Accepted` / `Rejected` / `Deferred`.
-> The meaning of each status is in [`README.md`](./README.md). This template defaults to `Draft`.
+> The meaning of each status is in this language directory's process README. This template defaults to `Draft`.
+> After copying to `rfcs/NNNN-title.md`, same-directory RFC links use `./0001-example.md`, and the process document link uses `../README.md`.
 
 ---
 

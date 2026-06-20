@@ -1,6 +1,7 @@
 # RFC NNNN：<标题>
 
 > 语言 / Language: 中文 | [English](../en/0000-template.md)
+> 复制为正式 RFC 后，将语言切换链接改为对应的 `../../en/rfcs/NNNN-title.md`。
 
 ## 元信息
 
@@ -12,10 +13,11 @@
 | 作者 | <作者> |
 | 创建日期 | YYYY-MM-DD |
 | 关联主题 | <例如错误处理、模式匹配、名称解析> |
-| 关联 RFC | <例如 [RFC 0001](./rfcs/0001-example.md)、无> |
+| 关联 RFC | <例如 [RFC 0001](./0001-example.md)、无> |
 
 > 状态字段取值：`Draft` / `Proposed` / `Accepted` / `Rejected` / `Deferred`。
-> 各状态含义见 [`README.md`](./README.md)。本模板默认 `Draft（待决）`。
+> 各状态含义见本语言目录的流程 README。本模板默认 `Draft（待决）`。
+> 复制到 `rfcs/NNNN-title.md` 后，同目录 RFC 引用使用 `./0001-example.md`，流程说明引用使用 `../README.md`。
 
 ---
 
