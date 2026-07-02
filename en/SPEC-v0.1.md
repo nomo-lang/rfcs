@@ -166,6 +166,85 @@ v0.1 does not support trait/interface constraints, higher-kinded types, or gener
 
 ---
 
+## 2.9 Package Identity and Dependency Aliases
+
+Nomo v0.1 uses a namespace-first package model. A package's stable identity is
+`owner/package`, for example `nomo-lang/json`; Git URLs, registries, branches,
+revisions, and local paths are dependency sources rather than source-level import
+identities.
+
+Basic `nomo.toml` shape:
+
+```toml
+[package]
+namespace = "fynn"
+name = "hello"
+version = "0.1.0"
+edition = "2026"
+
+[dependencies]
+json = { package = "nomo-lang/json", version = "0.1.0" }
+local_utils = { package = "fynn/utils", path = "../utils" }
+http = { package = "nomo-lang/http", git = "https://github.com/nomo-lang/http.git", rev = "2a4b8c1" }
+cli = { package = "nomo-lang/cli", git = "https://github.com/nomo-lang/cli.git", branch = "stable" }
+fmt = { package = "nomo-lang/fmt", git = "https://github.com/nomo-lang/fmt.git", tag = "v0.1.0" }
+```
+
+Source imports use dependency aliases:
+
+```rust
+package app.main
+
+import json.parser
+import local_utils.path
+import http.client
+```
+
+v0.1 must validate:
+
+- `[package]` namespace, name, version, and edition.
+- Dependency aliases using Nomo identifier rules.
+- Dependency `package` values using `owner/package` canonical IDs.
+- The `std`, `nomo`, and `core` namespaces are reserved and cannot be used as
+  package owners.
+- Exactly one dependency source among `path`, `git`, and `version`.
+- The `std` alias only points to the standard library package `nomo-lang/std`.
+- Registry/version sources are recorded as leaf lockfile entries in v0.1; an
+  optional `registry` endpoint may be stored as source metadata, but public
+  registry fetching is out of scope.
+- `path` sources are resolved by reading the target package's `nomo.toml` and are
+  included recursively in `nomo.lock` and `nomo deps tree`.
+- `git` sources are cloned into a project-local `.nomo/deps/git/` cache, checked
+  out to the requested `branch`, `tag`, or `rev` when one is declared, validated
+  against the expected canonical package ID, and locked to the actual `HEAD`
+  revision. A manifest dependency may specify only one checkout selector:
+  `branch`, `tag`, or `rev`.
+- Resolved `path` and `git` packages are locked with a `sha256:` checksum over
+  the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
+  checksum in v0.1 because registry archive fetching is out of scope.
+- `nomo deps tree` reads the existing `nomo.lock` when present, verifies
+  reachable locked `path` sources and matching git cache checkouts against their
+  checksum, and falls back to resolving the current manifest when no lockfile
+  exists. Missing `path` sources and git cache entries may still be shown as
+  offline locked entries.
+- The same canonical package ID resolving to different sources or versions is a
+  v0.1 error.
+- Project-level `nomo check/build/run` validates source imports against
+  dependency aliases declared in `nomo.toml`. Imported `path` and `git`
+  dependencies contribute the public API from their `src/main.nomo` to the
+  current v0.1 compile unit, including public functions, constants, structs,
+  enums, and public methods; private dependency items are not exported. `nomoc`
+  remains a standalone source-file compiler and only accepts built-in `std.*`
+  imports.
+- `nomo-lsp` diagnostics should match project-level `nomo check`: project files
+  read dependency aliases from the nearest `nomo.toml`, while standalone files
+  without a manifest keep `nomoc` behavior.
+
+Public registry fetching and complex version solving are out of scope for v0.1;
+v0.1 may reject multiple versions of the same canonical package ID directly.
+
+---
+
 ## 3. Error Handling
 
 ### 3.1 Dual-Track System
@@ -359,6 +438,9 @@ C backend principles:
 
 - Generate readable C.
 - Package paths participate in symbol mangling to avoid naming collisions.
+  v0.1 generated C function and nominal type symbols use each item's source
+  package path, so dependency APIs are not emitted as root-application package
+  symbols.
 - The standard library runtime is linked as C source files.
 - Layouts such as `Result`, `Option`, `Array` must be covered by tests.
 

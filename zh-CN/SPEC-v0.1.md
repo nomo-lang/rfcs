@@ -279,6 +279,68 @@ items.get(i)
 
 Parser 产出未消解点链；名称解析根据左侧实体种类分派为模块路径、类型成员、枚举变体、字段或方法。
 
+### 5.3 包身份与依赖别名
+
+Nomo v0.1 采用 namespace-first package model。包的稳定身份是
+`owner/package`，例如 `nomo-lang/json`；Git URL、registry、branch、rev、local
+path 都只是依赖 source，不作为源码 import 的语言身份。
+
+`nomo.toml` 基础结构：
+
+```toml
+[package]
+namespace = "fynn"
+name = "hello"
+version = "0.1.0"
+edition = "2026"
+
+[dependencies]
+json = { package = "nomo-lang/json", version = "0.1.0" }
+local_utils = { package = "fynn/utils", path = "../utils" }
+http = { package = "nomo-lang/http", git = "https://github.com/nomo-lang/http.git", rev = "2a4b8c1" }
+cli = { package = "nomo-lang/cli", git = "https://github.com/nomo-lang/cli.git", branch = "stable" }
+fmt = { package = "nomo-lang/fmt", git = "https://github.com/nomo-lang/fmt.git", tag = "v0.1.0" }
+```
+
+源码 import 使用依赖 alias：
+
+```rust
+package app.main
+
+import json.parser
+import local_utils.path
+import http.client
+```
+
+v0.1 必须校验：
+
+- `[package]` 的 namespace、name、version、edition。
+- dependency alias 使用 Nomo 标识符规则。
+- dependency `package` 使用 `owner/package` canonical id。
+- `std`、`nomo`、`core` namespace 为语言和标准工具链保留，不可作为 package owner。
+- dependency source 在 `path`、`git`、`version` 三类中必须且只能声明一种。
+- `std` alias 仅可指向标准库包 `nomo-lang/std`，不得隐式覆盖标准库。
+- registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
+  endpoint 可作为 source 元数据写入，但公共 registry 拉取不属于 v0.1。
+- `path` source 需要读取目标包的 `nomo.toml`，并递归纳入 `nomo.lock` 与 `nomo deps tree`。
+- `git` source 需要克隆到项目本地 `.nomo/deps/git/` 缓存；如声明 `branch`、`tag` 或 `rev` 则 checkout 到对应位置；读取目标包 manifest 校验 canonical package id；lockfile 写入实际 `HEAD` rev。manifest 中同一 git 依赖只能声明一个 checkout selector：`branch`、`tag` 或 `rev`。
+- 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；
+  checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。registry leaf 在 v0.1 不拉取归档，因此不写 checksum。
+- `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked
+  `path` source 与匹配的 git cache checkout 校验 checksum；没有 lockfile 时再解析当前
+  manifest source。缺失的 `path` source 与 git cache entry 可作为离线锁定条目继续展示。
+- 同一 canonical package id 若解析到不同 source 或 version，v0.1 直接报错。
+- 项目级 `nomo check/build/run` 使用 `nomo.toml` 中声明的 dependency alias 校验源码 import；
+  已 import 的 `path` 与 `git` dependency 会把其 `src/main.nomo` 中的 public API 纳入当前
+  v0.1 编译单元，包括 public function、const、struct、enum 与 public method；private
+  dependency item 不导出。`nomoc` 作为单文件编译器不读取 manifest，仍只接受内建
+  `std.*` import。
+- `nomo-lsp` 诊断路径应与项目级 `nomo check` 保持一致：对项目文件读取最近的
+  `nomo.toml` dependency alias；对无 manifest 的单文件保留 `nomoc` 行为。
+
+公共 registry 拉取和复杂版本求解不属于 v0.1；v0.1 遇到同一 canonical package id
+的多版本冲突可以直接报错。
+
 ---
 
 ## 6. 标准库 v0.1
@@ -358,7 +420,9 @@ Stage 0 管线：
 C 后端原则：
 
 - 生成可读 C。
-- 包路径参与符号混淆，避免命名冲突。
+- 包路径参与符号混淆，避免命名冲突。v0.1 生成 C 的 function 与 nominal type symbol
+  使用每个 item 的源码 package path，因此 dependency API 不会被生成为 root application
+  package 的符号。
 - 标准库运行时以 C 源文件链接。
 - `Result`、`Option`、`Array` 等布局必须有测试覆盖。
 
@@ -448,4 +512,3 @@ nomo run examples/hello
 - [RFC 0005](./rfcs/0005-newline-sensitivity-and-dot-resolution.md)：换行敏感语法与 `.` 消解。
 - [RFC 0006](./rfcs/0006-option-result-lang-items.md)：`Option`/`Result` lang item。
 - [RFC 0007](./rfcs/0007-unqualified-variant-access.md)：非限定枚举变体。
-

@@ -7,7 +7,11 @@ This is the bilingual RFC repository for the Nomo programming language. It conta
 ## Overview / 总览
 
 - [Nomo v0.1 Whitepaper](WHITEPAPER-v0.1.md)
+- [Nomo Design Constitution](DESIGN-CONSTITUTION.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing RFCs](CONTRIBUTING-RFCS.md)
 - [中文 v0.1 规格基线](zh-CN/SPEC-v0.1.md)
+- [中文 v0.1 设计实现计划](zh-CN/IMPLEMENTATION-PLAN-v0.1.md)
 - [English v0.1 Specification Baseline](en/SPEC-v0.1.md)
 
 ## Languages / 语言
