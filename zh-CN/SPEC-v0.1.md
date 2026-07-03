@@ -303,6 +303,9 @@ cli = { package = "nomo-lang/cli", git = "https://github.com/nomo-lang/cli.git",
 fmt = { package = "nomo-lang/fmt", git = "https://github.com/nomo-lang/fmt.git", tag = "v0.1.0" }
 ```
 
+`nomo.toml` 使用标准 TOML 解析。注释、字符串转义、inline table，以及
+`[dependencies.local_utils]` 这类 dependency subtable 都是合法 TOML 输入，不应再用逐行手写 parser 重新实现。
+
 源码 import 使用依赖 alias：
 
 ```rust
@@ -319,8 +322,12 @@ v0.1 必须校验：
 - dependency alias 使用 Nomo 标识符规则。
 - dependency `package` 使用 `owner/package` canonical id。
 - `std`、`nomo`、`core` namespace 为语言和标准工具链保留，不可作为 package owner。
+- `std` 是内置保留 import root。用户 manifest 不需要声明 `std` 依赖，普通依赖不可使用
+  `std` 作为 alias，`std` 也不作为普通 package entry 写入 `nomo.lock`。
 - dependency source 在 `path`、`git`、`version` 三类中必须且只能声明一种。
-- `std` alias 仅可指向标准库包 `nomo-lang/std`，不得隐式覆盖标准库。
+- 仍写有 `std = "0.1.0"` 或
+  `std = { package = "nomo-lang/std", version = "0.1.0" }` 的旧 manifest
+  可以作为兼容输入接受，但该声明会被忽略，不进入普通依赖图。
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入，但公共 registry 拉取不属于 v0.1。
 - `path` source 需要读取目标包的 `nomo.toml`，并递归纳入 `nomo.lock` 与 `nomo deps tree`。

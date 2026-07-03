@@ -82,6 +82,10 @@ local_utils = { package = "fynn/utils", path = "../utils" }
 http = { package = "nomo-lang/http", git = "https://github.com/nomo-lang/http.git", rev = "2a4b8c1" }
 ```
 
+`nomo.toml` 使用标准 TOML 解析。`std` 是内置保留 import root，用户不需要在
+`[dependencies]` 中声明；旧的 `std = "0.1.0"` 或
+`std = { package = "nomo-lang/std", version = "0.1.0" }` 可作为兼容输入接受，但不进入普通依赖图或 `nomo.lock`。
+
 源码 import 使用 dependency alias：
 
 ```nomo
@@ -116,7 +120,7 @@ import http.client
 7. `nomo-lsp` 使用与项目级 `nomo check` 一致的 manifest-aware diagnostics：项目文件读取最近 `nomo.toml`，无 manifest 文件保持 `nomoc` 单文件行为。
 8. registry/version 依赖作为 v0.1 叶子 source 记录到 lockfile/tree：允许显式 `registry` endpoint 元数据，但不做公共 registry 拉取；同一依赖不得混用 `path`、`git`、`version` 多种 source。
 9. `nomo deps tree` 在已有 `nomo.lock` 时读取锁定依赖图；没有 lockfile 时才解析当前 manifest/source。
-10. `std`、`nomo`、`core` namespace 作为保留命名空间处理，root package 与 dependency canonical owner 均不可占用。
+10. `std`、`nomo`、`core` namespace 作为保留命名空间处理，root package 与 dependency canonical owner 均不可占用；`std` 作为内置 import root，不要求用户 manifest 声明，也不写入普通 lockfile package entry。
 11. `path` 与 `git` resolved package 在 `nomo.lock` 中写入 `sha256:` checksum，覆盖目标包 `nomo.toml` 与 `src/` 内容；registry leaf 因 v0.1 不拉取内容而暂不写 checksum。
 12. git 依赖支持 `branch`、`tag`、`rev` checkout selector，并在 lockfile 中同时记录声明的 selector 与实际 `HEAD` rev；三者不可同时声明多个。
 13. `nomo deps tree` 读取 lockfile 时，对仍可访问的 locked `path` source 和匹配的 git cache checkout 重新计算 checksum 并拒绝陈旧锁；缺失 path source 或 git cache entry 仍按离线锁定条目展示。

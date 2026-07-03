@@ -191,6 +191,10 @@ cli = { package = "nomo-lang/cli", git = "https://github.com/nomo-lang/cli.git",
 fmt = { package = "nomo-lang/fmt", git = "https://github.com/nomo-lang/fmt.git", tag = "v0.1.0" }
 ```
 
+`nomo.toml` is parsed as standard TOML. Comments, escaped strings, inline
+tables, and dependency subtables such as `[dependencies.local_utils]` are valid
+TOML inputs and must not be reimplemented with a line-oriented parser.
+
 Source imports use dependency aliases:
 
 ```rust
@@ -208,8 +212,13 @@ v0.1 must validate:
 - Dependency `package` values using `owner/package` canonical IDs.
 - The `std`, `nomo`, and `core` namespaces are reserved and cannot be used as
   package owners.
+- `std` is a built-in reserved import root. User manifests do not need to
+  declare it, ordinary dependencies cannot use `std` as an alias, and `std` is
+  not written as a normal package entry in `nomo.lock`.
 - Exactly one dependency source among `path`, `git`, and `version`.
-- The `std` alias only points to the standard library package `nomo-lang/std`.
+- Legacy manifests that still declare `std = "0.1.0"` or
+  `std = { package = "nomo-lang/std", version = "0.1.0" }` may be accepted as
+  compatibility input, but the declaration is ignored as a normal dependency.
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata, but public
   registry fetching is out of scope.
