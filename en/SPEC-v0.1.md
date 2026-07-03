@@ -243,6 +243,14 @@ v0.1 must validate:
 - `nomo-lsp` diagnostics should match project-level `nomo check`: project files
   read dependency aliases from the nearest `nomo.toml`, while standalone files
   without a manifest keep `nomoc` behavior.
+- `nomo run <source.nomo>` supports a direct standalone source file outside a
+  project manifest. The file still uses the normal `package` declaration and
+  normal imports. If it has no explicit `fn main`, then top-level script
+  statements after all declarations are compiled as a synthesized
+  `main() -> void`. Declarations must appear before top-level script statements,
+  and an explicit `main` cannot be combined with top-level script statements.
+  Project-level `check/build/run` and `nomoc check/build` do not enable this
+  script entry mode.
 - `nomo fmt [path] [--check] [--json-errors]` is an AST-based formatter for
   v0.1 source. With no path or a directory path it discovers the project
   manifest and formats `src/**/*.nomo` in stable path order. With a direct

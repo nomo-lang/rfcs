@@ -339,6 +339,11 @@ v0.1 必须校验：
   item 不导出。`nomoc` 作为单文件编译器不读取 manifest，仍只接受内建 `std.*` import。
 - `nomo-lsp` 诊断路径应与项目级 `nomo check` 保持一致：对项目文件读取最近的
   `nomo.toml` dependency alias；对无 manifest 的单文件保留 `nomoc` 行为。
+- `nomo run <source.nomo>` 支持直接运行项目 manifest 外的 standalone source file。
+  文件仍使用普通 `package` 声明和普通 import。若文件没有显式 `fn main`，则所有声明之后的
+  top-level script statements 会被编译为合成的 `main() -> void`。声明必须出现在
+  top-level script statements 之前；显式 `main` 不能与 top-level script statements 混用。
+  项目级 `check/build/run` 与 `nomoc check/build` 不启用该 script entry mode。
 - `nomo fmt [path] [--check] [--json-errors]` 是 v0.1 源码的 AST-based formatter。
   无 path 或 path 为目录时，先发现项目 manifest，再按稳定路径顺序格式化
   `src/**/*.nomo`。path 为直接 `.nomo` 文件时，只格式化该文件，不要求 manifest。
