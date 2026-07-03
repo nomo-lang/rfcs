@@ -19,6 +19,7 @@ The goal of Nomo v0.1 is to deliver a minimal but complete Stage 0 compilation p
 5. `nomo run` builds and runs the example program.
 6. `nomo fmt` normalizes v0.1 source formatting for projects and standalone files.
 7. `nomo test` discovers and runs `#[test]` functions in a project or workspace.
+8. `nomo doc` generates project or workspace documentation from doc comments.
 
 v0.1 does not pursue maximal feature coverage, but rather a closed loop of specification, implementation, testing, and RFC decisions.
 
@@ -30,7 +31,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 
 | Module | Deliverable | Acceptance method |
 | --- | --- | --- |
-| Project tooling | `nomo new`, `nomo check`, `nomo build`, `nomo run`, `nomo fmt`, `nomo test` | Example projects can be created, checked, built, run, formatted, and tested |
+| Project tooling | `nomo new`, `nomo check`, `nomo build`, `nomo run`, `nomo fmt`, `nomo test`, `nomo doc` | Example projects can be created, checked, built, run, formatted, tested, and documented |
 | Compiler frontend | Lexer, Parser, AST, syntax diagnostics | golden tests stable |
 | Name resolution | Resolution of packages, imports, types, functions, fields, enum variants | Success/failure cases covered |
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
@@ -395,6 +396,15 @@ v0.1 must validate:
   not executed as the test entrypoint. `--filter` keeps tests whose full name
   contains the filter text, `--workspace` runs workspace members, `--package`
   selects a package id or member name, and `--json` emits a stable test report.
+- `nomo doc [path] [--workspace] [--package <package>] [--std] [--open] [--json] [--output <dir>]`
+  extracts module and item documentation from Rust-style doc comments (`//!`,
+  `///`, `/*! */`, `/** */`) and combines it with parser AST signatures,
+  visibility, and source locations for packages/modules, functions, structs,
+  enums, methods, and constants. By default it writes `build/doc/index.html`,
+  package/module HTML pages, and `search-index.json`; `--json` emits the
+  machine-readable documentation model without writing files. `--workspace`
+  documents workspace members, `--package` selects a package id or member name,
+  and `--std` generates the current built-in standard-library module index.
 
 Public registry fetching and complex version solving are out of scope for v0.1;
 v0.1 may reject multiple versions of the same canonical package ID directly.
