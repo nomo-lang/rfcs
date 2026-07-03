@@ -392,6 +392,11 @@ v0.1 必须校验：
   要求显式 target，并且只改变本次生成 lockfile 时使用的 source，不写回 `nomo.toml`：
   registry dependency 将该值作为 `version`，git dependency 将该值作为 `rev` 并清除
   branch/tag selector，path dependency 会被拒绝。
+- `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` 确保 lockfile
+  存在后，把 locked `path` 与 `git` dependency source 复制到 vendor 目录，并写入
+  `nomo-vendor.toml`。`--sync` 会先删除 vendor 目录再复制。registry leaf 在 registry
+  archive fetching 实现前只记录为 skipped。locked/offline 的项目模块加载在原 locked
+  path source 或 git cache checkout 缺失时，会回退到默认 `vendor/` 目录。
 - 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；
   checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。registry leaf 在 v0.1 不拉取归档，因此不写 checksum。
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked

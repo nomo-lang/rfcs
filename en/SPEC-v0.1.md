@@ -293,6 +293,13 @@ v0.1 must validate:
   editing `nomo.toml`: registry dependencies use the value as `version`, git
   dependencies use it as `rev` with branch/tag selectors cleared, and path
   dependencies are rejected.
+- `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` ensures a
+  lockfile exists, copies locked `path` and `git` dependency sources into the
+  vendor directory, and writes `nomo-vendor.toml`. `--sync` removes the vendor
+  directory before copying. Registry leaves are recorded as skipped until
+  registry archive fetching is implemented. Locked/offline project module
+  loading falls back to the default `vendor/` directory when the original locked
+  path source or git cache checkout is missing.
 - Resolved `path` and `git` packages are locked with a `sha256:` checksum over
   the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
   checksum in v0.1 because registry archive fetching is out of scope.
