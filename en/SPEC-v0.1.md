@@ -110,6 +110,8 @@ let ratio: f64 = total / count
 let ready: bool = !failed && connected || cached
 let mut masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
 masked &^= clear
+masked++
+masked--
 ```
 
 - `+`, `-`, `*`, and `/` require two matching numeric operands and return the
@@ -126,6 +128,9 @@ masked &^= clear
 - Statement-level compound assignment supports `+=`, `-=`, `*=`, `/=`, `%=`,
   `<<=`, `>>=`, `&=`, `^=`, `|=`, and `&^=` for mutable variables and mutable
   struct fields. Each form type-checks as `target = target op value`.
+- Statement-level postfix update supports `target++` and `target--` for mutable
+  variables and mutable struct fields. They type-check as `target += 1` and
+  `target -= 1`, are not expressions, and do not produce values.
 - Runtime divide-by-zero, overflow, invalid shift, and signed right-shift guards
   remain required full-scope safety work; the current C backend still emits
   direct C arithmetic/bitwise expressions for this slice.
