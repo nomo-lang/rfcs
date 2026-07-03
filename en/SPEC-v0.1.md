@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.path` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.path`, `std.math` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -542,6 +542,7 @@ std.option
 std.array
 std.string
 std.path
+std.math
 ```
 
 ### 6.1 `std.io`
@@ -591,6 +592,25 @@ path.dirname(path: string) -> string
 path.extension(path: string) -> string
 path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
+```
+
+### 6.6 `std.math`
+
+`std.math` provides basic numeric helpers. `abs`, `min`, and `max` preserve
+the input numeric type and require matching numeric operands. The remaining
+helpers are `f64` functions.
+
+```rust
+math.abs(value: number) -> same number type
+math.min(left: number, right: same number type) -> same number type
+math.max(left: number, right: same number type) -> same number type
+math.floor(value: f64) -> f64
+math.ceil(value: f64) -> f64
+math.round(value: f64) -> f64
+math.sqrt(value: f64) -> f64
+math.pow(base: f64, exponent: f64) -> f64
+math.sin(value: f64) -> f64
+math.cos(value: f64) -> f64
 ```
 
 ---
