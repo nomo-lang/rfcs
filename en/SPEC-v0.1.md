@@ -108,7 +108,8 @@ precedence:
 let value: i64 = a - b * c / d % e
 let ratio: f64 = total / count
 let ready: bool = !failed && connected || cached
-let masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
+let mut masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
+masked &^= clear
 ```
 
 - `+`, `-`, `*`, and `/` require two matching numeric operands and return the
@@ -122,6 +123,9 @@ let masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
 - `<<` and `>>` require an integer left operand and an integer shift amount, and
   return the left operand type.
 - Equality and ordering comparisons return `bool`.
+- Statement-level compound assignment supports `+=`, `-=`, `*=`, `/=`, `%=`,
+  `<<=`, `>>=`, `&=`, `^=`, `|=`, and `&^=` for mutable variables and mutable
+  struct fields. Each form type-checks as `target = target op value`.
 - Runtime divide-by-zero, overflow, invalid shift, and signed right-shift guards
   remain required full-scope safety work; the current C backend still emits
   direct C arithmetic/bitwise expressions for this slice.
