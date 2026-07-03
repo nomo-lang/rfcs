@@ -602,20 +602,20 @@ Error code ranges:
 
 | Range | Category |
 | --- | --- |
-| `N0100-N0199` | Lexical errors |
-| `N0200-N0299` | Syntax errors |
-| `N0300-N0399` | Name resolution |
-| `N0400-N0499` | Type checking |
-| `N0500-N0599` | Borrow and mutability |
-| `N0600-N0699` | Modules and packages |
-| `N0700-N0799` | C backend |
+| `E0100-E0199` | Lexical errors |
+| `E0200-E0299` | Syntax errors |
+| `E0300-E0399` | Name resolution |
+| `E0400-E0499` | Type checking |
+| `E0500-E0599` | Borrow and mutability |
+| `E0600-E0699` | Modules and packages |
+| `E0700-E0799` | C backend |
 
 A JSON diagnostic contains at least:
 
 ```json
 {
   "status": "error",
-  "error_code": "N0203",
+  "error_code": "E0203",
   "severity": "error",
   "message": "type mismatch",
   "source": {

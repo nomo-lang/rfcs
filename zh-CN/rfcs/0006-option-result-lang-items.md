@@ -99,7 +99,7 @@ pub enum Option<T> {
 - **解决循环依赖**：编译 `std.result` 自身时，lang item 注册先于使用；标准库可分两层——纯定义层（不依赖 `?`）先编译，依赖 `?` 的库代码后编译。
 - **C 后端**：codegen 见到 lang item `result` 即套用 4.4 布局；`option` 用类似的 `Option_T`（`bool is_some; union{...}`）。
 - **诊断**：
-  - `N0330` 找不到 `result`/`option` lang item（标准库缺失或未标注）。
+  - `E0330` 找不到 `result`/`option` lang item（标准库缺失或未标注）。
   - `?` 用在非 `result` lang item 上 → 类型检查报错（N04xx）。
 - **属性语法依赖**：需要一个最小的内部属性机制（`#[lang = "..."]`）。该属性可设为**仅编译器/标准库内部可用**，不开放给用户，避免提前引入完整属性系统。
 
@@ -127,7 +127,7 @@ pub enum Option<T> {
 
 - **建议 v0.1 落地**：方案 C。把 `Option`/`Result` 声明为 lang item，定义保留在 `std.option`/`std.result`；编译器据此支撑 `?`、codegen 专用布局与（未来的）prelude。
 - **建议当前规格补充**：在标准库设计或编译器架构新增一节，点明「`Option`/`Result` 是 lang item：既是标准库包，又被编译器识别」，消除当前的隐含耦合。
-- **验收影响**：验收测试矩阵需新增「缺少/未标注 lang item 时报 `N0330`」「`?` 仅对已识别的 `Result`/`Option` carrier 生效」测试；codegen 测试确认 lang item 套用 4.4 布局。
+- **验收影响**：验收测试矩阵需新增「缺少/未标注 lang item 时报 `E0330`」「`?` 仅对已识别的 `Result`/`Option` carrier 生效」测试；codegen 测试确认 lang item 套用 4.4 布局。
 
 ---
 

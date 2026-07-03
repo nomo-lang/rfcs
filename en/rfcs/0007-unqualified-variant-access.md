@@ -106,7 +106,7 @@ fn read_config(path: string) -> Result<string, AppError> {
   - The order for resolving a bare identifier: local binding/parameter > current-package symbol > prelude variant. If a user defines a same-named symbol, it **shadows** the prelude (with a concurrent lint hint), guaranteeing existing code is not broken.
   - Exhaustiveness, codegen, and the qualified form are fully equivalent (the same variant).
 - **Diagnostics**:
-  - `N0340` ambiguous bare variant name (only if a future prelude expansion causes a conflict).
+  - `E0340` ambiguous bare variant name (only if a future prelude expansion causes a conflict).
   - lint: when a qualified form is detected on a core type (`Result.Ok`), suggest switching to the unqualified form (uniform style, implementing "one form per domain").
 - **C backend**: no impact; after resolution it generates the same code as the qualified form.
 - **Relationship with (a)**: the named variant import of Option (a) can be kept alongside as an explicit outlet for "custom enums that want to drop the prefix", but v0.1 can do only the prelude first, leaving (a) for v0.2.

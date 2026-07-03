@@ -97,7 +97,7 @@ impl AppError {
 
 - **Semantics**: for `expr?`, when `Err(e)`, if the current function's error type `E2 != E1`, look up a registered `E1 -> E2` conversion and apply it; report an error if none is found.
 - **C backend**: insert one conversion-function call at the `?` expansion point, then `return` the wrapped `Result_T_E2`.
-- **Diagnostics**: add a "no error conversion found" error code (in the N0400-N0499 type-checking range, e.g. `N0461`).
+- **Diagnostics**: add a "no error conversion found" error code (in the E0400-E0499 type-checking range, e.g. `E0461`).
 - **Cost**: v0.1 explicitly "does not support trait/interface constraints" (3.9); introducing a `From`-style mechanism amounts to introducing the trait system early or a specialized "conversion registration" subsystem, conflicting with the MVP boundary.
 
 ### 4.2 Option B: A standard-library `.map_err()` explicit method (preferred)

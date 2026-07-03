@@ -84,7 +84,7 @@ The core tension: **exhaustiveness diagnostics (want everything listed)** and **
 
 - **Syntax**: allow `_ => ...`, but only legal when the number of remaining variants it covers is ≥ 2; if `_` actually covers only 1 remaining variant, the compiler hints "use the named variant for clarity".
 - **Semantics**: no arm may follow `_`; introduce a lint (warning level) for "`_` masked an added variant", so that adding a variant to the enum still triggers a reminder.
-- **Diagnostics**: add a name-resolution/type-checking warning, e.g. `N0410` (`_` masked enumerable remaining variants).
+- **Diagnostics**: add a name-resolution/type-checking warning, e.g. `E0410` (`_` masked enumerable remaining variants).
 - **Disadvantages**: once opened, AI/users will tend toward "always `_`", gradually eroding the exhaustiveness culture.
 
 ### 4.3 Option C: Introduce `if let` / `let else` (preferred)

@@ -30,7 +30,7 @@ All examples in the current specification rely on the layout of "one field per l
 - Whether a `match` arm `Pattern => Expr` is also separated by newlines (the examples are so, but not stated explicitly).
 - How `.` is distinguished among `std.result.Result` (module path + type), `Result.Ok` (type + variant), `self.email` (value + field), and `items.get(i)` (value + method).
 
-Without these rules, the Lexer/Parser cannot be implemented stably, and the lexical/syntax error codes (N0100-N0299) cannot give consistent diagnostics for "missing separator" and "illegal continuation". This directly threatens the "Lexer/Parser golden tests stable" acceptance.
+Without these rules, the Lexer/Parser cannot be implemented stably, and the lexical/syntax error codes (E0100-E0299) cannot give consistent diagnostics for "missing separator" and "illegal continuation". This directly threatens the "Lexer/Parser golden tests stable" acceptance.
 
 ---
 
@@ -81,9 +81,9 @@ The keyword/grammar rules only give keywords/reserved words/literals, with **no*
   - The line ends with a binary operator, `=>`, `,` (within a parameter list), or an unclosed opening bracket `(`/`{`/`<`.
   - The next line starts with `.` (chained calls: `items\n  .get(i)`).
 - **Block layout**: inside `{ ... }`, members are separated by newlines; blank lines are ignored.
-- **Diagnostics** (N0100-N0199 / N0200-N0299):
-  - `N0120` two members/statements appear on the same line without a separator (e.g. two fields written on one line).
-  - `N0220` illegal continuation / a newline separator was expected but excess tokens were found.
+- **Diagnostics** (E0100-E0199 / E0200-E0299):
+  - `E0120` two members/statements appear on the same line without a separator (e.g. two fields written on one line).
+  - `E0220` illegal continuation / a newline separator was expected but excess tokens were found.
 - **Alternative**: explicit separators (mandatory commas/semicolons). Easier to parse, friendlier to tooling, but conflicts with the current example layout, requires rewriting all examples, and is more verbose relative to the "restrained" temperament. Lean toward significant newlines to keep the existing examples unchanged.
 
 ### 4.2 `.` Resolution Rules (preferred: unified postfix dot + name-resolution dispatch)
@@ -95,10 +95,10 @@ Unify `.` as a "postfix dot-access expression", with no syntactic distinction of
    - If `Head` is an **imported module/module alias** → greedily consume consecutive "module" segments until a non-module item (type/function/constant) is encountered, after which it turns into member access.
    - If `Head` is a **type/enum name** → `.Seg` is interpreted as a **variant** or **associated function/constructor** (e.g. `Array.new`, `Result.Ok`).
 2. Ambiguity resolution: a value binding has higher priority than a same-named type (to avoid a variable being mistaken for a type); a module path is enabled only when `Head` comes from an `import`.
-3. **Diagnostics** (N0300-N0399 name resolution):
-   - `N0320` the identifier to the left of `.` is unresolved (neither a binding nor an imported module/type).
-   - `N0321` accessing a non-existent field/method on a value.
-   - `N0322` accessing a non-existent variant on an enum.
+3. **Diagnostics** (E0300-E0399 name resolution):
+   - `E0320` the identifier to the left of `.` is unresolved (neither a binding nor an imported module/type).
+   - `E0321` accessing a non-existent field/method on a value.
+   - `E0322` accessing a non-existent variant on an enum.
 
 - **C backend**: after resolution, the three kinds of dot access are lowered respectively to: struct member read (`v.field`), function call (`Pkg_func(...)`, mangled by package path per 12.3), and variant construction/tag determination (per the `Result_T_E` of 4.4). The polysemy of `.` is already eliminated in the HIR stage; the C IR has no ambiguity.
 

@@ -24,7 +24,7 @@ The current mutable-borrow specification requires that "within the same scope a 
 
 ## 2. Motivation
 
-The delivery boundary lists "mutability" checking as a must-deliver type-checking item; the acceptance test matrix requires "Mutability tests: illegal modification, repeated mutable borrows are rejected". That is, "repeated mutable borrows are rejected" is a hard acceptance metric. But the current specification only gives the rule text, without clarifying the checking-algorithm strength. If done too weakly (syntactic layer only), it will miss real aliasing; if done too strongly (regions/lifetimes), it violates the promise of "avoiding exposing Rust's explicit lifetime complexity early", with high slippage risk. The error-code range `N0500-N0599` is already reserved; it needs clarifying which situations these codes specifically cover.
+The delivery boundary lists "mutability" checking as a must-deliver type-checking item; the acceptance test matrix requires "Mutability tests: illegal modification, repeated mutable borrows are rejected". That is, "repeated mutable borrows are rejected" is a hard acceptance metric. But the current specification only gives the rule text, without clarifying the checking-algorithm strength. If done too weakly (syntactic layer only), it will miss real aliasing; if done too strongly (regions/lifetimes), it violates the promise of "avoiding exposing Rust's explicit lifetime complexity early", with high slippage risk. The error-code range `E0500-E0599` is already reserved; it needs clarifying which situations these codes specifically cover.
 
 ---
 
@@ -68,11 +68,11 @@ The tension: 3.6 wants "a small part of Rust-style aliasing safety" but "not Rus
   - Same-frame aliasing conflicts can only occur between **multiple `mut` arguments of the same call** → covered by L1.
   - Escape can only be "treating the borrow as a return value" → directly blocked by "no reference type, `mut p` is not a returnable value type", with an L2-level rule as a backstop diagnostic.
 - **C backend**: `mut p: T` degrades to "pass `T*` by pointer" (taking `&pt`). After the check passes, codegen safely passes the address; there is no runtime check.
-- **Diagnostics** (`N0500-N0599`):
-  - `N0501` the same value is mutably borrowed more than once (within one call).
-  - `N0502` a mutable borrow escapes the current function (e.g. attempting to return it).
-  - `N0503` the call site is missing the `mut` marker / the declaration and call sites' `mut` are inconsistent.
-  - `N0510` initiating a mutable borrow on an immutable binding (`let` without `mut`).
+- **Diagnostics** (`E0500-E0599`):
+  - `E0501` the same value is mutably borrowed more than once (within one call).
+  - `E0502` a mutable borrow escapes the current function (e.g. attempting to return it).
+  - `E0503` the call site is missing the `mut` marker / the declaration and call sites' `mut` are inconsistent.
+  - `E0510` initiating a mutable borrow on an immutable binding (`let` without `mut`).
 
 ### 4.3 The Relationship with Value Semantics/COW
 
@@ -100,7 +100,7 @@ L1's compile-time uniqueness lets `Array.push(mut self)` safely modify in place 
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: L1 (call-site aliasing) + escape backstop rule, with a set of `N0501-N0510` diagnostics; do not implement regions/lifetimes.
+- **Recommended to land in v0.1**: L1 (call-site aliasing) + escape backstop rule, with a set of `E0501-E0510` diagnostics; do not implement regions/lifetimes.
 - **Explicitly not doing**: named mutable borrows, storing a borrow in a struct/array, cross-function borrows.
 - **Acceptance impact**: the acceptance test matrix's "Mutability tests" need to cover: `f(mut p, mut p)` is rejected, initiating `mut` on a `let` (non-mut) is rejected, missing the call-side `mut` is rejected, and (restricted) escape is rejected.
 
@@ -122,5 +122,5 @@ Lean toward **L1 + restricted L2**: strictly limit the mutable borrow's lifetime
 
 ## 10. References
 
-- The current mutable-borrow parameters, error-code range (N0500-N0599), compiler pipeline and IR, the mutable-borrow example, the mutable-borrow syntax pending topic.
+- The current mutable-borrow parameters, error-code range (E0500-E0599), compiler pipeline and IR, the mutable-borrow example, the mutable-borrow syntax pending topic.
 - [RFC 0003](./0003-arc-cow-runtime-cost.md) (the boundary between compile-time uniqueness and runtime COW), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (`mut`/`.` syntax resolution).

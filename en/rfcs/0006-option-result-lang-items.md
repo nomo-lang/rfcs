@@ -99,7 +99,7 @@ pub enum Option<T> {
 - **Resolving the circular dependency**: when compiling `std.result` itself, the lang item is registered before use; the standard library can be split into two layers — the pure-definition layer (not depending on `?`) is compiled first, and library code that depends on `?` is compiled afterward.
 - **C backend**: when codegen sees the lang item `result`, it applies the 4.4 layout; `option` uses a similar `Option_T` (`bool is_some; union{...}`).
 - **Diagnostics**:
-  - `N0330` the `result`/`option` lang item is not found (standard library missing or not annotated).
+  - `E0330` the `result`/`option` lang item is not found (standard library missing or not annotated).
   - `?` used on a non-`result` lang item → type checking error (N04xx).
 - **Attribute-syntax dependency**: a minimal internal attribute mechanism (`#[lang = "..."]`) is needed. This attribute can be made **available only to the compiler/standard library internally**, not exposed to users, to avoid introducing a full attribute system early.
 
@@ -127,7 +127,7 @@ pub enum Option<T> {
 
 - **Recommended to land in v0.1**: Option C. Declare `Option`/`Result` as lang items, with the definitions kept in `std.option`/`std.result`; the compiler uses this to support `?`, the codegen dedicated layout, and the (future) prelude.
 - **Recommended current-specification supplement**: add a section to the standard-library design or compiler architecture pointing out that "`Option`/`Result` are lang items: both standard-library packages and recognized by the compiler", eliminating the current implicit coupling.
-- **Acceptance impact**: the acceptance test matrix needs to add "report `N0330` when a lang item is missing/unannotated" and "`?` takes effect only on recognized `Result`/`Option` carriers" tests; codegen tests confirm the lang item applies the 4.4 layout.
+- **Acceptance impact**: the acceptance test matrix needs to add "report `E0330` when a lang item is missing/unannotated" and "`?` takes effect only on recognized `Result`/`Option` carriers" tests; codegen tests confirm the lang item applies the 4.4 layout.
 
 ---
 
