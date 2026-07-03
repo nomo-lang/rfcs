@@ -306,6 +306,37 @@ fmt = { package = "nomo-lang/fmt", git = "https://github.com/nomo-lang/fmt.git",
 `nomo.toml` 使用标准 TOML 解析。注释、字符串转义、inline table，以及
 `[dependencies.local_utils]` 这类 dependency subtable 都是合法 TOML 输入，不应再用逐行手写 parser 重新实现。
 
+workspace root 可以共享 package 默认值和 dependency 声明：
+
+```toml
+[workspace]
+members = ["apps/*", "packages/*"]
+default-members = ["apps/cli"]
+resolver = "1"
+
+[workspace.package]
+namespace = "fynn"
+edition = "2026"
+
+[workspace.dependencies]
+json = { package = "nomo-lang/json", version = "0.1.0" }
+core = { package = "fynn/core", path = "packages/core" }
+```
+
+workspace member 通过 TOML dotted key 显式继承字段：
+
+```toml
+[package]
+name = "cli"
+version = "0.1.0"
+namespace.workspace = true
+edition.workspace = true
+
+[dependencies]
+json.workspace = true
+core.workspace = true
+```
+
 源码 import 使用依赖 alias：
 
 ```rust
@@ -330,6 +361,15 @@ v0.1 必须校验：
   可以作为兼容输入接受，但该声明会被忽略，不进入普通依赖图。
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入，但公共 registry 拉取不属于 v0.1。
+- workspace member manifest 可以用 `<field>.workspace = true` 从
+  `[workspace.package]` 继承 `namespace`、`name`、`version`、`edition`。
+- workspace member dependency 可以用 `<alias>.workspace = true` 继承
+  `[workspace.dependencies]` 中同名 dependency；workspace dependency 的 `path`
+  source 按 workspace root 解释，并在 member package 解析时重新基准化。
+- 只有 `[workspace]` 而没有 `[package]` 的 manifest 是 workspace root，不是 package
+  manifest。当前 member 级项目命令仍作用于选中的 member package；对 member 执行
+  `nomo deps resolve` 时 lockfile 写在 workspace root。workspace-wide batch commands
+  由 workspace graph 切片定义。
 - `path` source 需要读取目标包的 `nomo.toml`，并递归纳入 `nomo.lock` 与 `nomo deps tree`。
 - `git` source 需要克隆到项目本地 `.nomo/deps/git/` 缓存；如声明 `branch`、`tag` 或 `rev` 则 checkout 到对应位置；读取目标包 manifest 校验 canonical package id；lockfile 写入实际 `HEAD` rev。manifest 中同一 git 依赖只能声明一个 checkout selector：`branch`、`tag` 或 `rev`。
 - 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；

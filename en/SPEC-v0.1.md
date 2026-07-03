@@ -195,6 +195,37 @@ fmt = { package = "nomo-lang/fmt", git = "https://github.com/nomo-lang/fmt.git",
 tables, and dependency subtables such as `[dependencies.local_utils]` are valid
 TOML inputs and must not be reimplemented with a line-oriented parser.
 
+Workspace roots may share package defaults and dependencies:
+
+```toml
+[workspace]
+members = ["apps/*", "packages/*"]
+default-members = ["apps/cli"]
+resolver = "1"
+
+[workspace.package]
+namespace = "fynn"
+edition = "2026"
+
+[workspace.dependencies]
+json = { package = "nomo-lang/json", version = "0.1.0" }
+core = { package = "fynn/core", path = "packages/core" }
+```
+
+Member packages inherit explicit fields with TOML dotted keys:
+
+```toml
+[package]
+name = "cli"
+version = "0.1.0"
+namespace.workspace = true
+edition.workspace = true
+
+[dependencies]
+json.workspace = true
+core.workspace = true
+```
+
 Source imports use dependency aliases:
 
 ```rust
@@ -222,6 +253,17 @@ v0.1 must validate:
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata, but public
   registry fetching is out of scope.
+- Workspace member manifests may inherit `namespace`, `name`, `version`, and
+  `edition` from `[workspace.package]` using `<field>.workspace = true`.
+- Workspace member dependencies may inherit a dependency with
+  `<alias>.workspace = true`; the alias must exist in `[workspace.dependencies]`.
+  Workspace dependency `path` sources are interpreted from the workspace root
+  and rebased for member package resolution.
+- A manifest containing `[workspace]` but no `[package]` is a workspace root,
+  not a package manifest. Member-level project commands operate on the selected
+  member package; `nomo deps resolve` for a member writes the lockfile at the
+  workspace root. Workspace-wide batch commands are defined by the workspace
+  graph work.
 - `path` sources are resolved by reading the target package's `nomo.toml` and are
   included recursively in `nomo.lock` and `nomo deps tree`.
 - `git` sources are cloned into a project-local `.nomo/deps/git/` cache, checked
