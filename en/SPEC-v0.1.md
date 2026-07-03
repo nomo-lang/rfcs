@@ -421,7 +421,7 @@ Rules for `expr?`:
 - `Result.Err(error)` causes the current function to return `Result.Err(error)` early.
 - `Option.Some(value)` evaluates to `value`.
 - `Option.None` causes the current function to return `Option.None` early.
-- The current function's return type must be a compatible carrier: `Result` for `Result?`, or `Option` for `Option?`.
+- The current function's return type must be a compatible carrier: using `expr?` on a `Result` value requires the current function to return a compatible `Result`; using `expr?` on an `Option` value requires the current function to return a compatible `Option`.
 
 v0.1 does not automatically merge error types. Cross-layer error conversion is discussed in [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md).
 
