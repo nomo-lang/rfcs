@@ -361,6 +361,9 @@ v0.1 必须校验：
   可以作为兼容输入接受，但该声明会被忽略，不进入普通依赖图。
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入，但公共 registry 拉取不属于 v0.1。
+- `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
+  `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
+  字符串。非法 TOML、未知 package 字段和字段类型不匹配都会被拒绝。
 - workspace member manifest 可以用 `<field>.workspace = true` 从
   `[workspace.package]` 继承 `namespace`、`name`、`version`、`edition`。
 - workspace member dependency 可以用 `<alias>.workspace = true` 继承

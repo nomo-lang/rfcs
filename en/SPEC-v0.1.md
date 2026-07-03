@@ -253,6 +253,10 @@ v0.1 must validate:
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata, but public
   registry fetching is out of scope.
+- `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
+  tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
+  dependency edge strings. Invalid TOML, unknown package fields, and mismatched
+  field types are rejected.
 - Workspace member manifests may inherit `namespace`, `name`, `version`, and
   `edition` from `[workspace.package]` using `<field>.workspace = true`.
 - Workspace member dependencies may inherit a dependency with
