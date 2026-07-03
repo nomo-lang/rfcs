@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.path` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -541,6 +541,7 @@ std.result
 std.option
 std.array
 std.string
+std.path
 ```
 
 ### 6.1 `std.io`
@@ -576,6 +577,20 @@ Array.set(mut self, index: u64, value: T) -> void
 ```rust
 string.len(self) -> u64
 string.concat(self, other: string) -> string
+```
+
+### 6.5 `std.path`
+
+`std.path` provides pure string path helpers. v0.1 uses POSIX-style `/`
+separators and does not query the host filesystem or resolve symlinks.
+
+```rust
+path.join(left: string, right: string) -> string
+path.basename(path: string) -> string
+path.dirname(path: string) -> string
+path.extension(path: string) -> string
+path.normalize(path: string) -> string
+path.is_absolute(path: string) -> bool
 ```
 
 ---
