@@ -284,6 +284,11 @@ v0.1 must validate:
 - `nomo deps clean-cache [path]` removes the project or workspace
   `.nomo/deps/git` cache and leaves `nomo.lock`, source files, and build
   artifacts untouched. The command is idempotent.
+- `nomo deps update [path] [alias-or-package]` refreshes the lockfile from the
+  current manifest sources. Without a target it updates all dependencies; with
+  an alias or canonical package ID it first verifies that the target is a direct
+  dependency, then rewrites the lockfile. The current implementation rewrites
+  the full lockfile; `--precise` is reserved for the next update slice.
 - Resolved `path` and `git` packages are locked with a `sha256:` checksum over
   the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
   checksum in v0.1 because registry archive fetching is out of scope.

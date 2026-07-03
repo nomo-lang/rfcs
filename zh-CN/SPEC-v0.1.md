@@ -386,6 +386,10 @@ v0.1 必须校验：
   git 依赖只能声明一个 checkout selector：`branch`、`tag` 或 `rev`。
 - `nomo deps clean-cache [path]` 删除项目或 workspace 的 `.nomo/deps/git` 缓存，
   不删除 `nomo.lock`、source files 或 build artifacts；该命令可重复执行。
+- `nomo deps update [path] [alias-or-package]` 按当前 manifest source 刷新 lockfile。
+  不带 target 时更新全部依赖；带 alias 或 canonical package id 时先校验该 target 是
+  direct dependency，再重写 lockfile。当前实现会重写完整 lockfile；`--precise` 留给下一片
+  update 实现。
 - 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；
   checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。registry leaf 在 v0.1 不拉取归档，因此不写 checksum。
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked
