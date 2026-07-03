@@ -563,7 +563,22 @@ fn read_to_string(path: string) -> Result<string, FsError>
 fn write_string(path: string, content: string) -> Result<void, FsError>
 ```
 
-### 6.3 `std.array`
+### 6.3 `std.env`
+
+`env.set` mutates the current process environment and panics if the platform
+call fails. `env.cwd` panics if the current directory cannot be read.
+`env.temp_dir` reads `TMPDIR`, `TEMP`, then `TMP`, and falls back to `/tmp`.
+
+```rust
+env.args() -> Array<string>
+env.get(name: string) -> Option<string>
+env.set(name: string, value: string) -> void
+env.cwd() -> string
+env.home_dir() -> Option<string>
+env.temp_dir() -> string
+```
+
+### 6.4 `std.array`
 
 ```rust
 Array.new<T>() -> Array<T>
@@ -573,7 +588,7 @@ Array.get(self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
 ```
 
-### 6.4 `std.string`
+### 6.5 `std.string`
 
 `std.string` helpers operate on UTF-8 byte strings in v0.1. `trim` and case
 conversion use ASCII character classes rather than Unicode grapheme or locale
@@ -592,7 +607,7 @@ string.to_lower(self) -> string
 string.to_upper(self) -> string
 ```
 
-### 6.5 `std.path`
+### 6.6 `std.path`
 
 `std.path` provides pure string path helpers. v0.1 uses POSIX-style `/`
 separators and does not query the host filesystem or resolve symlinks.
@@ -606,7 +621,7 @@ path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
 ```
 
-### 6.6 `std.math`
+### 6.7 `std.math`
 
 `std.math` provides basic numeric helpers. `abs`, `min`, and `max` preserve
 the input numeric type and require matching numeric operands. The remaining

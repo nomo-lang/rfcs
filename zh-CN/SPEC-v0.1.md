@@ -516,7 +516,22 @@ fn read_to_string(path: string) -> Result<string, FsError>
 fn write_string(path: string, content: string) -> Result<void, FsError>
 ```
 
-### 6.3 `std.array`
+### 6.3 `std.env`
+
+`env.set` 修改当前进程环境变量，平台调用失败时 panic。`env.cwd` 在无法读取
+当前目录时 panic。`env.temp_dir` 依次读取 `TMPDIR`、`TEMP`、`TMP`，
+没有命中时回退到 `/tmp`。
+
+```rust
+env.args() -> Array<string>
+env.get(name: string) -> Option<string>
+env.set(name: string, value: string) -> void
+env.cwd() -> string
+env.home_dir() -> Option<string>
+env.temp_dir() -> string
+```
+
+### 6.4 `std.array`
 
 ```rust
 Array.new<T>() -> Array<T>
@@ -526,7 +541,7 @@ Array.get(self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
 ```
 
-### 6.4 `std.string`
+### 6.5 `std.string`
 
 `std.string` helper 在 v0.1 中按 UTF-8 字节字符串工作。`trim` 与大小写转换
 使用 ASCII 字符类，不提供 Unicode grapheme 或 locale 规则。
@@ -545,7 +560,7 @@ string.to_lower(self) -> string
 string.to_upper(self) -> string
 ```
 
-### 6.5 `std.path`
+### 6.6 `std.path`
 
 `std.path` 提供纯字符串路径 helper。v0.1 使用 POSIX 风格 `/` 分隔符，
 不查询宿主文件系统，也不解析符号链接。
@@ -559,7 +574,7 @@ path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
 ```
 
-### 6.6 `std.math`
+### 6.7 `std.math`
 
 `std.math` 提供基础数值 helper。`abs`、`min`、`max` 保留输入数值类型，
 并要求操作数类型匹配；其余 helper 当前为 `f64` 函数。
