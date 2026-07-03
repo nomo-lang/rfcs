@@ -384,6 +384,8 @@ v0.1 必须校验：
   则 checkout 到对应位置；branch source 还会执行 `git pull --ff-only`。读取目标包
   manifest 校验 canonical package id；lockfile 写入实际 `HEAD` rev。manifest 中同一
   git 依赖只能声明一个 checkout selector：`branch`、`tag` 或 `rev`。
+- `nomo deps clean-cache [path]` 删除项目或 workspace 的 `.nomo/deps/git` 缓存，
+  不删除 `nomo.lock`、source files 或 build artifacts；该命令可重复执行。
 - 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；
   checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。registry leaf 在 v0.1 不拉取归档，因此不写 checksum。
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked

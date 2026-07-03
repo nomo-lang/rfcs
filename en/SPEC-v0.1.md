@@ -281,6 +281,9 @@ v0.1 must validate:
   run `git pull --ff-only`. The checkout is validated against the expected
   canonical package ID and locked to the actual `HEAD` revision. A manifest
   dependency may specify only one checkout selector: `branch`, `tag`, or `rev`.
+- `nomo deps clean-cache [path]` removes the project or workspace
+  `.nomo/deps/git` cache and leaves `nomo.lock`, source files, and build
+  artifacts untouched. The command is idempotent.
 - Resolved `path` and `git` packages are locked with a `sha256:` checksum over
   the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
   checksum in v0.1 because registry archive fetching is out of scope.
