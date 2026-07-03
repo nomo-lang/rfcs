@@ -288,7 +288,11 @@ v0.1 must validate:
   current manifest sources. Without a target it updates all dependencies; with
   an alias or canonical package ID it first verifies that the target is a direct
   dependency, then rewrites the lockfile. The current implementation rewrites
-  the full lockfile; `--precise` is reserved for the next update slice.
+  the full lockfile. `--precise <version-or-rev>` requires a direct dependency
+  target and only changes the source used for this lockfile update, without
+  editing `nomo.toml`: registry dependencies use the value as `version`, git
+  dependencies use it as `rev` with branch/tag selectors cleared, and path
+  dependencies are rejected.
 - Resolved `path` and `git` packages are locked with a `sha256:` checksum over
   the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
   checksum in v0.1 because registry archive fetching is out of scope.
