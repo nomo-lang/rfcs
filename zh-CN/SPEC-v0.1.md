@@ -378,7 +378,12 @@ v0.1 必须校验：
   `exclude`，按稳定路径顺序访问每个 member package。其它 workspace-wide batch
   commands 由后续 workspace graph 切片定义。
 - `path` source 需要读取目标包的 `nomo.toml`，并递归纳入 `nomo.lock` 与 `nomo deps tree`。
-- `git` source 需要克隆到项目本地 `.nomo/deps/git/` 缓存；如声明 `branch`、`tag` 或 `rev` 则 checkout 到对应位置；读取目标包 manifest 校验 canonical package id；lockfile 写入实际 `HEAD` rev。manifest 中同一 git 依赖只能声明一个 checkout selector：`branch`、`tag` 或 `rev`。
+- `git` source 使用项目本地 `.nomo/deps/git/` 缓存，cache key 基于 canonical package
+  id 与 source URL。cache miss 时 clone repository；cache hit 时先执行
+  `git fetch --tags --prune origin` 再 checkout。如声明 `branch`、`tag` 或 `rev`
+  则 checkout 到对应位置；branch source 还会执行 `git pull --ff-only`。读取目标包
+  manifest 校验 canonical package id；lockfile 写入实际 `HEAD` rev。manifest 中同一
+  git 依赖只能声明一个 checkout selector：`branch`、`tag` 或 `rev`。
 - 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；
   checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。registry leaf 在 v0.1 不拉取归档，因此不写 checksum。
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked

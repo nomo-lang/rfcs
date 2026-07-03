@@ -274,11 +274,13 @@ v0.1 must validate:
   by later workspace graph work.
 - `path` sources are resolved by reading the target package's `nomo.toml` and are
   included recursively in `nomo.lock` and `nomo deps tree`.
-- `git` sources are cloned into a project-local `.nomo/deps/git/` cache, checked
-  out to the requested `branch`, `tag`, or `rev` when one is declared, validated
-  against the expected canonical package ID, and locked to the actual `HEAD`
-  revision. A manifest dependency may specify only one checkout selector:
-  `branch`, `tag`, or `rev`.
+- `git` sources use a project-local `.nomo/deps/git/` cache keyed by canonical
+  package ID and source URL. Cache misses clone the repository; cache hits run
+  `git fetch --tags --prune origin` before checkout. The resolver checks out the
+  requested `branch`, `tag`, or `rev` when one is declared; branch sources also
+  run `git pull --ff-only`. The checkout is validated against the expected
+  canonical package ID and locked to the actual `HEAD` revision. A manifest
+  dependency may specify only one checkout selector: `branch`, `tag`, or `rev`.
 - Resolved `path` and `git` packages are locked with a `sha256:` checksum over
   the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
   checksum in v0.1 because registry archive fetching is out of scope.
