@@ -99,7 +99,24 @@ let age: i32 = 18
 let ratio: f64 = age as f64
 ```
 
-### 2.5 Functions
+### 2.5 Numeric Operators
+
+Current preview builds support binary numeric arithmetic with standard
+precedence:
+
+```rust
+let value: i64 = a - b * c / d % e
+let ratio: f64 = total / count
+```
+
+- `+`, `-`, `*`, and `/` require two matching numeric operands and return the
+  same type.
+- `%` requires two matching integer operands and returns the same integer type.
+- Equality and ordering comparisons return `bool`.
+- Runtime divide-by-zero and overflow guards remain required full-scope safety
+  work; the current C backend still emits direct C arithmetic for this slice.
+
+### 2.6 Functions
 
 ```rust
 pub fn add(a: i32, b: i32) -> i32 {
@@ -112,7 +129,7 @@ pub fn add(a: i32, b: i32) -> i32 {
 - An explicit `return expr` is allowed, mainly for early returns.
 - A `void`-returning function may omit the trailing expression.
 
-### 2.6 Structs and Methods
+### 2.7 Structs and Methods
 
 ```rust
 pub struct User {
