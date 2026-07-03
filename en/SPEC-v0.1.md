@@ -255,8 +255,9 @@ v0.1 must validate:
   registry fetching is out of scope.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
-  dependency edge strings. Invalid TOML, unknown package fields, and mismatched
-  field types are rejected.
+  dependency edge strings. Workspace lockfiles additionally store `[[root]]`
+  tables that map each member package ID to its direct dependency edges. Invalid
+  TOML, unknown package fields, and mismatched field types are rejected.
 - Workspace member manifests may inherit `namespace`, `name`, `version`, and
   `edition` from `[workspace.package]` using `<field>.workspace = true`.
 - Workspace member dependencies may inherit a dependency with
@@ -266,10 +267,11 @@ v0.1 must validate:
 - A manifest containing `[workspace]` but no `[package]` is a workspace root,
   not a package manifest. Member-level project commands operate on the selected
   member package; `nomo deps resolve` for a member writes the lockfile at the
-  workspace root. `nomo check --workspace`, `nomo build --workspace`, and
-  `nomo deps tree --workspace` discover the workspace root, expand `members`
-  minus `exclude`, and visit each member package in stable path order. Other
-  workspace-wide batch commands are defined by later workspace graph work.
+  workspace root. `nomo check --workspace`, `nomo build --workspace`,
+  `nomo deps resolve --workspace`, and `nomo deps tree --workspace` discover the
+  workspace root, expand `members` minus `exclude`, and visit each member
+  package in stable path order. Other workspace-wide batch commands are defined
+  by later workspace graph work.
 - `path` sources are resolved by reading the target package's `nomo.toml` and are
   included recursively in `nomo.lock` and `nomo deps tree`.
 - `git` sources are cloned into a project-local `.nomo/deps/git/` cache, checked
