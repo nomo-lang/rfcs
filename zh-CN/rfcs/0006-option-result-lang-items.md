@@ -119,7 +119,7 @@ pub enum Option<T> {
 
 - 方案 C 需要引入内部属性 `#[lang = "..."]`。必须明确它**不是**面向用户的通用属性系统（那是后续 RFC），仅供标准库/编译器内部使用，否则会扩大 v0.1 语法表面积。
 - 标准库分层编译（先定义层、后 `?` 使用层）需要在构建顺序中体现，避免自举式循环。
-- `Option` 与 `Result` 内建程度需对齐：建议两者都设 lang item，即使 v0.1 的 `?` 只作用于 `Result`，为 [RFC 0002](./0002-match-wildcard-and-nesting.md)/[RFC 0007](./0007-unqualified-variant-access.md) 留出空间。
+- `Option` 与 `Result` 内建程度需对齐：两者都设为 lang item，v0.1 的 `?` 同时作用于 `Result` 与 `Option`，并按 carrier 执行对应早退。
 
 ---
 
@@ -127,7 +127,7 @@ pub enum Option<T> {
 
 - **建议 v0.1 落地**：方案 C。把 `Option`/`Result` 声明为 lang item，定义保留在 `std.option`/`std.result`；编译器据此支撑 `?`、codegen 专用布局与（未来的）prelude。
 - **建议当前规格补充**：在标准库设计或编译器架构新增一节，点明「`Option`/`Result` 是 lang item：既是标准库包，又被编译器识别」，消除当前的隐含耦合。
-- **验收影响**：验收测试矩阵需新增「缺少/未标注 lang item 时报 `N0330`」「`?` 仅对 `Result` 生效」测试；codegen 测试确认 lang item 套用 4.4 布局。
+- **验收影响**：验收测试矩阵需新增「缺少/未标注 lang item 时报 `N0330`」「`?` 仅对已识别的 `Result`/`Option` carrier 生效」测试；codegen 测试确认 lang item 套用 4.4 布局。
 
 ---
 

@@ -134,9 +134,9 @@ fn swap(mut items: Array<i32>, i: u64, j: u64) {
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: Option C's `let else` (divergent), prioritizing "extract or panic" cases such as array swap; `if let` can be in the same batch or follow closely.
+- **Recommended to land in v0.1**: Option C's `let else` (divergent), prioritizing "extract or panic" cases such as array swap; `if let` can be in the same batch or follow closely. Option D's `Option?` also lands through the existing postfix `?` propagation model for `Option`-returning functions.
 - **Keep unchanged**: `match` continues to disable `_` (Option A), guarding exhaustiveness diagnostics.
-- **Defer**: Option B (restricted `_`) and Option D (Option `?`) are left for v0.2 discussion, to avoid introducing too many omission mechanisms at once.
+- **Defer**: Option B (restricted `_`) is left for v0.2 discussion, to avoid weakening exhaustiveness culture in v0.1.
 - **Acceptance impact**: the acceptance test matrix's Parser/Type checker tests need to add success/failure cases for `let else` (a non-diverging `else` should error).
 
 ---

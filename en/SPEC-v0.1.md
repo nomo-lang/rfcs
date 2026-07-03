@@ -131,9 +131,9 @@ masked--
 - Statement-level postfix update supports `target++` and `target--` for mutable
   variables and mutable struct fields. They type-check as `target += 1` and
   `target -= 1`, are not expressions, and do not produce values.
-- Runtime divide-by-zero and invalid shift amounts panic. Signed overflow guards
-  and fully specified signed right-shift behavior remain required full-scope
-  safety work.
+- Runtime divide-by-zero, signed `i32`/`i64` arithmetic overflow, and invalid
+  shift amounts panic. Fully specified signed right-shift behavior remains
+  required full-scope safety work.
 
 ### 2.6 Functions
 
@@ -419,7 +419,9 @@ Rules for `expr?`:
 
 - `Result.Ok(value)` evaluates to `value`.
 - `Result.Err(error)` causes the current function to return `Result.Err(error)` early.
-- The current function's return type must be a compatible `Result`.
+- `Option.Some(value)` evaluates to `value`.
+- `Option.None` causes the current function to return `Option.None` early.
+- The current function's return type must be a compatible carrier: `Result` for `Result?`, or `Option` for `Option?`.
 
 v0.1 does not automatically merge error types. Cross-layer error conversion is discussed in [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md).
 

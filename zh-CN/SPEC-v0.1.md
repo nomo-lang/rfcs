@@ -125,8 +125,8 @@ masked--
   `target = target op value` 进行类型检查。
 - 语句级 postfix 更新支持 `target++` 与 `target--`，可用于可变变量和可变结构体字段。
   它们按 `target += 1` 与 `target -= 1` 类型检查，不是表达式，也不产生值。
-- 除零和非法 shift 数量会在运行时 panic。有符号溢出保护和完全固定的有符号右移语义
-  仍是 full-scope 安全语义后续切片。
+- 除零、有符号 `i32`/`i64` 算术溢出和非法 shift 数量会在运行时 panic。
+  完全固定的有符号右移语义仍是 full-scope 安全语义后续切片。
 
 ### 2.6 函数
 
@@ -224,7 +224,9 @@ pub enum Result<T, E> {
 
 - `Result.Ok(value)` 求值为 `value`。
 - `Result.Err(error)` 使当前函数提前返回 `Result.Err(error)`。
-- 当前函数返回类型必须是兼容的 `Result`。
+- `Option.Some(value)` 求值为 `value`。
+- `Option.None` 使当前函数提前返回 `Option.None`。
+- 当前函数返回类型必须是兼容的 carrier：`Result?` 对应 `Result`，`Option?` 对应 `Option`。
 
 v0.1 不自动合并错误类型。跨层错误转换由 [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md) 讨论。
 

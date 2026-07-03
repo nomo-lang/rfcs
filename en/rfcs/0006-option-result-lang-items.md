@@ -119,7 +119,7 @@ pub enum Option<T> {
 
 - Option C needs to introduce the internal attribute `#[lang = "..."]`. It must be made clear that it is **not** a general user-facing attribute system (that is a follow-up RFC), and is only for standard-library/compiler internal use, otherwise it would expand the v0.1 syntactic surface area.
 - The layered compilation of the standard library (definition layer first, `?`-using layer later) needs to be reflected in the build order, to avoid a bootstrap-style cycle.
-- The degree of built-in-ness of `Option` and `Result` must be aligned: it is recommended that both be set as lang items, even though v0.1's `?` only acts on `Result`, to leave room for [RFC 0002](./0002-match-wildcard-and-nesting.md)/[RFC 0007](./0007-unqualified-variant-access.md).
+- The degree of built-in-ness of `Option` and `Result` must be aligned: both are set as lang items, and v0.1's `?` acts on both `Result` and `Option` through carrier-specific early return.
 
 ---
 
@@ -127,7 +127,7 @@ pub enum Option<T> {
 
 - **Recommended to land in v0.1**: Option C. Declare `Option`/`Result` as lang items, with the definitions kept in `std.option`/`std.result`; the compiler uses this to support `?`, the codegen dedicated layout, and the (future) prelude.
 - **Recommended current-specification supplement**: add a section to the standard-library design or compiler architecture pointing out that "`Option`/`Result` are lang items: both standard-library packages and recognized by the compiler", eliminating the current implicit coupling.
-- **Acceptance impact**: the acceptance test matrix needs to add "report `N0330` when a lang item is missing/unannotated" and "`?` only takes effect on `Result`" tests; codegen tests confirm the lang item applies the 4.4 layout.
+- **Acceptance impact**: the acceptance test matrix needs to add "report `N0330` when a lang item is missing/unannotated" and "`?` takes effect only on recognized `Result`/`Option` carriers" tests; codegen tests confirm the lang item applies the 4.4 layout.
 
 ---
 
