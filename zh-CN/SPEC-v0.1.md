@@ -331,10 +331,11 @@ v0.1 必须校验：
   manifest source。缺失的 `path` source 与 git cache entry 可作为离线锁定条目继续展示。
 - 同一 canonical package id 若解析到不同 source 或 version，v0.1 直接报错。
 - 项目级 `nomo check/build/run` 使用 `nomo.toml` 中声明的 dependency alias 校验源码 import；
-  已 import 的 `path` 与 `git` dependency 会把其 `src/main.nomo` 中的 public API 纳入当前
-  v0.1 编译单元，包括 public function、const、struct、enum 与 public method；private
-  dependency item 不导出。`nomoc` 作为单文件编译器不读取 manifest，仍只接受内建
-  `std.*` import。
+  本地项目模块使用 Flat+Dir 查找：`import app.util` 优先解析 `src/util.nomo`，然后回退到
+  `src/util/main.nomo`；`import app.main` 解析 `src/main.nomo`。已 import 的 `path`
+  与 `git` dependency module 在依赖包 `src/` 下使用同样的查找规则。已 import 的本地模块与依赖模块会把 public API
+  纳入当前 v0.1 编译单元，包括 public function、const、struct、enum 与 public method；private
+  item 不导出。`nomoc` 作为单文件编译器不读取 manifest，仍只接受内建 `std.*` import。
 - `nomo-lsp` 诊断路径应与项目级 `nomo check` 保持一致：对项目文件读取最近的
   `nomo.toml` dependency alias；对无 manifest 的单文件保留 `nomoc` 行为。
 

@@ -111,7 +111,7 @@ import http.client
 2. 在 `nomo` 中生成 namespace-first `nomo.toml`。
 3. 在 `nomo` 中实现 `nomo deps resolve/tree` 的最小闭环：解析 dependency alias、校验 canonical package id、写入 `nomo.lock`、显示依赖树。
 4. `path` 依赖递归读取目标包 manifest，传递依赖进入 lockfile/tree；同一 canonical package id 的不同 source/version 在 v0.1 直接报错。
-5. 项目级 `nomo check/build/run` 使用 manifest dependency alias 校验 import root；已 import 的 `path` 与 `git` dependency 会把 `src/main.nomo` 中的 public API 纳入当前 v0.1 编译单元，private dependency item 不导出；生成 C 的 function 与 nominal type symbol 使用 item 来源 package path 做 mangle；`nomoc` 保持单文件模式，不读取 manifest。
+5. 项目级 `nomo check/build/run` 使用 manifest dependency alias 校验 import root；本地模块使用 Flat+Dir 查找（`src/foo.nomo`，回退 `src/foo/main.nomo`），`path` 与 `git` dependency module 在依赖包 `src/` 下使用同样规则；已 import 的本地模块与依赖模块会把 public API 纳入当前 v0.1 编译单元，private item 不导出；生成 C 的 function 与 nominal type symbol 使用 item 来源 package path 做 mangle；`nomoc` 保持单文件模式，不读取 manifest。
 6. `git` 依赖克隆到项目本地 `.nomo/deps/git/` 缓存，checkout 声明的 `rev`，读取目标包 manifest 校验包身份，并把实际 `HEAD` rev 锁入 `nomo.lock`。
 7. `nomo-lsp` 使用与项目级 `nomo check` 一致的 manifest-aware diagnostics：项目文件读取最近 `nomo.toml`，无 manifest 文件保持 `nomoc` 单文件行为。
 8. registry/version 依赖作为 v0.1 叶子 source 记录到 lockfile/tree：允许显式 `registry` endpoint 元数据，但不做公共 registry 拉取；同一依赖不得混用 `path`、`git`、`version` 多种 source。

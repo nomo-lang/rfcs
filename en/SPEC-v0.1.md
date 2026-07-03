@@ -230,12 +230,15 @@ v0.1 must validate:
 - The same canonical package ID resolving to different sources or versions is a
   v0.1 error.
 - Project-level `nomo check/build/run` validates source imports against
-  dependency aliases declared in `nomo.toml`. Imported `path` and `git`
-  dependencies contribute the public API from their `src/main.nomo` to the
-  current v0.1 compile unit, including public functions, constants, structs,
-  enums, and public methods; private dependency items are not exported. `nomoc`
-  remains a standalone source-file compiler and only accepts built-in `std.*`
-  imports.
+  dependency aliases declared in `nomo.toml`. Local project modules use Flat+Dir
+  lookup: `import app.util` first resolves `src/util.nomo`, then
+  `src/util/main.nomo`; `import app.main` resolves `src/main.nomo`. Imported
+  `path` and `git` dependency modules use the same lookup under the dependency
+  `src/` directory. Imported local modules and imported dependency modules
+  contribute public API to the current v0.1 compile unit, including public
+  functions, constants, structs, enums, and public methods; private items are
+  not exported. `nomoc` remains a standalone source-file compiler and only
+  accepts built-in `std.*` imports.
 - `nomo-lsp` diagnostics should match project-level `nomo check`: project files
   read dependency aliases from the nearest `nomo.toml`, while standalone files
   without a manifest keep `nomoc` behavior.
