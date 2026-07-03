@@ -575,9 +575,21 @@ Array.set(mut self, index: u64, value: T) -> void
 
 ### 6.4 `std.string`
 
+`std.string` helpers operate on UTF-8 byte strings in v0.1. `trim` and case
+conversion use ASCII character classes rather than Unicode grapheme or locale
+rules. `string.split(value, separator)` panics if `separator` is empty.
+
 ```rust
 string.len(self) -> u64
 string.concat(self, other: string) -> string
+string.is_empty(self) -> bool
+string.contains(self, needle: string) -> bool
+string.starts_with(self, prefix: string) -> bool
+string.ends_with(self, suffix: string) -> bool
+string.split(self, separator: string) -> Array<string>
+string.trim(self) -> string
+string.to_lower(self) -> string
+string.to_upper(self) -> string
 ```
 
 ### 6.5 `std.path`

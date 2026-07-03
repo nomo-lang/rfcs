@@ -528,9 +528,21 @@ Array.set(mut self, index: u64, value: T) -> void
 
 ### 6.4 `std.string`
 
+`std.string` helper 在 v0.1 中按 UTF-8 字节字符串工作。`trim` 与大小写转换
+使用 ASCII 字符类，不提供 Unicode grapheme 或 locale 规则。
+`string.split(value, separator)` 在 `separator` 为空时 panic。
+
 ```rust
 string.len(self) -> u64
 string.concat(self, other: string) -> string
+string.is_empty(self) -> bool
+string.contains(self, needle: string) -> bool
+string.starts_with(self, prefix: string) -> bool
+string.ends_with(self, suffix: string) -> bool
+string.split(self, separator: string) -> Array<string>
+string.trim(self) -> string
+string.to_lower(self) -> string
+string.to_upper(self) -> string
 ```
 
 ### 6.5 `std.path`
