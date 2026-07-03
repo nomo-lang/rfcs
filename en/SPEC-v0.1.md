@@ -108,6 +108,7 @@ precedence:
 let value: i64 = a - b * c / d % e
 let ratio: f64 = total / count
 let ready: bool = !failed && connected || cached
+let masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
 ```
 
 - `+`, `-`, `*`, and `/` require two matching numeric operands and return the
@@ -116,9 +117,14 @@ let ready: bool = !failed && connected || cached
 - `&&` and `||` require two `bool` operands, return `bool`, and short-circuit
   left-to-right.
 - `!` requires one `bool` operand and returns `bool`.
+- `&`, `|`, `^`, and `&^` require two matching integer operands and return the
+  same integer type.
+- `<<` and `>>` require an integer left operand and an integer shift amount, and
+  return the left operand type.
 - Equality and ordering comparisons return `bool`.
-- Runtime divide-by-zero and overflow guards remain required full-scope safety
-  work; the current C backend still emits direct C arithmetic for this slice.
+- Runtime divide-by-zero, overflow, invalid shift, and signed right-shift guards
+  remain required full-scope safety work; the current C backend still emits
+  direct C arithmetic/bitwise expressions for this slice.
 
 ### 2.6 Functions
 
