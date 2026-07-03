@@ -262,8 +262,10 @@ v0.1 must validate:
 - A manifest containing `[workspace]` but no `[package]` is a workspace root,
   not a package manifest. Member-level project commands operate on the selected
   member package; `nomo deps resolve` for a member writes the lockfile at the
-  workspace root. Workspace-wide batch commands are defined by the workspace
-  graph work.
+  workspace root. `nomo check --workspace` and
+  `nomo deps tree --workspace` discover the workspace root, expand `members`
+  minus `exclude`, and visit each member package in stable path order. Other
+  workspace-wide batch commands are defined by later workspace graph work.
 - `path` sources are resolved by reading the target package's `nomo.toml` and are
   included recursively in `nomo.lock` and `nomo deps tree`.
 - `git` sources are cloned into a project-local `.nomo/deps/git/` cache, checked
