@@ -287,6 +287,12 @@ v0.1 must validate:
   checksum, and falls back to resolving the current manifest when no lockfile
   exists. Missing `path` sources and git cache entries may still be shown as
   offline locked entries.
+- `--locked` is accepted by `nomo build`, `nomo deps resolve`, and
+  `nomo deps tree`. It requires an existing lockfile and rejects missing or
+  out-of-date direct dependencies without rewriting `nomo.lock`.
+- `--offline` prevents git fetch/clone and uses existing lockfiles or git cache
+  checkouts. Without a lockfile, uncached git dependencies fail instead of
+  accessing the network. `--frozen` is equivalent to `--locked --offline`.
 - The same canonical package ID resolving to different sources or versions is a
   v0.1 error.
 - Project-level `nomo check/build/run` validates source imports against

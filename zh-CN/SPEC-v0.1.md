@@ -384,6 +384,12 @@ v0.1 必须校验：
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked
   `path` source 与匹配的 git cache checkout 校验 checksum；没有 lockfile 时再解析当前
   manifest source。缺失的 `path` source 与 git cache entry 可作为离线锁定条目继续展示。
+- `nomo build`、`nomo deps resolve` 与 `nomo deps tree` 接受 `--locked`；该模式要求
+  现有 lockfile，若缺失或 direct dependency 与 manifest 不一致则报错，且不重写
+  `nomo.lock`。
+- `--offline` 禁止 git fetch/clone，只使用现有 lockfile 或 git cache checkout；没有
+  lockfile 时，未缓存的 git dependency 会报错而不是访问网络。`--frozen` 等价于
+  `--locked --offline`。
 - 同一 canonical package id 若解析到不同 source 或 version，v0.1 直接报错。
 - 项目级 `nomo check/build/run` 使用 `nomo.toml` 中声明的 dependency alias 校验源码 import；
   本地项目模块使用 Flat+Dir 查找：`import app.util` 优先解析 `src/util.nomo`，然后回退到
