@@ -427,7 +427,9 @@ v0.1 必须校验：
   `src/**/*.nomo`。path 为直接 `.nomo` 文件时，只格式化该文件，不要求 manifest。
   `--check` 只输出 `would format <path>`，不写文件；只要存在差异就以失败退出。
   formatter 输出规范空白、缩进以及 package/import/item 间距；不保留用户原始排版 trivia。
-  由于 v0.1 还没有 comment token，类似注释的输入仍是语法错误，不由 `fmt` 保留。
+  lexer 接受 Rust 风格行注释（`//`、`///`、`//!`）和可嵌套块注释
+  （`/* */`、`/** */`、`/*! */`）作为 trivia。在保留注释的 formatter 落地前，
+  `nomo fmt` 遇到含注释输入会给出稳定诊断，而不是静默删除注释。
   `nomoc` 在 v0.1 不新增 formatter 命令。
 
 公共 registry 拉取和复杂版本求解不属于 v0.1；v0.1 遇到同一 canonical package id

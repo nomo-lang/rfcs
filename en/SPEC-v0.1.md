@@ -344,9 +344,11 @@ v0.1 must validate:
   `--check` reports `would format <path>` without writing and exits with
   failure if any target differs. The formatter emits canonical whitespace,
   indentation, and package/import/item spacing; it does not preserve original
-  layout trivia. Because v0.1 has no comment tokens, comment-like input remains
-  a syntax error instead of being preserved by `fmt`. `nomoc` does not gain a
-  formatter command in v0.1.
+  layout trivia. The lexer accepts Rust-style line comments (`//`, `///`,
+  `//!`) and nested block comments (`/* */`, `/** */`, `/*! */`) as trivia.
+  Until comment-preserving formatting lands, `nomo fmt` rejects commented input
+  with a stable diagnostic instead of silently dropping comments. `nomoc` does
+  not gain a formatter command in v0.1.
 
 Public registry fetching and complex version solving are out of scope for v0.1;
 v0.1 may reject multiple versions of the same canonical package ID directly.
