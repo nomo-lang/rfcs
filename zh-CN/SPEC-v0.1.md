@@ -232,7 +232,7 @@ pub enum Result<T, E> {
 
 v0.1 不引入 `try` 关键字或语句语法；错误与缺值传播统一使用后缀 `?`。
 
-v0.1 不自动合并错误类型。跨层错误转换由 [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md) 讨论。
+v0.1 不自动合并错误类型。跨层错误转换使用显式 `std.result.map_err(named_converter)?`，见已接受的 [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md)。
 
 ### 3.4 `Option` / `Result` 的编译器认知
 

@@ -8,7 +8,7 @@
 | --- | --- |
 | Number | 0001 |
 | Title | The experience tension between `?` propagation and the lack of automatic error conversion |
-| Status | Draft |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Related topics | error handling, `Result`, `?` propagation, error conversion, C backend |
@@ -18,7 +18,7 @@
 
 ## 1. Summary
 
-The current error-handling specification clearly states that "v0.1 does not provide anonymous error unions and does not automatically merge error types"; cross-layer error conversion must be written explicitly with `match`. This directly conflicts with the original intent of `?` (eliminating boilerplate and making propagation lightweight): in real multi-layer calls, the caller's error type is almost always different from the callee's, so `?` is barely usable anywhere, and developers are forced back to `match`. This RFC analyzes the tension, presents three alternatives (`From`/`Into`-style conversion traits, a standard-library `.map_err()` method, anonymous error unions), and leans toward "landing `.map_err()` in v0.1 first as the explicit conversion entry point, leaving automatic-conversion traits for a v0.2 RFC", while remaining Draft.
+The current error-handling specification clearly states that v0.1 does not provide anonymous error unions and does not automatically merge error types. Cross-layer error conversion therefore needs an explicit step before propagation. This RFC accepts `std.result.map_err(converter)?` as the v0.1 answer: `?` stays the only propagation syntax, `map_err` performs named-function error conversion, and `From`/`Into`-style automatic conversion plus anonymous error unions are deferred beyond v0.1.
 
 ---
 
@@ -100,22 +100,22 @@ impl AppError {
 - **Diagnostics**: add a "no error conversion found" error code (in the E0400-E0499 type-checking range, e.g. `E0461`).
 - **Cost**: v0.1 explicitly "does not support trait/interface constraints" (3.9); introducing a `From`-style mechanism amounts to introducing the trait system early or a specialized "conversion registration" subsystem, conflicting with the MVP boundary.
 
-### 4.2 Option B: A standard-library `.map_err()` explicit method (preferred)
+### 4.2 Option B: A standard-library `.map_err()` explicit method (accepted)
 
 - **Syntax**: keep the semantics of `?` unchanged, and provide `map_err` on `std.result`:
 
 ```rust
 fn read_config(path: string) -> Result<string, AppError> {
-    let text = fs.read_to_string(path)
-        .map_err(fn(e: FsError) -> AppError { AppError.ReadFailed(e.message) })?
+    let raw: Result<string, FsError> = fs.read_to_string(path)
+    let text: string = raw.map_err(app_error_from_fs)?
     Result.Ok(text)
 }
 ```
 
 - **Semantics**: `map_err` maps `Result<T, E1>` to `Result<T, E2>`, after which `?` propagates under the premise of type equality. No implicit conversion or trait is needed.
-- **C backend**: `map_err` is monomorphized into an ordinary function; it requires a function-value/closure argument (v0.1's closure capability is in the closure-representation topic of the pending-issues list; if closures are not ready, named conversion functions can be required first).
+- **C backend**: `map_err` is monomorphized into an ordinary helper that accepts a named, unqualified, non-generic converter function. Closures and anonymous function values remain out of scope for v0.1.
 - **Diagnostics**: no new exhaustiveness/conversion error codes; type mismatch still goes through the existing N04xx.
-- **Dependency**: the ideal form requires functions as arguments. If v0.1 closures are unavailable, it degrades to "passing a named `fn`": `.map_err(app_error_from_fs)?`.
+- **Dependency**: v0.1 requires passing a named `fn`: `.map_err(app_error_from_fs)?`.
 
 ### 4.3 Option C: Anonymous error unions (implicit merging)
 
@@ -131,37 +131,37 @@ fn read_config(path: string) -> Result<string, AppError> {
 | Option | Approach | Advantages | Disadvantages |
 | --- | --- | --- | --- |
 | A `From` trait | `?` implicitly calls error conversion | Experience closest to Rust, least boilerplate | Requires introducing trait/conversion registration early, violating the 3.9 MVP boundary; implicitness reduces readability |
-| B `.map_err()` (preferred) | Explicit mapping then `?` | Does not break `?` semantics, no implicit magic, fits "explicit first"; can be a pure library implementation | Still some boilerplate; the ideal form depends on function values/closures |
+| B `.map_err()` (accepted) | Explicit mapping then `?` | Does not break `?` semantics, no implicit magic, fits "explicit first"; works in v0.1 with named converter functions | Still some boilerplate; closure-based inline converters are deferred |
 | C Anonymous union | `Result<T, A \| B>` auto-merge | No need to write conversions by hand | Breaks the 4.4 fixed layout, complex type inference/diagnostics, clearly beyond v0.1 |
 
 ---
 
 ## 6. Drawbacks and Risks
 
-- When choosing B, if v0.1 closures have not yet landed, `map_err` can only accept named functions, and the experience is slightly worse; it needs to coordinate with the closure-representation topic.
-- Any option must first confirm the precise definition of "compatible `Result`" (the current 4.3 is vague), otherwise implementers will each interpret it differently.
-- If we stay with B for a long time while A eventually has to be done too, there will be "first `map_err`, then `From`" two ways of writing it, in tension with the 2.2 principle — the recommended order needs to be made explicit in the documentation.
+- `map_err` accepts named converter functions in v0.1, so inline conversion remains more verbose than a closure-based form.
+- "Compatible `Result`" is fixed as matching `Ok` payload type and strictly equal error type after any explicit conversion.
+- If a future `From`-style mechanism is added, the language will need a migration story so `map_err(...)?` and implicit conversion do not become equally preferred duplicate idioms.
 
 ---
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: Option B's `std.result.map_err` (supporting named conversion functions first), and add a sentence to the current error-handling specification that "the recommended way to do cross-layer conversion is `.map_err(...)?`", while also rewriting the file-reading example into a form that can use `?` as an anchor.
-- **Explicitly deferred**: Option A (`From`-style) and Option C (anonymous union) are left for a v0.2 RFC, bound to the error-conversion topic in the pending-issues list.
-- **Acceptance impact**: the acceptance test matrix should add a "`map_err` + `?` cross-layer propagation" case (which can be merged into the `result_chain` example).
+- **Lands in v0.1**: Option B's `std.result.map_err` with named converter functions, documented as the recommended way to write cross-layer conversion before `?`.
+- **Explicitly deferred**: Option A (`From`-style) and Option C (anonymous union) are left for a v0.2+ RFC, bound to the error-conversion topic in the pending-issues list.
+- **Acceptance impact**: the acceptance matrix includes `map_err` + `?` cross-layer propagation examples and tests.
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward **Option B**: introduce `std.result.map_err` in v0.1, make cross-layer error conversion explicit so that `?` is usable in real code (including `read_config`), while not breaking the fixed C layout of 4.4 and not introducing traits early. `From`-style automatic conversion (Option A) continues to be discussed as a v0.2 candidate. Remains Draft.
+Accepted **Option B**. v0.1 uses postfix `?` as the only propagation syntax and uses explicit `std.result.map_err(named_converter)?` for cross-layer error conversion. `try` syntax, implicit `From` conversion, and anonymous error unions are not part of v0.1.
 
 ---
 
 ## 9. Open Questions
 
-- Does "compatible `Result`" only mean `E` is strictly equal? This needs to be settled when this RFC is accepted.
-- Does `map_err` require v0.1 closures to be ready, or should it support named functions first? This depends on progress on the closure-representation topic in the pending-issues list.
+- Whether a later closure syntax should allow inline converters for `map_err`.
+- Whether a later `From`-style conversion mechanism should coexist with or supersede explicit `map_err(...)?`.
 - Whether to also provide `map` (for `Ok`) to keep the API symmetric.
 
 ---

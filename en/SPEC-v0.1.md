@@ -446,7 +446,7 @@ Rules for `expr?`:
 v0.1 does not introduce a `try` keyword or statement syntax; postfix `?` is
 the unified propagation syntax for errors and absence.
 
-v0.1 does not automatically merge error types. Cross-layer error conversion is discussed in [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md).
+v0.1 does not automatically merge error types. Cross-layer error conversion uses explicit `std.result.map_err(named_converter)?`, as accepted by [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md).
 
 ### 3.4 The Compiler's Awareness of `Option` / `Result`
 

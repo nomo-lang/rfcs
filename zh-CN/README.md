@@ -64,7 +64,7 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 
 | 编号 | 标题 | 状态 | 关联主题 | 一句话结论/倾向 |
 | --- | --- | --- | --- | --- |
-| [0001](./rfcs/0001-error-propagation-and-conversion.md) | `?` 传播与缺少自动错误转换的体验矛盾 | Draft（待决） | 错误处理、`Result`、`?` 传播、C 后端 | 倾向 v0.1 先提供显式 `std.result.map_err`（让 `?` 可用），把 `From` 风格自动转换留作 v0.2。 |
+| [0001](./rfcs/0001-error-propagation-and-conversion.md) | `?` 传播与缺少自动错误转换的体验矛盾 | Accepted（已接受） | 错误处理、`Result`、`?` 传播、C 后端 | v0.1 使用显式 `std.result.map_err(named_converter)?`；`From` 风格自动转换推迟。 |
 | [0002](./rfcs/0002-match-wildcard-and-nesting.md) | `match` 缺少 `_` 通配分支与嵌套解构 | Draft（待决） | 模式匹配、穷尽性、嵌套解构 | 倾向 `match` 继续禁用 `_`（守穷尽性），改用 `let else`/`if let` 压平嵌套样板。 |
 | [0003](./rfcs/0003-arc-cow-runtime-cost.md) | 值语义 + ARC + COW 的运行时实现成本 | Draft（待决） | 内存模型、`string`、`Array<T>`、运行时 | 倾向「分而治之」：`string` 仅引用计数（不可变免 COW），`Array<T>` 用非原子 RC+COW，纯拷贝作为应急回退。 |
 | [0004](./rfcs/0004-mutable-borrow-uniqueness.md) | 可变借用唯一性检查的真实难度 | Draft（待决） | 可变借用、别名检查、逃逸检查 | 倾向把借用存活期限定为「单调用表达式」，做调用点别名 + 逃逸兜底（L1），不引入 lifetime。 |
