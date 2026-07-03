@@ -18,6 +18,7 @@ The goal of Nomo v0.1 is to deliver a minimal but complete Stage 0 compilation p
 4. The system C compiler produces an executable.
 5. `nomo run` builds and runs the example program.
 6. `nomo fmt` normalizes v0.1 source formatting for projects and standalone files.
+7. `nomo test` discovers and runs `#[test]` functions in a project or workspace.
 
 v0.1 does not pursue maximal feature coverage, but rather a closed loop of specification, implementation, testing, and RFC decisions.
 
@@ -29,7 +30,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 
 | Module | Deliverable | Acceptance method |
 | --- | --- | --- |
-| Project tooling | `nomo new`, `nomo check`, `nomo build`, `nomo run`, `nomo fmt` | Example projects can be created, checked, built, run, and formatted |
+| Project tooling | `nomo new`, `nomo check`, `nomo build`, `nomo run`, `nomo fmt`, `nomo test` | Example projects can be created, checked, built, run, formatted, and tested |
 | Compiler frontend | Lexer, Parser, AST, syntax diagnostics | golden tests stable |
 | Name resolution | Resolution of packages, imports, types, functions, fields, enum variants | Success/failure cases covered |
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
@@ -385,6 +386,15 @@ v0.1 must validate:
   Until comment-preserving formatting lands, `nomo fmt` rejects commented input
   with a stable diagnostic instead of silently dropping comments. `nomoc` does
   not gain a formatter command in v0.1.
+- `nomo test [path] [--workspace] [--package <package>] [--filter <text>] [--json] [--locked] [--offline] [--frozen]`
+  discovers top-level `#[test]` functions in project `src/**/*.nomo` and runs
+  them one by one. Test functions must be non-generic, take no parameters,
+  return `void`, and must not be named `main`. Each test reuses the project
+  module resolver and dependency resolver, compiling a temporary runner
+  `main() -> void` that calls the test function; an existing project `main` is
+  not executed as the test entrypoint. `--filter` keeps tests whose full name
+  contains the filter text, `--workspace` runs workspace members, `--package`
+  selects a package id or member name, and `--json` emits a stable test report.
 
 Public registry fetching and complex version solving are out of scope for v0.1;
 v0.1 may reject multiple versions of the same canonical package ID directly.
