@@ -125,8 +125,8 @@ masked--
   `target = target op value` 进行类型检查。
 - 语句级 postfix 更新支持 `target++` 与 `target--`，可用于可变变量和可变结构体字段。
   它们按 `target += 1` 与 `target -= 1` 类型检查，不是表达式，也不产生值。
-- 除零、溢出、非法 shift 和有符号右移的运行时保护仍是 full-scope 安全语义后续切片；
-  当前 C 后端在本切片仍直接生成 C 算术/位运算表达式。
+- 除零和非法 shift 数量会在运行时 panic。有符号溢出保护和完全固定的有符号右移语义
+  仍是 full-scope 安全语义后续切片。
 
 ### 2.6 函数
 

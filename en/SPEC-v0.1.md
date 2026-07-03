@@ -131,9 +131,9 @@ masked--
 - Statement-level postfix update supports `target++` and `target--` for mutable
   variables and mutable struct fields. They type-check as `target += 1` and
   `target -= 1`, are not expressions, and do not produce values.
-- Runtime divide-by-zero, overflow, invalid shift, and signed right-shift guards
-  remain required full-scope safety work; the current C backend still emits
-  direct C arithmetic/bitwise expressions for this slice.
+- Runtime divide-by-zero and invalid shift amounts panic. Signed overflow guards
+  and fully specified signed right-shift behavior remain required full-scope
+  safety work.
 
 ### 2.6 Functions
 
