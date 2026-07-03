@@ -106,10 +106,13 @@ let ratio: f64 = age as f64
 ```rust
 let value: i64 = a - b * c / d % e
 let ratio: f64 = total / count
+let ready: bool = !failed && connected || cached
 ```
 
 - `+`、`-`、`*`、`/` 需要两个匹配的数值操作数，并返回同类型结果。
 - `%` 需要两个匹配的整数操作数，并返回同整数类型结果。
+- `&&` 与 `||` 需要两个 `bool` 操作数，返回 `bool`，并按从左到右短路求值。
+- `!` 需要一个 `bool` 操作数，并返回 `bool`。
 - 相等与大小比较返回 `bool`。
 - 除零与溢出的运行时保护仍是 full-scope 安全语义后续切片；当前 C 后端在本切片
   仍直接生成 C 算术表达式。

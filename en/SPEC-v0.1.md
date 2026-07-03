@@ -107,11 +107,15 @@ precedence:
 ```rust
 let value: i64 = a - b * c / d % e
 let ratio: f64 = total / count
+let ready: bool = !failed && connected || cached
 ```
 
 - `+`, `-`, `*`, and `/` require two matching numeric operands and return the
   same type.
 - `%` requires two matching integer operands and returns the same integer type.
+- `&&` and `||` require two `bool` operands, return `bool`, and short-circuit
+  left-to-right.
+- `!` requires one `bool` operand and returns `bool`.
 - Equality and ordering comparisons return `bool`.
 - Runtime divide-by-zero and overflow guards remain required full-scope safety
   work; the current C backend still emits direct C arithmetic for this slice.
