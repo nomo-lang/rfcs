@@ -584,6 +584,14 @@ C 后端原则：
 | `E0500-E0599` | 借用与可变性 |
 | `E0600-E0699` | 模块与包 |
 | `E0700-E0799` | C 后端 |
+| `E0800-E0899` | 标准库与运行时 API |
+| `E0900-E0999` | manifest、lockfile 与依赖解析 |
+| `E1000-E1099` | workspace |
+| `E1100-E1199` | test runner |
+| `E1200-E1299` | doc generator |
+| `E1300-E1399` | LSP semantic API |
+| `E1400-E1499` | registry 与 publish |
+| `E1500-E1599` | FFI 与 unsafe |
 
 JSON 诊断至少包含：
 
@@ -602,6 +610,9 @@ JSON 诊断至少包含：
   "suggestions": []
 }
 ```
+
+诊断文档放在 `docs/diagnostics/`。LSP diagnostic 的 `codeDescription`
+应指向对应错误码文档，例如 `E0404.md`。
 
 ---
 

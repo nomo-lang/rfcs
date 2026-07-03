@@ -632,6 +632,14 @@ Error code ranges:
 | `E0500-E0599` | Borrow and mutability |
 | `E0600-E0699` | Modules and packages |
 | `E0700-E0799` | C backend |
+| `E0800-E0899` | Standard library and runtime API |
+| `E0900-E0999` | Manifest, lockfile, and dependency resolver |
+| `E1000-E1099` | Workspace |
+| `E1100-E1199` | Test runner |
+| `E1200-E1299` | Documentation generator |
+| `E1300-E1399` | LSP semantic API |
+| `E1400-E1499` | Registry and publish |
+| `E1500-E1599` | FFI and unsafe |
 
 A JSON diagnostic contains at least:
 
@@ -650,6 +658,9 @@ A JSON diagnostic contains at least:
   "suggestions": []
 }
 ```
+
+Diagnostic documentation lives under `docs/diagnostics/`. LSP diagnostics should
+set `codeDescription` to the matching error-code page, for example `E0404.md`.
 
 ---
 
