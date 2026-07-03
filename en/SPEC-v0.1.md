@@ -17,6 +17,7 @@ The goal of Nomo v0.1 is to deliver a minimal but complete Stage 0 compilation p
 3. `nomo build` invokes `nomoc` to transpile `.nomo` source into C99.
 4. The system C compiler produces an executable.
 5. `nomo run` builds and runs the example program.
+6. `nomo fmt` normalizes v0.1 source formatting for projects and standalone files.
 
 v0.1 does not pursue maximal feature coverage, but rather a closed loop of specification, implementation, testing, and RFC decisions.
 
@@ -28,7 +29,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 
 | Module | Deliverable | Acceptance method |
 | --- | --- | --- |
-| Project tooling | `nomo new`, `nomo check`, `nomo build`, `nomo run` | Example projects can be created, checked, built, and run |
+| Project tooling | `nomo new`, `nomo check`, `nomo build`, `nomo run`, `nomo fmt` | Example projects can be created, checked, built, run, and formatted |
 | Compiler frontend | Lexer, Parser, AST, syntax diagnostics | golden tests stable |
 | Name resolution | Resolution of packages, imports, types, functions, fields, enum variants | Success/failure cases covered |
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
@@ -242,6 +243,16 @@ v0.1 must validate:
 - `nomo-lsp` diagnostics should match project-level `nomo check`: project files
   read dependency aliases from the nearest `nomo.toml`, while standalone files
   without a manifest keep `nomoc` behavior.
+- `nomo fmt [path] [--check] [--json-errors]` is an AST-based formatter for
+  v0.1 source. With no path or a directory path it discovers the project
+  manifest and formats `src/**/*.nomo` in stable path order. With a direct
+  `.nomo` file path it formats only that file and does not require a manifest.
+  `--check` reports `would format <path>` without writing and exits with
+  failure if any target differs. The formatter emits canonical whitespace,
+  indentation, and package/import/item spacing; it does not preserve original
+  layout trivia. Because v0.1 has no comment tokens, comment-like input remains
+  a syntax error instead of being preserved by `fmt`. `nomoc` does not gain a
+  formatter command in v0.1.
 
 Public registry fetching and complex version solving are out of scope for v0.1;
 v0.1 may reject multiple versions of the same canonical package ID directly.
@@ -514,6 +525,7 @@ Before releasing v0.1, the following must be satisfied:
 
 - `cargo test` passes.
 - `cargo fmt --check` passes.
+- `nomo fmt --check` succeeds on checked-in `.nomo` examples and fixtures.
 - Lexer / Parser golden tests are stable.
 - Type checking, name resolution, and mutability tests cover both success and failure paths.
 - C backend generated code compiles with at least one mainstream C compiler.
