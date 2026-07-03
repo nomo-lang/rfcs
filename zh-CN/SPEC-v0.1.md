@@ -230,6 +230,8 @@ pub enum Result<T, E> {
 - `Option.None` 使当前函数提前返回 `Option.None`。
 - 当前函数返回类型必须是兼容的 carrier：对 `Result` 值使用 `expr?` 时，当前函数必须返回兼容的 `Result`；对 `Option` 值使用 `expr?` 时，当前函数必须返回兼容的 `Option`。
 
+v0.1 不引入 `try` 关键字或语句语法；错误与缺值传播统一使用后缀 `?`。
+
 v0.1 不自动合并错误类型。跨层错误转换由 [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md) 讨论。
 
 ### 3.4 `Option` / `Result` 的编译器认知
