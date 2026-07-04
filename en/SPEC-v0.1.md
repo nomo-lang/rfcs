@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.regex`, `std.collections` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.net`, `std.http`, `std.regex`, `std.collections` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -942,7 +942,29 @@ impl UdpSocket {
 }
 ```
 
-### 6.19 `std.regex`
+### 6.19 `std.http`
+
+`std.http` provides blocking plain-HTTP client helpers in the current slice.
+`http.get` requests an `http://` URL. `http.post` sends a string body to an
+`http://` URL. Responses expose the numeric HTTP status and response body.
+TLS, custom headers, redirects, chunked transfer decoding, streaming bodies,
+and server helpers remain later `std.http` slices.
+
+```rust
+pub struct HttpError {
+    pub message: string
+}
+
+pub struct HttpResponse {
+    pub status: i64
+    pub body: string
+}
+
+http.get(url: string) -> Result<HttpResponse, HttpError>
+http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
+```
+
+### 6.20 `std.regex`
 
 `std.regex` provides v0.1 regular expression helpers. `Regex` stores the
 source pattern after compile-time validation by `regex.compile`. Compile
@@ -964,7 +986,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.20 `std.collections`
+### 6.21 `std.collections`
 
 `std.collections` provides v0.1 string-specialized collections. `StringMap`
 stores string keys and string values. `StringSet` stores unique strings. Update
@@ -995,7 +1017,7 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.20 `std.testing`
+### 6.22 `std.testing`
 
 `std.testing` provides assertion helpers intended for `#[test]` functions. A
 failed assertion panics, which makes the current test fail under `nomo test`.
@@ -1009,7 +1031,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.21 `std.debug`
+### 6.23 `std.debug`
 
 `std.debug` provides lightweight debugging helpers. Print helpers write to
 stderr. `debug.panic` uses the same panic path as the language builtin.
@@ -1023,7 +1045,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.22 `std.log`
+### 6.24 `std.log`
 
 `std.log` provides lightweight leveled logging helpers. Log messages are
 written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
