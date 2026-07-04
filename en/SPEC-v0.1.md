@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -555,6 +555,7 @@ std.log
 std.path
 std.math
 std.num
+std.hash
 ```
 
 ### 6.1 `std.io`
@@ -817,7 +818,25 @@ num.wrapping_sub(left: integer, right: same integer type) -> same integer type
 num.wrapping_mul(left: integer, right: same integer type) -> same integer type
 ```
 
-### 6.15 `std.testing`
+### 6.15 `std.hash`
+
+`std.hash` provides stable non-cryptographic FNV-1a 64-bit hashing helpers for
+strings. `HashState` carries incremental hash state by value, so callers can
+build the same hash from multiple string chunks without mutable references.
+Cryptographic digests belong to `std.crypto`, not `std.hash`.
+
+```rust
+pub struct HashState {
+    pub value: u64
+}
+
+hash.string(value: string) -> u64
+hash.new() -> HashState
+hash.write_string(state: HashState, value: string) -> HashState
+hash.finish(state: HashState) -> u64
+```
+
+### 6.16 `std.testing`
 
 `std.testing` provides assertion helpers intended for `#[test]` functions. A
 failed assertion panics, which makes the current test fail under `nomo test`.
@@ -831,7 +850,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.16 `std.debug`
+### 6.17 `std.debug`
 
 `std.debug` provides lightweight debugging helpers. Print helpers write to
 stderr. `debug.panic` uses the same panic path as the language builtin.
@@ -845,7 +864,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.17 `std.log`
+### 6.18 `std.log`
 
 `std.log` provides lightweight leveled logging helpers. Log messages are
 written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
