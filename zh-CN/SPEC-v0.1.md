@@ -782,10 +782,11 @@ num.wrapping_mul(left: integer, right: same integer type) -> same integer type
 
 ### 6.15 `std.hash`
 
-`std.hash` 提供稳定的非加密 FNV-1a 64-bit 字符串 hash helper。
-`HashState` 以值语义保存增量 hash 状态，因此调用者可以用多个字符串片段
-构造与一次性 hash 相同的结果，而不需要可变引用。加密摘要属于后续
-`std.crypto`，不属于 `std.hash`。
+`std.hash` 提供稳定的非加密 FNV-1a 64-bit 字符串与 `Array<u32>` byte array
+hash helper。`HashState` 以值语义保存增量 hash 状态，因此调用者可以用多个
+字符串或 byte chunk 构造与一次性 hash 相同的结果，而不需要可变引用。
+byte array 使用与 `std.fs` byte helper、`std.crypto.random_bytes` 相同的
+`0..255` 元素约定。加密摘要属于 `std.crypto`，不属于 `std.hash`。
 
 ```rust
 pub struct HashState {
@@ -793,8 +794,10 @@ pub struct HashState {
 }
 
 hash.string(value: string) -> u64
+hash.bytes(value: Array<u32>) -> u64
 hash.new() -> HashState
 hash.write_string(state: HashState, value: string) -> HashState
+hash.write_bytes(state: HashState, value: Array<u32>) -> HashState
 hash.finish(state: HashState) -> u64
 ```
 

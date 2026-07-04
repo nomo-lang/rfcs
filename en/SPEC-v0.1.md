@@ -841,8 +841,10 @@ num.wrapping_mul(left: integer, right: same integer type) -> same integer type
 ### 6.15 `std.hash`
 
 `std.hash` provides stable non-cryptographic FNV-1a 64-bit hashing helpers for
-strings. `HashState` carries incremental hash state by value, so callers can
-build the same hash from multiple string chunks without mutable references.
+strings and `Array<u32>` byte arrays. `HashState` carries incremental hash state
+by value, so callers can build the same hash from multiple string or byte
+chunks without mutable references. Byte arrays use the same `0..255` element
+convention as `std.fs` byte helpers and `std.crypto.random_bytes`.
 Cryptographic digests belong to `std.crypto`, not `std.hash`.
 
 ```rust
@@ -851,8 +853,10 @@ pub struct HashState {
 }
 
 hash.string(value: string) -> u64
+hash.bytes(value: Array<u32>) -> u64
 hash.new() -> HashState
 hash.write_string(state: HashState, value: string) -> HashState
+hash.write_bytes(state: HashState, value: Array<u32>) -> HashState
 hash.finish(state: HashState) -> u64
 ```
 
