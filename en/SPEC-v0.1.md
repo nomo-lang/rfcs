@@ -580,6 +580,8 @@ pub struct FileMetadata {
     pub size: u64
 }
 
+pub struct File
+
 fn read_to_string(path: string) -> Result<string, FsError>
 fn write_string(path: string, content: string) -> Result<void, FsError>
 fn exists(path: string) -> bool
@@ -587,10 +589,20 @@ fn metadata(path: string) -> Result<FileMetadata, FsError>
 fn create_dir(path: string) -> Result<void, FsError>
 fn remove_dir(path: string) -> Result<void, FsError>
 fn read_dir(path: string) -> Result<Array<string>, FsError>
+fn open(path: string) -> Result<File, FsError>
+
+impl File {
+    fn read_to_string(self) -> Result<string, FsError>
+    fn write_string(self, content: string) -> Result<void, FsError>
+    fn close(self) -> void
+}
 ```
 
 `metadata` returns file-type flags and byte size. Directory size is
 platform-defined.
+`open` opens an existing file for reading and writing. `File.read_to_string`
+reads the whole file from the beginning; `File.write_string` writes at the
+beginning and flushes.
 `read_dir` returns entry names, not full paths, and skips `.` and `..`.
 `remove_dir` removes an empty directory only.
 

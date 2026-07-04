@@ -48,9 +48,9 @@ If we treat them as "ordinary library types the compiler knows nothing about", `
 ### 3.2 Problem Analysis
 
 - **Circular dependency**: the standard library defines the type → the compiler must have built-in awareness of the type → only then can it compile the standard library itself (the definition of `Result` in `std.result`, and any library code that uses `?`).
-- **`?` must have an anchor**: the expansion rule of `expr?` must be bound to a "known `Result`", otherwise can a user define any same-named `Result` and `?` it too? Or can only `std.result.Result` be `?`'d? The current specification does not answer.
+- **`?` must have an anchor**: the expansion rule of `expr?` must be bound to known carrier types, otherwise can a user define any same-named `Result` or `Option` and `?` it too? Or can only `std.result.Result` and `std.option.Option` be `?`'d? The current specification does not answer.
 - **codegen dedicated layout**: the `Result_T_E` of 4.4 shows that codegen does not use a "generic enum layout" for `Result` but a **special case**, which already treats it as a lang item, only without saying so.
-- **The degree of `Option`'s built-in-ness**: `Option` has no `?` (4.3 only mentions `Result`), but `Array.get` (8.4) and `std.env.get` (8.3) both return `Option`, and [RFC 0002](./0002-match-wildcard-and-nesting.md) may add `?`-style early exit to `Option`; its degree of built-in-ness must be decided together with `Result`.
+- **The degree of `Option`'s built-in-ness**: `Array.get` (8.4) and `std.env.get` (8.3) both return `Option`, and the v0.1 postfix `?` model now treats `Option.None` as an early return from an `Option`-returning function. Its degree of built-in-ness must therefore be decided together with `Result`.
 
 ---
 

@@ -48,9 +48,9 @@
 ### 3.2 问题分析
 
 - **循环依赖**：标准库定义类型 → 编译器要内建认知该类型 → 才能编译标准库自身（`std.result` 里 `Result` 的定义本身、以及任何用到 `?` 的库代码）。
-- **`?` 必须有锚点**：`expr?` 的展开规则必须绑定到某个「已知的 `Result`」，否则用户随便定义一个同名 `Result` 也能 `?`？还是只有 `std.result.Result` 能 `?`？当前规格未答。
+- **`?` 必须有锚点**：`expr?` 的展开规则必须绑定到已知 carrier 类型，否则用户随便定义一个同名 `Result` 或 `Option` 也能 `?`？还是只有 `std.result.Result` 与 `std.option.Option` 能 `?`？当前规格未答。
 - **codegen 专用布局**：4.4 的 `Result_T_E` 说明 codegen 对 `Result` 不是「泛化枚举布局」而是**特例**，这等于已经把它当 lang item 了，只是没明说。
-- **`Option` 的内建程度**：`Option` 没有 `?`（4.3 只提 `Result`），但 `Array.get`（8.4）、`std.env.get`（8.3）都返回 `Option`，且 [RFC 0002](./0002-match-wildcard-and-nesting.md) 可能给 `Option` 加 `?` 风格早退；其内建程度需与 `Result` 一并定。
+- **`Option` 的内建程度**：`Array.get`（8.4）、`std.env.get`（8.3）都返回 `Option`，且 v0.1 后缀 `?` 模型已经把 `Option.None` 作为从 `Option` 返回函数早退的语义。其内建程度需与 `Result` 一并定。
 
 ---
 
