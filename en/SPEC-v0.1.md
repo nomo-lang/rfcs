@@ -944,11 +944,16 @@ impl UdpSocket {
 
 ### 6.19 `std.http`
 
-`std.http` provides blocking plain-HTTP client helpers in the current slice.
-`http.get` requests an `http://` URL. `http.post` sends a string body to an
-`http://` URL. Responses expose the numeric HTTP status and response body.
-TLS, custom headers, redirects, chunked transfer decoding, streaming bodies,
-and server helpers remain later `std.http` slices.
+`std.http` provides blocking plain-HTTP client and basic server helpers in the
+current slice. `http.get` requests an `http://` URL. `http.post` sends a string
+body to an `http://` URL. Responses expose the numeric HTTP status and response
+body. `http.listen` creates a blocking server socket, `http.accept` accepts one
+request exchange, and `http.respond_string` writes a string response. Programs
+should close handles with `defer http.close_exchange(exchange)` and
+`defer http.close_server(server)` so cleanup runs on both normal returns and `?`
+early returns. TLS, custom headers, redirects, chunked transfer decoding,
+streaming bodies, routing, and concurrent server helpers remain later
+`std.http` slices.
 
 ```rust
 pub struct HttpError {
@@ -960,8 +965,22 @@ pub struct HttpResponse {
     pub body: string
 }
 
+pub struct HttpServer {
+}
+
+pub struct HttpExchange {
+    pub method: string
+    pub path: string
+    pub body: string
+}
+
 http.get(url: string) -> Result<HttpResponse, HttpError>
 http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
+http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
+http.accept(server: HttpServer) -> Result<HttpExchange, HttpError>
+http.respond_string(exchange: HttpExchange, status: i64, body: string) -> Result<void, HttpError>
+http.close_server(server: HttpServer) -> void
+http.close_exchange(exchange: HttpExchange) -> void
 ```
 
 ### 6.20 `std.regex`

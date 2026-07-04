@@ -884,10 +884,15 @@ impl UdpSocket {
 
 ### 6.19 `std.http`
 
-`std.http` 在当前切片提供阻塞 plain-HTTP client helper。`http.get` 请求
-`http://` URL。`http.post` 向 `http://` URL 发送 string body。响应暴露数字
-HTTP status 与 response body。TLS、自定义 header、redirect、chunked transfer
-解码、streaming body 与 server helper 留给后续 `std.http` 切片。
+`std.http` 在当前切片提供阻塞 plain-HTTP client helper 与基础 server
+helper。`http.get` 请求 `http://` URL。`http.post` 向 `http://` URL 发送
+string body。响应暴露数字 HTTP status 与 response body。`http.listen` 创建
+阻塞 server socket，`http.accept` 接受一个 request exchange，
+`http.respond_string` 写入 string response。程序应使用
+`defer http.close_exchange(exchange)` 和 `defer http.close_server(server)` 关闭
+handle，使正常返回与 `?` 早退都会清理资源。TLS、自定义 header、redirect、
+chunked transfer 解码、streaming body、routing 与并发 server helper 留给后续
+`std.http` 切片。
 
 ```rust
 pub struct HttpError {
@@ -899,8 +904,22 @@ pub struct HttpResponse {
     pub body: string
 }
 
+pub struct HttpServer {
+}
+
+pub struct HttpExchange {
+    pub method: string
+    pub path: string
+    pub body: string
+}
+
 http.get(url: string) -> Result<HttpResponse, HttpError>
 http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
+http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
+http.accept(server: HttpServer) -> Result<HttpExchange, HttpError>
+http.respond_string(exchange: HttpExchange, status: i64, body: string) -> Result<void, HttpError>
+http.close_server(server: HttpServer) -> void
+http.close_exchange(exchange: HttpExchange) -> void
 ```
 
 ### 6.20 `std.regex`
