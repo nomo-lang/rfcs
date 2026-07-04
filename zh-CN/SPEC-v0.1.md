@@ -108,6 +108,7 @@ let ratio: f64 = age as f64
 ```rust
 let value: i64 = a - b * c / d % e
 let ratio: f64 = total / count
+let grouped: i64 = -(a + b) * c
 let ready: bool = !failed && connected || cached
 let mut masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
 masked &^= clear
@@ -116,6 +117,8 @@ masked--
 ```
 
 - `+`、`-`、`*`、`/` 需要两个匹配的数值操作数，并返回同类型结果。
+- 括号分组表达式会覆盖默认优先级。
+- 一元 `-` 需要 `i32`、`i64` 或 `f64` 操作数，并返回同类型结果。
 - `%` 需要两个匹配的整数操作数，并返回同整数类型结果。
 - `&&` 与 `||` 需要两个 `bool` 操作数，返回 `bool`，并按从左到右短路求值。
 - `!` 需要一个 `bool` 操作数，并返回 `bool`。

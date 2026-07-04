@@ -109,6 +109,7 @@ precedence:
 ```rust
 let value: i64 = a - b * c / d % e
 let ratio: f64 = total / count
+let grouped: i64 = -(a + b) * c
 let ready: bool = !failed && connected || cached
 let mut masked: i64 = value & mask &^ clear << 1 >> shift | extra ^ flags
 masked &^= clear
@@ -118,6 +119,8 @@ masked--
 
 - `+`, `-`, `*`, and `/` require two matching numeric operands and return the
   same type.
+- Parenthesized subexpressions override precedence.
+- Unary `-` requires an `i32`, `i64`, or `f64` operand and returns the same type.
 - `%` requires two matching integer operands and returns the same integer type.
 - `&&` and `||` require two `bool` operands, return `bool`, and short-circuit
   left-to-right.
