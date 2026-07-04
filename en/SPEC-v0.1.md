@@ -576,7 +576,14 @@ pub struct FsError {
 
 fn read_to_string(path: string) -> Result<string, FsError>
 fn write_string(path: string, content: string) -> Result<void, FsError>
+fn exists(path: string) -> bool
+fn create_dir(path: string) -> Result<void, FsError>
+fn remove_dir(path: string) -> Result<void, FsError>
+fn read_dir(path: string) -> Result<Array<string>, FsError>
 ```
+
+`read_dir` returns entry names, not full paths, and skips `.` and `..`.
+`remove_dir` removes an empty directory only.
 
 ### 6.3 `std.env`
 
