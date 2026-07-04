@@ -268,7 +268,8 @@ nums.push(1)
 - 读操作共享底层存储。
 - 写操作在引用计数大于 1 时触发写时复制。
 - `Array.get` 返回 `Option<T>`。
-- `Array.set` 越界触发 `panic`。
+- `Array.pop` 和 `Array.remove` 返回 `Option<T>`；空数组或越界时返回 `None`。
+- `Array.set` 和 `Array.insert` 越界触发 `panic`。
 
 ARC/COW 的运行时成本与退化策略由 [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md) 讨论。
 
@@ -549,7 +550,11 @@ Array.new<T>() -> Array<T>
 Array.len(self) -> u64
 Array.push(mut self, value: T)
 Array.get(self, index: u64) -> Option<T>
+Array.pop(mut self) -> Option<T>
+Array.remove(mut self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
+Array.insert(mut self, index: u64, value: T) -> void
+Array.clear(mut self) -> void
 ```
 
 ### 6.5 `std.result`

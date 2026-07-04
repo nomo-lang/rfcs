@@ -482,7 +482,9 @@ nums.push(1)
 - Read operations share the underlying storage.
 - Write operations trigger copy-on-write when the reference count is greater than 1.
 - `Array.get` returns `Option<T>`.
-- `Array.set` triggers a `panic` on out-of-bounds.
+- `Array.pop` and `Array.remove` return `Option<T>`; empty arrays and
+  out-of-bounds removals return `None`.
+- `Array.set` and `Array.insert` trigger a `panic` on out-of-bounds.
 
 The runtime cost and degradation strategy of ARC/COW are discussed in [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md).
 
@@ -596,7 +598,11 @@ Array.new<T>() -> Array<T>
 Array.len(self) -> u64
 Array.push(mut self, value: T)
 Array.get(self, index: u64) -> Option<T>
+Array.pop(mut self) -> Option<T>
+Array.remove(mut self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
+Array.insert(mut self, index: u64, value: T) -> void
+Array.clear(mut self) -> void
 ```
 
 ### 6.5 `std.result`
