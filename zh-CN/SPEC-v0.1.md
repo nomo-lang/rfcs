@@ -708,14 +708,16 @@ pub struct ProcessOutput {
 }
 ```
 
-`std.process` 提供同步进程 helper。`process.status` 返回命令退出码。
-`process.exec` 捕获 stdout，并在启动、读取、关闭或非零退出状态时返回
-`Err`。`process.output` 分别捕获 stdout/stderr；即使命令以非零状态退出，
-也返回 `Ok(ProcessOutput)`，调用者读取 `status`。完整 spawn handle 留给后续
-`std.process` 切片。
+`std.process` 提供同步进程 helper。`process.spawn` 启动 shell 命令并等待
+结束，不捕获 stdout/stderr，返回命令退出码。`process.status` 具有相同的
+退出码行为，保留为只关心最终状态时的描述性 helper。`process.exec` 捕获
+stdout，并在启动、读取、关闭或非零退出状态时返回 `Err`。`process.output`
+分别捕获 stdout/stderr；即使命令以非零状态退出，也返回
+`Ok(ProcessOutput)`，调用者读取 `status`。v0.1 不暴露异步 process handle。
 
 ```rust
 process.exit(code: i64) -> void
+process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
 process.output(command: string) -> Result<ProcessOutput, ProcessError>

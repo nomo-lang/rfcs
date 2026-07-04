@@ -762,15 +762,18 @@ pub struct ProcessOutput {
 }
 ```
 
-`std.process` provides synchronous process helpers. `process.status` returns a
-command exit code. `process.exec` captures stdout and returns `Err` for spawn,
-read, close, or non-zero-exit failures. `process.output` captures stdout and
-stderr separately and returns `Ok(ProcessOutput)` even when the command exits
-non-zero; callers inspect `status`. Full spawn handles remain a later
-`std.process` slice.
+`std.process` provides synchronous process helpers. `process.spawn` starts a
+shell command, waits for it to finish, and returns its exit code without
+capturing stdout or stderr. `process.status` has the same exit-code behavior
+and remains as the descriptive helper name for callers that only need the final
+status. `process.exec` captures stdout and returns `Err` for spawn, read,
+close, or non-zero-exit failures. `process.output` captures stdout and stderr
+separately and returns `Ok(ProcessOutput)` even when the command exits non-zero;
+callers inspect `status`. v0.1 does not expose asynchronous process handles.
 
 ```rust
 process.exit(code: i64) -> void
+process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
 process.output(command: string) -> Result<ProcessOutput, ProcessError>
