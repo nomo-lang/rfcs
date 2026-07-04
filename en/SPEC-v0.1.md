@@ -591,6 +591,8 @@ pub struct File
 
 fn read_to_string(path: string) -> Result<string, FsError>
 fn write_string(path: string, content: string) -> Result<void, FsError>
+fn read_bytes(path: string) -> Result<Array<u32>, FsError>
+fn write_bytes(path: string, bytes: Array<u32>) -> Result<void, FsError>
 fn exists(path: string) -> bool
 fn metadata(path: string) -> Result<FileMetadata, FsError>
 fn create_dir(path: string) -> Result<void, FsError>
