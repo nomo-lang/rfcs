@@ -541,7 +541,23 @@ Array.get(self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
 ```
 
-### 6.5 `std.option`
+### 6.5 `std.result`
+
+`std.result` helper 同时支持 module function、具体导入和 value method 三种用法。
+`map`、`map_err` 与 `and_then` 在 v0.1 中接收具名、非限定、非泛型
+converter 函数；闭包不属于 v0.1 范围。`and_then` 要求 converter 返回
+错误类型相同的 `Result<U, E>`。
+
+```rust
+result.is_ok(value: Result<T, E>) -> bool
+result.is_err(value: Result<T, E>) -> bool
+result.unwrap_or(value: Result<T, E>, default: T) -> T
+result.map(value: Result<T, E>, converter: fn(T) -> U) -> Result<U, E>
+result.map_err(value: Result<T, E1>, converter: fn(E1) -> E2) -> Result<T, E2>
+result.and_then(value: Result<T, E>, converter: fn(T) -> Result<U, E>) -> Result<U, E>
+```
+
+### 6.6 `std.option`
 
 `std.option` helper 同时支持 module function、具体导入和 value method 三种用法。
 `map` 与 `and_then` 在 v0.1 中接收具名、非限定、非泛型 converter 函数；闭包
@@ -555,7 +571,7 @@ option.map(value: Option<T>, converter: fn(T) -> U) -> Option<U>
 option.and_then(value: Option<T>, converter: fn(T) -> Option<U>) -> Option<U>
 ```
 
-### 6.6 `std.string`
+### 6.7 `std.string`
 
 `std.string` helper 在 v0.1 中按 UTF-8 字节字符串工作。`trim` 与大小写转换
 使用 ASCII 字符类，不提供 Unicode grapheme 或 locale 规则。
@@ -574,7 +590,7 @@ string.to_lower(self) -> string
 string.to_upper(self) -> string
 ```
 
-### 6.7 `std.path`
+### 6.8 `std.path`
 
 `std.path` 提供纯字符串路径 helper。v0.1 使用 POSIX 风格 `/` 分隔符，
 不查询宿主文件系统，也不解析符号链接。
@@ -588,7 +604,7 @@ path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
 ```
 
-### 6.8 `std.math`
+### 6.9 `std.math`
 
 `std.math` 提供基础数值 helper。`abs`、`min`、`max` 保留输入数值类型，
 并要求操作数类型匹配；其余 helper 当前为 `f64` 函数。

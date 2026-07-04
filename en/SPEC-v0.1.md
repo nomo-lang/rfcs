@@ -588,7 +588,23 @@ Array.get(self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
 ```
 
-### 6.5 `std.option`
+### 6.5 `std.result`
+
+`std.result` helpers are available as module functions, specific imports, and
+value methods. `map`, `map_err`, and `and_then` take named, unqualified,
+non-generic converter functions in v0.1; closures are out of scope. `and_then`
+requires the converter to return a `Result<U, E>` with the same error type.
+
+```rust
+result.is_ok(value: Result<T, E>) -> bool
+result.is_err(value: Result<T, E>) -> bool
+result.unwrap_or(value: Result<T, E>, default: T) -> T
+result.map(value: Result<T, E>, converter: fn(T) -> U) -> Result<U, E>
+result.map_err(value: Result<T, E1>, converter: fn(E1) -> E2) -> Result<T, E2>
+result.and_then(value: Result<T, E>, converter: fn(T) -> Result<U, E>) -> Result<U, E>
+```
+
+### 6.6 `std.option`
 
 `std.option` helpers are available as module functions, specific imports, and
 value methods. `map` and `and_then` take named, unqualified, non-generic
@@ -602,7 +618,7 @@ option.map(value: Option<T>, converter: fn(T) -> U) -> Option<U>
 option.and_then(value: Option<T>, converter: fn(T) -> Option<U>) -> Option<U>
 ```
 
-### 6.6 `std.string`
+### 6.7 `std.string`
 
 `std.string` helpers operate on UTF-8 byte strings in v0.1. `trim` and case
 conversion use ASCII character classes rather than Unicode grapheme or locale
@@ -621,7 +637,7 @@ string.to_lower(self) -> string
 string.to_upper(self) -> string
 ```
 
-### 6.7 `std.path`
+### 6.8 `std.path`
 
 `std.path` provides pure string path helpers. v0.1 uses POSIX-style `/`
 separators and does not query the host filesystem or resolve symlinks.
@@ -635,7 +651,7 @@ path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
 ```
 
-### 6.8 `std.math`
+### 6.9 `std.math`
 
 `std.math` provides basic numeric helpers. `abs`, `min`, and `max` preserve
 the input numeric type and require matching numeric operands. The remaining
