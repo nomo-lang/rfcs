@@ -218,6 +218,12 @@ impl Display for User {
 }
 ```
 
+The compiler checks `impl Interface for Type` blocks statically: the interface
+must be declared or imported as public API, every required method must exist on
+the impl, and method type parameters, parameter count, parameter mutability,
+parameter types, and return type must match after substituting `Self` with the
+concrete impl target.
+
 The current interface MVP does not support trait objects, associated types,
 blanket impls, dynamic dispatch, or generic constraints such as
 `fn print<T: Display>(value: T)`. That full constraint system remains outside

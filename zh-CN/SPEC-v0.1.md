@@ -211,6 +211,11 @@ impl Display for User {
 }
 ```
 
+编译器会静态检查 `impl Interface for Type`：interface 必须已声明或作为
+public API 导入，impl 必须提供每个必需方法，并且方法 type parameter、
+参数数量、参数 mutability、参数类型与返回类型在把 `Self` 替换为具体 impl
+目标类型后必须一致。
+
 当前 interface MVP 不支持 trait object、associated type、blanket impl、动态分派或
 `fn print<T: Display>(value: T)` 形式的泛型约束；这类完整约束系统仍不属于 v0.1。
 高阶类型和泛型特化也不属于 v0.1。
