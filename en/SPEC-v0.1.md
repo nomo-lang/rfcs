@@ -381,12 +381,10 @@ v0.1 must validate:
   `.nomo` file path it formats only that file and does not require a manifest.
   `--check` reports `would format <path>` without writing and exits with
   failure if any target differs. The formatter emits canonical whitespace,
-  indentation, and package/import/item spacing; it does not preserve original
-  layout trivia. The lexer accepts Rust-style line comments (`//`, `///`,
-  `//!`) and nested block comments (`/* */`, `/** */`, `/*! */`) as trivia.
-  Until comment-preserving formatting lands, `nomo fmt` rejects commented input
-  with a stable diagnostic instead of silently dropping comments. `nomoc` does
-  not gain a formatter command in v0.1.
+  indentation, and package/import/item spacing while preserving Rust-style line
+  comments (`//`, `///`, `//!`) and nested block comments (`/* */`, `/** */`,
+  `/*! */`) as leading or trailing trivia attached to nearby declarations and
+  statements. `nomoc` does not gain a formatter command in v0.1.
 - `nomo test [path] [--workspace] [--package <package>] [--filter <text>] [--json] [--locked] [--offline] [--frozen]`
   discovers top-level `#[test]` functions in project `src/**/*.nomo` and runs
   them one by one. Test functions must be non-generic, take no parameters,

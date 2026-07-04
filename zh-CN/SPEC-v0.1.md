@@ -463,10 +463,9 @@ v0.1 必须校验：
   无 path 或 path 为目录时，先发现项目 manifest，再按稳定路径顺序格式化
   `src/**/*.nomo`。path 为直接 `.nomo` 文件时，只格式化该文件，不要求 manifest。
   `--check` 只输出 `would format <path>`，不写文件；只要存在差异就以失败退出。
-  formatter 输出规范空白、缩进以及 package/import/item 间距；不保留用户原始排版 trivia。
-  lexer 接受 Rust 风格行注释（`//`、`///`、`//!`）和可嵌套块注释
-  （`/* */`、`/** */`、`/*! */`）作为 trivia。在保留注释的 formatter 落地前，
-  `nomo fmt` 遇到含注释输入会给出稳定诊断，而不是静默删除注释。
+  formatter 输出规范空白、缩进以及 package/import/item 间距，同时保留 Rust 风格
+  行注释（`//`、`///`、`//!`）和可嵌套块注释（`/* */`、`/** */`、`/*! */`），
+  并将它们作为前置或行尾 trivia 绑定到附近的声明和语句。
   `nomoc` 在 v0.1 不新增 formatter 命令。
 - `nomo test [path] [--workspace] [--package <package>] [--filter <text>] [--json] [--locked] [--offline] [--frozen]`
   发现项目 `src/**/*.nomo` 中的顶层 `#[test]` 函数并逐个运行。测试函数必须无泛型、无参数、
