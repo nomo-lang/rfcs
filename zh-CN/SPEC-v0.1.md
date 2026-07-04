@@ -500,6 +500,7 @@ std.char
 std.os
 std.time
 std.process
+std.testing
 std.path
 std.math
 std.num
@@ -756,6 +757,19 @@ num.checked_mul(left: integer, right: same integer type) -> Option<same integer 
 num.wrapping_add(left: integer, right: same integer type) -> same integer type
 num.wrapping_sub(left: integer, right: same integer type) -> same integer type
 num.wrapping_mul(left: integer, right: same integer type) -> same integer type
+```
+
+### 6.15 `std.testing`
+
+`std.testing` 提供面向 `#[test]` 函数的 assertion helper。断言失败时会
+panic，因此当前测试会在 `nomo test` 下失败。`testing.assert_equal` 支持
+string，以及类型一致的 bool、char、整数和 `f64` primitive 值。
+`testing.assert_error` 接受任意 `Result<T, E>`，仅在值为 `Err` 时通过。
+
+```rust
+testing.assert(condition: bool, message: string) -> void
+testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
+testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
 ---
