@@ -548,10 +548,15 @@ std.math
 ### 6.1 `std.io`
 
 ```rust
+pub struct IoError {
+    pub message: string
+}
+
 io.print("hello")
 io.println("hello")
 io.eprint("error")
 io.eprintln("error")
+io.read_line() -> Result<string, IoError>
 ```
 
 ### 6.2 `std.fs`
