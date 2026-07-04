@@ -680,17 +680,25 @@ time.sleep_millis(duration: i64) -> void
 pub struct ProcessError {
     pub message: string
 }
+
+pub struct ProcessOutput {
+    pub status: i32
+    pub stdout: string
+    pub stderr: string
+}
 ```
 
 `std.process` 提供同步进程 helper。`process.status` 返回命令退出码。
 `process.exec` 捕获 stdout，并在启动、读取、关闭或非零退出状态时返回
-`Err`。v0.1 的 `exec` 不捕获 stderr；完整 spawn handle 与 stdout/stderr
-双通道捕获留给后续 `std.process` 切片。
+`Err`。`process.output` 分别捕获 stdout/stderr；即使命令以非零状态退出，
+也返回 `Ok(ProcessOutput)`，调用者读取 `status`。完整 spawn handle 留给后续
+`std.process` 切片。
 
 ```rust
 process.exit(code: i64) -> void
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
+process.output(command: string) -> Result<ProcessOutput, ProcessError>
 ```
 
 ### 6.12 `std.path`

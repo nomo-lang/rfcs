@@ -733,17 +733,26 @@ time.sleep_millis(duration: i64) -> void
 pub struct ProcessError {
     pub message: string
 }
+
+pub struct ProcessOutput {
+    pub status: i32
+    pub stdout: string
+    pub stderr: string
+}
 ```
 
 `std.process` provides synchronous process helpers. `process.status` returns a
 command exit code. `process.exec` captures stdout and returns `Err` for spawn,
-read, close, or non-zero-exit failures. v0.1 `exec` does not capture stderr;
-full spawn handles and stdout/stderr capture are a later `std.process` slice.
+read, close, or non-zero-exit failures. `process.output` captures stdout and
+stderr separately and returns `Ok(ProcessOutput)` even when the command exits
+non-zero; callers inspect `status`. Full spawn handles remain a later
+`std.process` slice.
 
 ```rust
 process.exit(code: i64) -> void
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
+process.output(command: string) -> Result<ProcessOutput, ProcessError>
 ```
 
 ### 6.12 `std.path`
