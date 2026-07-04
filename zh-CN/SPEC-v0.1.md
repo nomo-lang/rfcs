@@ -413,10 +413,9 @@ v0.1 必须校验：
 - 只有 `[workspace]` 而没有 `[package]` 的 manifest 是 workspace root，不是 package
   manifest。当前 member 级项目命令仍作用于选中的 member package；对 member 执行
   `nomo deps resolve` 时 lockfile 写在 workspace root。`nomo check --workspace`、
-  `nomo build --workspace`、`nomo deps resolve --workspace` 与
-  `nomo deps tree --workspace` 会发现 workspace root，展开 `members` 并排除
-  `exclude`，按稳定路径顺序访问每个 member package。其它 workspace-wide batch
-  commands 由后续 workspace graph 切片定义。
+  `nomo build --workspace`、`nomo test --workspace`、`nomo doc --workspace`、
+  `nomo deps resolve --workspace` 与 `nomo deps tree --workspace` 会发现 workspace
+  root，展开 `members` 并排除 `exclude`，按稳定路径顺序访问每个 member package。
 - `path` source 需要读取目标包的 `nomo.toml`，并递归纳入 `nomo.lock` 与 `nomo deps tree`。
 - `git` source 使用项目本地 `.nomo/deps/git/` 缓存，cache key 基于 canonical package
   id 与 source URL。cache miss 时 clone repository；cache hit 时先执行
