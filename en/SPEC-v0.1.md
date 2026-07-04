@@ -448,11 +448,13 @@ v0.1 must validate:
   extracts module and item documentation from Rust-style doc comments (`//!`,
   `///`, `/*! */`, `/** */`) and combines it with parser AST signatures,
   visibility, and source locations for packages/modules, functions, structs,
-  enums, methods, and constants. By default it writes `build/doc/index.html`,
-  package/module HTML pages, and `search-index.json`; `--json` emits the
-  machine-readable documentation model without writing files. `--workspace`
-  documents workspace members, `--package` selects a package id or member name,
-  and `--std` generates the current built-in standard-library module index.
+  enums, methods, and constants. Struct fields and enum variants are emitted as
+  child documentation items and participate in the search index. By default it
+  writes `build/doc/index.html`, package/module HTML pages, and
+  `search-index.json`; `--json` emits the machine-readable documentation model
+  without writing files. `--workspace` documents workspace members, `--package`
+  selects a package id or member name, and `--std` generates the current
+  built-in standard-library module index.
 
 Public registry fetching and complex version solving are out of scope for v0.1;
 v0.1 may reject multiple versions of the same canonical package ID directly.
