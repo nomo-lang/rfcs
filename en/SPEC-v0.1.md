@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.path`, `std.math`, `std.num` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.path`, `std.math`, `std.num` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -548,6 +548,7 @@ std.string
 std.char
 std.os
 std.time
+std.process
 std.path
 std.math
 std.num
@@ -726,7 +727,26 @@ time.monotonic_millis() -> i64
 time.sleep_millis(duration: i64) -> void
 ```
 
-### 6.11 `std.path`
+### 6.11 `std.process`
+
+```rust
+pub struct ProcessError {
+    pub message: string
+}
+```
+
+`std.process` provides synchronous process helpers. `process.status` returns a
+command exit code. `process.exec` captures stdout and returns `Err` for spawn,
+read, close, or non-zero-exit failures. v0.1 `exec` does not capture stderr;
+full spawn handles and stdout/stderr capture are a later `std.process` slice.
+
+```rust
+process.exit(code: i64) -> void
+process.status(command: string) -> Result<i32, ProcessError>
+process.exec(command: string) -> Result<string, ProcessError>
+```
+
+### 6.12 `std.path`
 
 `std.path` provides pure string path helpers. v0.1 uses POSIX-style `/`
 separators and does not query the host filesystem or resolve symlinks.
@@ -740,7 +760,7 @@ path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
 ```
 
-### 6.12 `std.math`
+### 6.13 `std.math`
 
 `std.math` provides basic numeric helpers. `abs`, `min`, and `max` preserve
 the input numeric type and require matching numeric operands. The remaining
@@ -759,7 +779,7 @@ math.sin(value: f64) -> f64
 math.cos(value: f64) -> f64
 ```
 
-### 6.13 `std.num`
+### 6.14 `std.num`
 
 `std.num` provides numeric conversion helpers. Parse helpers return
 `Result<T, NumError>` and are intended to compose with the `?` operator.
