@@ -270,6 +270,7 @@ nums.push(1)
 - `Array.get` 返回 `Option<T>`。
 - `Array.pop` 和 `Array.remove` 返回 `Option<T>`；空数组或越界时返回 `None`。
 - `Array.set` 和 `Array.insert` 越界触发 `panic`。
+- `Array.iter` 返回可被 `for ... in` 消费的快照值；完整 iterator 类型推迟到 trait/interface 之后。
 
 ARC/COW 的运行时成本与退化策略由 [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md) 讨论。
 
@@ -555,6 +556,7 @@ Array.remove(mut self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
 Array.insert(mut self, index: u64, value: T) -> void
 Array.clear(mut self) -> void
+Array.iter(self) -> Array<T>
 ```
 
 ### 6.5 `std.result`

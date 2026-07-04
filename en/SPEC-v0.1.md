@@ -485,6 +485,8 @@ nums.push(1)
 - `Array.pop` and `Array.remove` return `Option<T>`; empty arrays and
   out-of-bounds removals return `None`.
 - `Array.set` and `Array.insert` trigger a `panic` on out-of-bounds.
+- `Array.iter` returns a snapshot value accepted by `for ... in`; a full
+  iterator type is deferred until traits/interfaces exist.
 
 The runtime cost and degradation strategy of ARC/COW are discussed in [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md).
 
@@ -603,6 +605,7 @@ Array.remove(mut self, index: u64) -> Option<T>
 Array.set(mut self, index: u64, value: T) -> void
 Array.insert(mut self, index: u64, value: T) -> void
 Array.clear(mut self) -> void
+Array.iter(self) -> Array<T>
 ```
 
 ### 6.5 `std.result`
