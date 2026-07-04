@@ -501,7 +501,9 @@ std.math
 ### 6.1 `std.io`
 
 ```rust
+io.print("hello")
 io.println("hello")
+io.eprint("error")
 io.eprintln("error")
 ```
 
