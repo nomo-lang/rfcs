@@ -197,7 +197,44 @@ pub fn identity<T>(value: T) -> T {
 }
 ```
 
-v0.1 不支持 trait/interface 约束、高阶类型或泛型特化。
+v0.1 支持最小 `interface` 声明和 `impl Interface for Type` 静态方法实现：
+
+```rust
+pub interface Display {
+    fn to_string(self) -> string
+}
+
+impl Display for User {
+    fn to_string(self) -> string {
+        return self.name
+    }
+}
+```
+
+当前 interface MVP 不支持 trait object、associated type、blanket impl、动态分派或
+`fn print<T: Display>(value: T)` 形式的泛型约束；这类完整约束系统仍不属于 v0.1。
+高阶类型和泛型特化也不属于 v0.1。
+
+### 2.9 C FFI 与 `unsafe`
+
+v0.1 支持最小 C FFI 入口：
+
+```rust
+extern "C" {
+    fn puts(message: string) -> i32
+}
+
+fn main() -> void {
+    unsafe {
+        puts("hello")
+    }
+}
+```
+
+`extern "C"` 声明只描述 C 函数签名；调用 extern 函数必须写在 `unsafe { ... }`
+block 中。当前 MVP 支持将 Nomo `string` 传给 C `puts`，codegen 传递底层
+NUL-terminated byte buffer。任意裸指针、C struct 自动布局、header 绑定生成、
+多语句 unsafe block 和通用 link metadata 留待后续切片。
 
 ---
 

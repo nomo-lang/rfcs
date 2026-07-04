@@ -204,11 +204,50 @@ pub fn identity<T>(value: T) -> T {
 }
 ```
 
-v0.1 does not support trait/interface constraints, higher-kinded types, or generic specialization.
+v0.1 supports minimal `interface` declarations and static `impl Interface for Type` method implementations:
+
+```rust
+pub interface Display {
+    fn to_string(self) -> string
+}
+
+impl Display for User {
+    fn to_string(self) -> string {
+        return self.name
+    }
+}
+```
+
+The current interface MVP does not support trait objects, associated types,
+blanket impls, dynamic dispatch, or generic constraints such as
+`fn print<T: Display>(value: T)`. That full constraint system remains outside
+v0.1. Higher-kinded types and generic specialization are also out of scope.
+
+### 2.9 C FFI and `unsafe`
+
+v0.1 supports a minimal C FFI entry point:
+
+```rust
+extern "C" {
+    fn puts(message: string) -> i32
+}
+
+fn main() -> void {
+    unsafe {
+        puts("hello")
+    }
+}
+```
+
+`extern "C"` declarations describe C function signatures; extern calls must be
+inside an `unsafe { ... }` block. The current MVP supports passing a Nomo
+`string` to C `puts`; codegen passes the underlying NUL-terminated byte buffer.
+Arbitrary raw pointers, C struct layout inference, header binding generation,
+multi-statement unsafe blocks, and general link metadata are left for later slices.
 
 ---
 
-## 2.9 Package Identity and Dependency Aliases
+## 2.10 Package Identity and Dependency Aliases
 
 Nomo v0.1 uses a namespace-first package model. A package's stable identity is
 `owner/package`, for example `nomo-lang/json`; Git URLs, registries, branches,
