@@ -721,15 +721,28 @@ os.line_ending() -> string
 
 ### 6.10 `std.time`
 
-`std.time` provides basic wall-clock, monotonic-clock, and sleep helpers.
+`std.time` provides basic wall-clock, monotonic-clock, duration, formatting, and
+sleep helpers.
 `time.now_millis()` returns Unix epoch milliseconds. `time.monotonic_millis()`
 is suitable for measuring elapsed time within one process and must not be
-compared with wall-clock timestamps. `time.sleep_millis` panics for negative
-durations or platform sleep failures.
+compared with wall-clock timestamps. `Duration` stores a signed millisecond
+count. `time.format_duration` uses the stable v0.1 form `<millis>ms`, for
+example `1500ms`. `time.duration_seconds` panics if converting seconds to
+milliseconds would overflow `i64`. `time.sleep` and `time.sleep_millis` panic
+for negative durations or platform sleep failures.
 
 ```rust
+struct Duration {
+    millis: i64
+}
+
 time.now_millis() -> i64
 time.monotonic_millis() -> i64
+time.duration_millis(millis: i64) -> Duration
+time.duration_seconds(seconds: i64) -> Duration
+time.duration_as_millis(duration: Duration) -> i64
+time.format_duration(duration: Duration) -> string
+time.sleep(duration: Duration) -> void
 time.sleep_millis(duration: i64) -> void
 ```
 

@@ -670,14 +670,25 @@ os.line_ending() -> string
 
 ### 6.10 `std.time`
 
-`std.time` 提供基础 wall clock、monotonic clock 与 sleep helper。
+`std.time` 提供基础 wall clock、monotonic clock、duration、format 与 sleep helper。
 `time.now_millis()` 返回 Unix epoch 毫秒。`time.monotonic_millis()` 适合在
-单个进程内测量耗时，不能与 wall-clock 时间戳比较。`time.sleep_millis` 在
-duration 为负数或平台 sleep 调用失败时 panic。
+单个进程内测量耗时，不能与 wall-clock 时间戳比较。`Duration` 保存有符号毫秒数。
+`time.format_duration` 使用稳定的 v0.1 格式 `<millis>ms`，例如 `1500ms`。
+`time.duration_seconds` 在秒转换为毫秒会溢出 `i64` 时 panic。`time.sleep` 与
+`time.sleep_millis` 在 duration 为负数或平台 sleep 调用失败时 panic。
 
 ```rust
+struct Duration {
+    millis: i64
+}
+
 time.now_millis() -> i64
 time.monotonic_millis() -> i64
+time.duration_millis(millis: i64) -> Duration
+time.duration_seconds(seconds: i64) -> Duration
+time.duration_as_millis(duration: Duration) -> i64
+time.format_duration(duration: Duration) -> string
+time.sleep(duration: Duration) -> void
 time.sleep_millis(duration: i64) -> void
 ```
 
