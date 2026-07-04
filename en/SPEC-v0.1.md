@@ -550,6 +550,7 @@ std.os
 std.time
 std.process
 std.testing
+std.debug
 std.path
 std.math
 std.num
@@ -827,6 +828,20 @@ failed assertion panics, which makes the current test fail under `nomo test`.
 testing.assert(condition: bool, message: string) -> void
 testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
+```
+
+### 6.16 `std.debug`
+
+`std.debug` provides lightweight debugging helpers. Print helpers write to
+stderr. `debug.panic` uses the same panic path as the language builtin.
+`debug.backtrace` is a stable placeholder in v0.1; it returns a string so code
+can depend on the API before real stack capture is available.
+
+```rust
+debug.print(message: string) -> void
+debug.println(message: string) -> void
+debug.panic(message: string) -> void
+debug.backtrace() -> string
 ```
 
 ---

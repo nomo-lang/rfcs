@@ -501,6 +501,7 @@ std.os
 std.time
 std.process
 std.testing
+std.debug
 std.path
 std.math
 std.num
@@ -770,6 +771,19 @@ string，以及类型一致的 bool、char、整数和 `f64` primitive 值。
 testing.assert(condition: bool, message: string) -> void
 testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
+```
+
+### 6.16 `std.debug`
+
+`std.debug` 提供轻量调试 helper。print helper 写入 stderr。`debug.panic`
+复用语言内建 `panic` 的执行路径。`debug.backtrace` 在 v0.1 返回稳定占位
+字符串；这样代码可以先依赖 API，真实 stack capture 后续再接入。
+
+```rust
+debug.print(message: string) -> void
+debug.println(message: string) -> void
+debug.panic(message: string) -> void
+debug.backtrace() -> string
 ```
 
 ---
