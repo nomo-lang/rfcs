@@ -675,8 +675,10 @@ math.cos(value: f64) -> f64
 ### 6.13 `std.num`
 
 `std.num` 提供数值转换 helper。parse helper 返回 `Result<T, NumError>`，
-预期与 `?` 操作符组合使用。v0.1 中 `num.to_string` 保持模块限定调用，
-避免与 `char.to_string` 的裸导入产生名称冲突。
+预期与 `?` 操作符组合使用。checked 整数 helper 返回 `Option<T>`；
+wrapping 整数 helper 返回相同整数类型并使用 wraparound 语义。v0.1 中
+`num.to_string` 保持模块限定调用，避免与 `char.to_string` 的裸导入产生
+名称冲突。
 
 ```rust
 pub struct NumError {
@@ -687,6 +689,12 @@ num.parse_i64(value: string) -> Result<i64, NumError>
 num.parse_u64(value: string) -> Result<u64, NumError>
 num.parse_f64(value: string) -> Result<f64, NumError>
 num.to_string(value: i64 | i32 | u32 | u64 | f64) -> string
+num.checked_add(left: integer, right: same integer type) -> Option<same integer type>
+num.checked_sub(left: integer, right: same integer type) -> Option<same integer type>
+num.checked_mul(left: integer, right: same integer type) -> Option<same integer type>
+num.wrapping_add(left: integer, right: same integer type) -> same integer type
+num.wrapping_sub(left: integer, right: same integer type) -> same integer type
+num.wrapping_mul(left: integer, right: same integer type) -> same integer type
 ```
 
 ---

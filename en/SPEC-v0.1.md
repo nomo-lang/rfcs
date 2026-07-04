@@ -726,6 +726,8 @@ math.cos(value: f64) -> f64
 
 `std.num` provides numeric conversion helpers. Parse helpers return
 `Result<T, NumError>` and are intended to compose with the `?` operator.
+Checked integer helpers return `Option<T>`; wrapping integer helpers return the
+same integer type with wraparound semantics.
 `num.to_string` is module-qualified in v0.1 to avoid colliding with
 `char.to_string`.
 
@@ -738,6 +740,12 @@ num.parse_i64(value: string) -> Result<i64, NumError>
 num.parse_u64(value: string) -> Result<u64, NumError>
 num.parse_f64(value: string) -> Result<f64, NumError>
 num.to_string(value: i64 | i32 | u32 | u64 | f64) -> string
+num.checked_add(left: integer, right: same integer type) -> Option<same integer type>
+num.checked_sub(left: integer, right: same integer type) -> Option<same integer type>
+num.checked_mul(left: integer, right: same integer type) -> Option<same integer type>
+num.wrapping_add(left: integer, right: same integer type) -> same integer type
+num.wrapping_sub(left: integer, right: same integer type) -> same integer type
+num.wrapping_mul(left: integer, right: same integer type) -> same integer type
 ```
 
 ---
