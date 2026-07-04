@@ -447,12 +447,12 @@ v0.1 must validate:
 - `nomo doc [path] [--workspace] [--package <package>] [--std] [--open] [--json] [--output <dir>]`
   extracts module and item documentation from Rust-style doc comments (`//!`,
   `///`, `/*! */`, `/** */`) and combines it with parser AST signatures,
-  visibility, and source locations for packages/modules, functions, structs,
-  enums, methods, and constants. Struct fields and enum variants are emitted as
-  child documentation items and participate in the search index. By default it
-  writes `build/doc/index.html`, package/module HTML pages, and
-  `search-index.json`; `--json` emits the machine-readable documentation model
-  without writing files. `--workspace` documents workspace members, `--package`
+  visibility, and source locations for packages/modules, functions, extern
+  functions, structs, enums, methods, and constants. Struct fields and enum
+  variants are emitted as child documentation items and participate in the
+  search index. By default it writes `build/doc/index.html`, package/module HTML
+  pages, and `search-index.json`; `--json` emits the machine-readable
+  documentation model without writing files. `--workspace` documents workspace members, `--package`
   selects a package id or member name, and `--std` generates the current
   built-in standard-library module index.
 
