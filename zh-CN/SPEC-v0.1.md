@@ -796,13 +796,15 @@ hash.finish(state: HashState) -> u64
 
 ### 6.16 `std.crypto`
 
-`std.crypto` 提供确定性的加密摘要 helper。当前切片把 string 输入按 UTF-8
-字节计算 hash，并返回小写十六进制字符串。随机字节 API 等 byte-array 语义
-稳定后再进入后续切片。
+`std.crypto` 提供加密 helper。摘要 helper 把 string 输入按 UTF-8 字节计算
+hash，并返回小写十六进制字符串。`random_bytes` 返回由操作系统生成的随机
+字节，并在 v0.1 中用 `Array<u32>` 表示，每个元素都在 `0..255` 范围内；
+专用 byte array 类型留到后续版本。
 
 ```rust
 crypto.sha256(value: string) -> string
 crypto.sha512(value: string) -> string
+crypto.random_bytes(count: u64) -> Array<u32>
 ```
 
 ### 6.17 `std.json`

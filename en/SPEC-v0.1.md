@@ -853,14 +853,15 @@ hash.finish(state: HashState) -> u64
 
 ### 6.16 `std.crypto`
 
-`std.crypto` provides deterministic cryptographic digest helpers. In the
-current slice, string input is hashed as its UTF-8 bytes and the result is a
-lowercase hexadecimal string. Random bytes remain a later slice until
-byte-array APIs are settled.
+`std.crypto` provides cryptographic helpers. Digest helpers hash string input
+as UTF-8 bytes and return lowercase hexadecimal strings. `random_bytes`
+returns OS-generated random bytes as `u32` values in the inclusive range
+`0..255`; v0.1 uses `Array<u32>` until a dedicated byte array type exists.
 
 ```rust
 crypto.sha256(value: string) -> string
 crypto.sha512(value: string) -> string
+crypto.random_bytes(count: u64) -> Array<u32>
 ```
 
 ### 6.17 `std.json`
