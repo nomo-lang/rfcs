@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.path`, `std.math`, `std.num` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -551,6 +551,7 @@ std.time
 std.process
 std.testing
 std.debug
+std.log
 std.path
 std.math
 std.num
@@ -842,6 +843,21 @@ debug.print(message: string) -> void
 debug.println(message: string) -> void
 debug.panic(message: string) -> void
 debug.backtrace() -> string
+```
+
+### 6.17 `std.log`
+
+`std.log` provides lightweight leveled logging helpers. Log messages are
+written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
+enabled level; accepted values are `debug`, `info`, `warn`, `error`, and
+`off`. Unset or unknown values use the default `info` threshold.
+
+```rust
+log.debug(message: string) -> void
+log.info(message: string) -> void
+log.warn(message: string) -> void
+log.error(message: string) -> void
+log.enabled(level: string) -> bool
 ```
 
 ---
