@@ -379,9 +379,11 @@ v0.1 must validate:
   Project-level `check/build/run` and `nomoc check/build` do not enable this
   script entry mode.
 - `nomo fmt [path] [--check] [--json-errors]` is an AST-based formatter for
-  v0.1 source. With no path or a directory path it discovers the project
-  manifest and formats `src/**/*.nomo` in stable path order. With a direct
-  `.nomo` file path it formats only that file and does not require a manifest.
+  v0.1 source. With no path or a project directory path it discovers the project
+  manifest and formats `src/**/*.nomo` in stable path order. With a workspace
+  root it formats each member's `src/**/*.nomo`. With a loose source directory
+  that has no `nomo.toml`, it recursively formats contained `.nomo` files. With a
+  direct `.nomo` file path it formats only that file and does not require a manifest.
   `--check` reports `would format <path>` without writing and exits with
   failure if any target differs. The formatter emits canonical whitespace,
   indentation, and package/import/item spacing while preserving Rust-style line

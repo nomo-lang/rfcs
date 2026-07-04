@@ -462,8 +462,10 @@ v0.1 必须校验：
   top-level script statements 之前；显式 `main` 不能与 top-level script statements 混用。
   项目级 `check/build/run` 与 `nomoc check/build` 不启用该 script entry mode。
 - `nomo fmt [path] [--check] [--json-errors]` 是 v0.1 源码的 AST-based formatter。
-  无 path 或 path 为目录时，先发现项目 manifest，再按稳定路径顺序格式化
-  `src/**/*.nomo`。path 为直接 `.nomo` 文件时，只格式化该文件，不要求 manifest。
+  无 path 或 path 为 project 目录时，先发现项目 manifest，再按稳定路径顺序格式化
+  `src/**/*.nomo`。path 为 workspace root 时，格式化各 member 的 `src/**/*.nomo`。
+  path 为无 `nomo.toml` 的 loose source directory 时，递归格式化其中的 `.nomo` 文件。
+  path 为直接 `.nomo` 文件时，只格式化该文件，不要求 manifest。
   `--check` 只输出 `would format <path>`，不写文件；只要存在差异就以失败退出。
   formatter 输出规范空白、缩进以及 package/import/item 间距，同时保留 Rust 风格
   行注释（`//`、`///`、`//!`）和可嵌套块注释（`/* */`、`/** */`、`/*! */`），
