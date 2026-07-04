@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.path`, `std.math` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.path`, `std.math` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -541,6 +541,7 @@ std.result
 std.option
 std.array
 std.string
+std.char
 std.path
 std.math
 ```
@@ -644,7 +645,19 @@ string.to_lower(self) -> string
 string.to_upper(self) -> string
 ```
 
-### 6.8 `std.path`
+### 6.8 `std.char`
+
+`std.char` character-class helpers use ASCII character classes in v0.1.
+`char.to_string` encodes a Nomo `char` scalar as a UTF-8 string.
+
+```rust
+char.is_digit(value: char) -> bool
+char.is_alpha(value: char) -> bool
+char.is_whitespace(value: char) -> bool
+char.to_string(value: char) -> string
+```
+
+### 6.9 `std.path`
 
 `std.path` provides pure string path helpers. v0.1 uses POSIX-style `/`
 separators and does not query the host filesystem or resolve symlinks.
@@ -658,7 +671,7 @@ path.normalize(path: string) -> string
 path.is_absolute(path: string) -> bool
 ```
 
-### 6.9 `std.math`
+### 6.10 `std.math`
 
 `std.math` provides basic numeric helpers. `abs`, `min`, and `max` preserve
 the input numeric type and require matching numeric operands. The remaining
