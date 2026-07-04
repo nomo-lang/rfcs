@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.path`, `std.math` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.path`, `std.math`, `std.num` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -546,6 +546,7 @@ std.os
 std.time
 std.path
 std.math
+std.num
 ```
 
 ### 6.1 `std.io`
@@ -719,6 +720,24 @@ math.sqrt(value: f64) -> f64
 math.pow(base: f64, exponent: f64) -> f64
 math.sin(value: f64) -> f64
 math.cos(value: f64) -> f64
+```
+
+### 6.13 `std.num`
+
+`std.num` provides numeric conversion helpers. Parse helpers return
+`Result<T, NumError>` and are intended to compose with the `?` operator.
+`num.to_string` is module-qualified in v0.1 to avoid colliding with
+`char.to_string`.
+
+```rust
+pub struct NumError {
+    pub message: string
+}
+
+num.parse_i64(value: string) -> Result<i64, NumError>
+num.parse_u64(value: string) -> Result<u64, NumError>
+num.parse_f64(value: string) -> Result<f64, NumError>
+num.to_string(value: i64 | i32 | u32 | u64 | f64) -> string
 ```
 
 ---
