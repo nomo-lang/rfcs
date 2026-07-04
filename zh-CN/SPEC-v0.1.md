@@ -522,8 +522,9 @@ v0.1 必须校验：
 - `nomo doc [path] [--workspace] [--package <package>] [--std] [--open] [--json] [--output <dir>]`
   从 Rust 风格 doc comment（`//!`、`///`、`/*! */`、`/** */`）提取 module 与 item 文档，
   并结合 parser AST 输出 package/module、function、extern function、struct、enum、
-  method、const 的签名、可见性和 source 位置。struct field 与 enum variant
-  会作为子文档项输出，并进入 search index。默认写入 `build/doc/index.html`、
+  interface、method、const 的签名、可见性和 source 位置。struct field、
+  enum variant 与 interface method 会作为子文档项输出，并进入 search index。
+  默认写入 `build/doc/index.html`、
   package/module HTML 页面与 `search-index.json`；`--json` 只输出机器可读文档模型，
   不写文件。`--workspace` 生成 workspace members 文档，`--package`
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引。
