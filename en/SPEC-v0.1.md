@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.collections` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.collections` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 
 ### 1.2 Explicitly Out of Scope for v0.1
@@ -557,6 +557,7 @@ std.math
 std.num
 std.hash
 std.crypto
+std.json
 std.collections
 ```
 
@@ -850,7 +851,27 @@ crypto.sha256(value: string) -> string
 crypto.sha512(value: string) -> string
 ```
 
-### 6.17 `std.collections`
+### 6.17 `std.json`
+
+`std.json` provides a v0.1 JSON validation and serialization boundary.
+`JsonValue` stores validated raw JSON text. `json.parse` validates JSON syntax
+and returns `Result<JsonValue, JsonError>`; `json.stringify` returns the stored
+JSON text. Structured field/index access remains a later slice.
+
+```rust
+pub struct JsonValue {
+    pub raw: string
+}
+
+pub struct JsonError {
+    pub message: string
+}
+
+json.parse(value: string) -> Result<JsonValue, JsonError>
+json.stringify(value: JsonValue) -> string
+```
+
+### 6.18 `std.collections`
 
 `std.collections` provides v0.1 string-specialized collections. `StringMap`
 stores string keys and string values. `StringSet` stores unique strings. Update
@@ -881,7 +902,7 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.18 `std.testing`
+### 6.19 `std.testing`
 
 `std.testing` provides assertion helpers intended for `#[test]` functions. A
 failed assertion panics, which makes the current test fail under `nomo test`.
@@ -895,7 +916,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.19 `std.debug`
+### 6.20 `std.debug`
 
 `std.debug` provides lightweight debugging helpers. Print helpers write to
 stderr. `debug.panic` uses the same panic path as the language builtin.
@@ -909,7 +930,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.20 `std.log`
+### 6.21 `std.log`
 
 `std.log` provides lightweight leveled logging helpers. Log messages are
 written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
