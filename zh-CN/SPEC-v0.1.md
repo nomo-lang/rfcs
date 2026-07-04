@@ -833,12 +833,15 @@ json.stringify(value: JsonValue) -> string
 
 ### 6.18 `std.net`
 
-`std.net` 在当前切片提供阻塞 TCP stream helper。`net.connect` 连接 host
+`std.net` 在当前切片提供阻塞 TCP 与 UDP helper。`net.connect` 连接 host
 和 port。`net.listen` 绑定阻塞 `TcpListener`；`TcpListener.accept` 返回下一条
 `TcpStream`，`TcpListener.close` 关闭 listener socket。`TcpStream.write_string`
 向 peer 写入字符串，`TcpStream.read_to_string` 读取直到 peer 关闭写端，
-`TcpStream.close` 关闭 stream socket。UDP socket、listener 地址查询、backlog
-配置与 nonblocking handle 留给后续 `std.net` 切片。
+`TcpStream.close` 关闭 stream socket。`net.udp_bind` 绑定阻塞 `UdpSocket`；
+`UdpSocket.recv_from_string` 接收 datagram 并返回包含 `data`、`host`、`port`
+的 `UdpDatagram`，`UdpSocket.send_to_string` 发送 datagram，`UdpSocket.close`
+关闭 socket。listener 地址查询、backlog 配置与 nonblocking handle 留给后续
+`std.net` 切片。
 
 ```rust
 pub struct NetError {
@@ -849,8 +852,17 @@ pub struct TcpStream
 
 pub struct TcpListener
 
+pub struct UdpDatagram {
+    pub data: string
+    pub host: string
+    pub port: i64
+}
+
+pub struct UdpSocket
+
 net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
 net.listen(host: string, port: i64) -> Result<TcpListener, NetError>
+net.udp_bind(host: string, port: i64) -> Result<UdpSocket, NetError>
 
 impl TcpListener {
     fn accept(self) -> Result<TcpStream, NetError>
@@ -860,6 +872,12 @@ impl TcpListener {
 impl TcpStream {
     fn write_string(self, content: string) -> Result<void, NetError>
     fn read_to_string(self) -> Result<string, NetError>
+    fn close(self) -> void
+}
+
+impl UdpSocket {
+    fn recv_from_string(self, max_bytes: i64) -> Result<UdpDatagram, NetError>
+    fn send_to_string(self, content: string, host: string, port: i64) -> Result<void, NetError>
     fn close(self) -> void
 }
 ```

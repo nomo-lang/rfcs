@@ -891,14 +891,17 @@ json.stringify(value: JsonValue) -> string
 
 ### 6.18 `std.net`
 
-`std.net` provides blocking TCP stream helpers in the current slice.
+`std.net` provides blocking TCP and UDP helpers in the current slice.
 `net.connect` opens a TCP connection to a host and port. `net.listen` binds a
 blocking `TcpListener`; `TcpListener.accept` returns the next `TcpStream`, and
 `TcpListener.close` closes the listener socket. `TcpStream.write_string` writes
 a string to the peer, `TcpStream.read_to_string` reads until the peer closes its
-write side, and `TcpStream.close` closes the stream socket. UDP sockets,
-listener address inspection, backlog configuration, and nonblocking handles
-remain later `std.net` slices.
+write side, and `TcpStream.close` closes the stream socket. `net.udp_bind` binds
+a blocking `UdpSocket`; `UdpSocket.recv_from_string` receives a datagram as a
+`UdpDatagram` with `data`, `host`, and `port`, `UdpSocket.send_to_string` sends
+a datagram, and `UdpSocket.close` closes the socket. Listener address
+inspection, backlog configuration, and nonblocking handles remain later
+`std.net` slices.
 
 ```rust
 pub struct NetError {
@@ -909,8 +912,17 @@ pub struct TcpStream
 
 pub struct TcpListener
 
+pub struct UdpDatagram {
+    pub data: string
+    pub host: string
+    pub port: i64
+}
+
+pub struct UdpSocket
+
 net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
 net.listen(host: string, port: i64) -> Result<TcpListener, NetError>
+net.udp_bind(host: string, port: i64) -> Result<UdpSocket, NetError>
 
 impl TcpListener {
     fn accept(self) -> Result<TcpStream, NetError>
@@ -920,6 +932,12 @@ impl TcpListener {
 impl TcpStream {
     fn write_string(self, content: string) -> Result<void, NetError>
     fn read_to_string(self) -> Result<string, NetError>
+    fn close(self) -> void
+}
+
+impl UdpSocket {
+    fn recv_from_string(self, max_bytes: i64) -> Result<UdpDatagram, NetError>
+    fn send_to_string(self, content: string, host: string, port: i64) -> Result<void, NetError>
     fn close(self) -> void
 }
 ```
