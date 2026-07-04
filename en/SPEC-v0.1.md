@@ -889,7 +889,31 @@ json.parse(value: string) -> Result<JsonValue, JsonError>
 json.stringify(value: JsonValue) -> string
 ```
 
-### 6.18 `std.regex`
+### 6.18 `std.net`
+
+`std.net` provides blocking TCP client stream helpers in the current slice.
+`net.connect` opens a TCP connection to a host and port. `TcpStream.write_string`
+writes a string to the peer, `TcpStream.read_to_string` reads until the peer
+closes the connection, and `TcpStream.close` closes the socket. TCP listeners,
+UDP sockets, and nonblocking handles remain later `std.net` slices.
+
+```rust
+pub struct NetError {
+    pub message: string
+}
+
+pub struct TcpStream
+
+net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
+
+impl TcpStream {
+    fn write_string(self, content: string) -> Result<void, NetError>
+    fn read_to_string(self) -> Result<string, NetError>
+    fn close(self) -> void
+}
+```
+
+### 6.19 `std.regex`
 
 `std.regex` provides v0.1 regular expression helpers. `Regex` stores the
 source pattern after compile-time validation by `regex.compile`. Compile
@@ -911,7 +935,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.19 `std.collections`
+### 6.20 `std.collections`
 
 `std.collections` provides v0.1 string-specialized collections. `StringMap`
 stores string keys and string values. `StringSet` stores unique strings. Update

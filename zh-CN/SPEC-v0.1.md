@@ -831,7 +831,31 @@ json.parse(value: string) -> Result<JsonValue, JsonError>
 json.stringify(value: JsonValue) -> string
 ```
 
-### 6.18 `std.regex`
+### 6.18 `std.net`
+
+`std.net` 在当前切片提供阻塞 TCP client stream helper。`net.connect`
+连接 host 和 port。`TcpStream.write_string` 向 peer 写入字符串，
+`TcpStream.read_to_string` 读取直到 peer 关闭连接，`TcpStream.close` 关闭
+socket。TCP listener、UDP socket 与 nonblocking handle 留给后续
+`std.net` 切片。
+
+```rust
+pub struct NetError {
+    pub message: string
+}
+
+pub struct TcpStream
+
+net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
+
+impl TcpStream {
+    fn write_string(self, content: string) -> Result<void, NetError>
+    fn read_to_string(self) -> Result<string, NetError>
+    fn close(self) -> void
+}
+```
+
+### 6.19 `std.regex`
 
 `std.regex` 提供 v0.1 正则表达式 helper。`Regex` 保存经过
 `regex.compile` 校验后的源 pattern。编译失败通过
@@ -853,7 +877,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.19 `std.collections`
+### 6.20 `std.collections`
 
 `std.collections` 提供 v0.1 字符串专用集合。`StringMap` 存储 string key
 和 string value；`StringSet` 存储去重 string。更新 helper 返回更新后的集合
