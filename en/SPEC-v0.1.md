@@ -134,8 +134,8 @@ masked--
   variables and mutable struct fields. They type-check as `target += 1` and
   `target -= 1`, are not expressions, and do not produce values.
 - Runtime divide-by-zero, signed `i32`/`i64` arithmetic overflow, and invalid
-  shift amounts panic. Fully specified signed right-shift behavior remains
-  required full-scope safety work.
+  shift amounts panic. Signed right shift is defined as arithmetic shift:
+  negative values shift in `1` bits, and non-negative values shift in `0` bits.
 
 ### 2.6 Functions
 
