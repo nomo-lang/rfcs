@@ -891,11 +891,14 @@ json.stringify(value: JsonValue) -> string
 
 ### 6.18 `std.net`
 
-`std.net` provides blocking TCP client stream helpers in the current slice.
-`net.connect` opens a TCP connection to a host and port. `TcpStream.write_string`
-writes a string to the peer, `TcpStream.read_to_string` reads until the peer
-closes the connection, and `TcpStream.close` closes the socket. TCP listeners,
-UDP sockets, and nonblocking handles remain later `std.net` slices.
+`std.net` provides blocking TCP stream helpers in the current slice.
+`net.connect` opens a TCP connection to a host and port. `net.listen` binds a
+blocking `TcpListener`; `TcpListener.accept` returns the next `TcpStream`, and
+`TcpListener.close` closes the listener socket. `TcpStream.write_string` writes
+a string to the peer, `TcpStream.read_to_string` reads until the peer closes its
+write side, and `TcpStream.close` closes the stream socket. UDP sockets,
+listener address inspection, backlog configuration, and nonblocking handles
+remain later `std.net` slices.
 
 ```rust
 pub struct NetError {
@@ -904,7 +907,15 @@ pub struct NetError {
 
 pub struct TcpStream
 
+pub struct TcpListener
+
 net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
+net.listen(host: string, port: i64) -> Result<TcpListener, NetError>
+
+impl TcpListener {
+    fn accept(self) -> Result<TcpStream, NetError>
+    fn close(self) -> void
+}
 
 impl TcpStream {
     fn write_string(self, content: string) -> Result<void, NetError>

@@ -833,11 +833,12 @@ json.stringify(value: JsonValue) -> string
 
 ### 6.18 `std.net`
 
-`std.net` 在当前切片提供阻塞 TCP client stream helper。`net.connect`
-连接 host 和 port。`TcpStream.write_string` 向 peer 写入字符串，
-`TcpStream.read_to_string` 读取直到 peer 关闭连接，`TcpStream.close` 关闭
-socket。TCP listener、UDP socket 与 nonblocking handle 留给后续
-`std.net` 切片。
+`std.net` 在当前切片提供阻塞 TCP stream helper。`net.connect` 连接 host
+和 port。`net.listen` 绑定阻塞 `TcpListener`；`TcpListener.accept` 返回下一条
+`TcpStream`，`TcpListener.close` 关闭 listener socket。`TcpStream.write_string`
+向 peer 写入字符串，`TcpStream.read_to_string` 读取直到 peer 关闭写端，
+`TcpStream.close` 关闭 stream socket。UDP socket、listener 地址查询、backlog
+配置与 nonblocking handle 留给后续 `std.net` 切片。
 
 ```rust
 pub struct NetError {
@@ -846,7 +847,15 @@ pub struct NetError {
 
 pub struct TcpStream
 
+pub struct TcpListener
+
 net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
+net.listen(host: string, port: i64) -> Result<TcpListener, NetError>
+
+impl TcpListener {
+    fn accept(self) -> Result<TcpStream, NetError>
+    fn close(self) -> void
+}
 
 impl TcpStream {
     fn write_string(self, content: string) -> Result<void, NetError>
