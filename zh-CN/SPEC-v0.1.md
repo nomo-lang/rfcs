@@ -444,7 +444,8 @@ v0.1 必须校验：
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove` 会编辑
   `nomo.toml` 中的 registry dependency entry；registry archive fetching 属于
-  独立 registry 切片。
+  独立 registry 切片。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
+  package archive，但不会上传。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
   字符串。workspace lockfile 额外使用 `[[root]]` table，把每个 member package id
@@ -480,6 +481,10 @@ v0.1 必须校验：
   也不重写 `nomo.lock`；需要刷新 lockfile 时由调用者再执行 `nomo deps resolve`。
 - `nomo remove <alias> [path]` 从选中的 package manifest 删除 dependency entry。
   它不重写 `nomo.lock`。
+- `nomo publish [path] --dry-run [--output <dir>] [--json-errors]` 使用项目检查
+  校验选中的 package，将 `nomo.toml` 与 `src/` 打成确定性的 `.nomo-package`
+  archive，并输出 archive path、`sha256:` checksum 与 byte size。不带 `--dry-run`
+  时，v0.1 会拒绝该命令，因为 registry upload 还未实现。
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` 确保 lockfile
   存在后，把 locked `path` 与 `git` dependency source 复制到 vendor 目录，并写入
   `nomo-vendor.toml`。`--sync` 会先删除 vendor 目录再复制。registry leaf 在 registry
@@ -537,7 +542,7 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-registry archive fetching、publish protocol 调用和复杂版本求解仍作为独立
+registry archive fetching、publish protocol 上传调用和复杂版本求解仍作为独立
 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---

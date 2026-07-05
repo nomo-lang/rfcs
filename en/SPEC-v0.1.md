@@ -339,7 +339,9 @@ v0.1 must validate:
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata. `nomo add` and
   `nomo remove` edit these registry dependency entries in `nomo.toml`; registry
-  archive fetching is a separate registry slice.
+  archive fetching is a separate registry slice. `nomo publish --dry-run`
+  validates a local package and prepares a deterministic package archive, but
+  does not upload it.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -386,6 +388,11 @@ v0.1 must validate:
   `nomo deps resolve` when they want a lockfile refresh.
 - `nomo remove <alias> [path]` removes a dependency entry from the selected
   package manifest. It does not rewrite `nomo.lock`.
+- `nomo publish [path] --dry-run [--output <dir>] [--json-errors]` validates the
+  selected package with project checks, packages `nomo.toml` and `src/` into a
+  deterministic `.nomo-package` archive, and reports the archive path,
+  `sha256:` checksum, and byte size. Without `--dry-run`, v0.1 rejects the
+  command because registry upload is not implemented yet.
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` ensures a
   lockfile exists, copies locked `path` and `git` dependency sources into the
   vendor directory, and writes `nomo-vendor.toml`. `--sync` removes the vendor
@@ -465,9 +472,9 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-Registry archive fetching, publishing protocol calls, and complex version
-solving remain separate registry slices. v0.1 may reject multiple versions of
-the same canonical package ID directly.
+Registry archive fetching, publishing protocol upload calls, and complex
+version solving remain separate registry slices. v0.1 may reject multiple
+versions of the same canonical package ID directly.
 
 ---
 
