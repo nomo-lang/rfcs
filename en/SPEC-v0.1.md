@@ -346,7 +346,10 @@ v0.1 must validate:
   provide imported public API. `nomo publish --dry-run` validates a local package
   and prepares a deterministic package archive; `nomo publish --registry <url>`
   uploads that archive with `PUT /api/v1/packages/<owner>/<package>/<version>`
-  to an `http://` registry endpoint.
+  to an `http://` registry endpoint. `nomo search <query> --registry <url>`
+  queries `GET /api/v1/packages?query=<encoded>` on an `http://` registry
+  endpoint and expects a JSON array of objects with `package`, optional
+  `version`, and optional `description`.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -393,6 +396,10 @@ v0.1 must validate:
   `nomo deps resolve` when they want a lockfile refresh.
 - `nomo remove <alias> [path]` removes a dependency entry from the selected
   package manifest. It does not rewrite `nomo.lock`.
+- `nomo search <query> --registry <url>` queries an `http://` registry package
+  index using `GET /api/v1/packages?query=<encoded>` and prints one result per
+  line as `owner/package`, `owner/package version`, or
+  `owner/package version - description`, depending on the fields returned.
 - `nomo publish [path] (--dry-run | --registry <url>) [--output <dir>] [--json-errors]`
   validates the selected package with project checks, packages `nomo.toml` and
   `src/` into a deterministic `.nomo-package` archive, and reports the archive
@@ -479,7 +486,7 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTPS/TLS registry archive fetching or publishing, auth, search, and complex
+HTTPS/TLS registry archive fetching, publishing, or search; auth; and complex
 version solving remain separate registry slices. v0.1 may reject multiple
 versions of the same canonical package ID directly.
 

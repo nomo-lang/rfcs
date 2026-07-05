@@ -450,7 +450,10 @@ v0.1 必须校验：
   imported public API。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
   package archive；`nomo publish --registry <url>` 会用
   `PUT /api/v1/packages/<owner>/<package>/<version>` 把 archive 上传到 `http://`
-  registry endpoint。
+  registry endpoint。`nomo search <query> --registry <url>` 会向 `http://`
+  registry endpoint 查询 `GET /api/v1/packages?query=<encoded>`，并期望得到由
+  object 组成的 JSON array；object 包含 `package`，以及可选的 `version` 和
+  `description`。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
   字符串。workspace lockfile 额外使用 `[[root]]` table，把每个 member package id
@@ -486,6 +489,10 @@ v0.1 必须校验：
   也不重写 `nomo.lock`；需要刷新 lockfile 时由调用者再执行 `nomo deps resolve`。
 - `nomo remove <alias> [path]` 从选中的 package manifest 删除 dependency entry。
   它不重写 `nomo.lock`。
+- `nomo search <query> --registry <url>` 使用
+  `GET /api/v1/packages?query=<encoded>` 查询 `http://` registry package index，
+  并按 registry 返回字段逐行输出 `owner/package`、`owner/package version` 或
+  `owner/package version - description`。
 - `nomo publish [path] (--dry-run | --registry <url>) [--output <dir>] [--json-errors]`
   使用项目检查校验选中的 package，将 `nomo.toml` 与 `src/` 打成确定性的
   `.nomo-package` archive，并输出 archive path、`sha256:` checksum 与 byte size。
@@ -550,7 +557,7 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-HTTPS/TLS registry archive fetching 或 publishing、auth、search 和复杂版本求解仍作为
+HTTPS/TLS registry archive fetching、publishing 或 search、auth 和复杂版本求解仍作为
 独立 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---
