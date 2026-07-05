@@ -356,7 +356,10 @@ v0.1 must validate:
   --token <token>` stores a bearer token in `$NOMO_HOME/credentials.toml` or,
   when `NOMO_HOME` is unset, `$HOME/.nomo/credentials.toml`; subsequent HTTP
   registry download, publish, and yank requests to the same endpoint include
-  `Authorization: Bearer <token>`.
+  `Authorization: Bearer <token>`. `nomo owner add <owner/package> <user>
+  --registry <url>` adds a package owner with
+  `PUT /api/v1/packages/<owner>/<package>/owners/<user>` and uses the same
+  stored bearer token when present.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -410,6 +413,10 @@ v0.1 must validate:
 - `nomo login --registry <url> --token <token>` stores a local bearer token for
   an `http://` registry endpoint. The token is used by subsequent HTTP registry
   download, publish, and yank requests for that endpoint.
+- `nomo owner add <owner/package> <user> --registry <url>` adds an owner to a
+  package using `PUT /api/v1/packages/<owner>/<package>/owners/<user>`. When a
+  token has been stored with `nomo login`, the request includes
+  `Authorization: Bearer <token>`.
 - `nomo yank <owner/package> <version> --registry <url>` marks an
   already-published registry version as yanked using
   `POST /api/v1/packages/<owner>/<package>/<version>/yank`. Yanking does not
@@ -501,7 +508,7 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTPS/TLS registry archive fetching, interactive auth flows, owner management,
+HTTPS/TLS registry archive fetching, interactive auth flows, owner removal,
 and complex version solving remain separate registry slices. v0.1 may reject
 multiple versions of the same canonical package ID directly.
 
