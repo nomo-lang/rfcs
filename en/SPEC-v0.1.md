@@ -339,8 +339,8 @@ v0.1 must validate:
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata. `nomo add` and
   `nomo remove` edit these registry dependency entries in `nomo.toml`; registry
-  dependencies without an explicit endpoint remain leaf entries. A `file://`
-  registry endpoint is resolved using
+  dependencies without an explicit endpoint remain leaf entries. A `file://` or
+  `http://` registry endpoint is resolved using
   `/api/v1/packages/<owner>/<package>/<version>/download`; the downloaded
   `.nomo-package` archive is unpacked into `.nomo/cache/registry/` and can
   provide imported public API. `nomo publish --dry-run` validates a local package
@@ -475,9 +475,9 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTP registry archive fetching, publishing protocol upload calls, and complex
-version solving remain separate registry slices. v0.1 may reject multiple
-versions of the same canonical package ID directly.
+HTTPS/TLS registry archive fetching, publishing protocol upload calls, auth,
+search, and complex version solving remain separate registry slices. v0.1 may
+reject multiple versions of the same canonical package ID directly.
 
 ---
 

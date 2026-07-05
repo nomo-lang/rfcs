@@ -444,7 +444,7 @@ v0.1 必须校验：
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove` 会编辑
   `nomo.toml` 中的 registry dependency entry；没有显式 endpoint 的 registry dependency
-  仍作为 leaf entry。`file://` registry endpoint 使用
+  仍作为 leaf entry。`file://` 或 `http://` registry endpoint 使用
   `/api/v1/packages/<owner>/<package>/<version>/download` 路径解析；下载到的
   `.nomo-package` archive 会解包到 `.nomo/cache/registry/`，并可向项目构建提供
   imported public API。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
@@ -546,8 +546,8 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-HTTP registry archive fetching、publish protocol 上传调用和复杂版本求解仍作为独立
-registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
+HTTPS/TLS registry archive fetching、publish protocol 上传调用、auth、search 和复杂版本求解
+仍作为独立 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---
 
