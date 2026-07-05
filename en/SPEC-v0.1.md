@@ -337,8 +337,9 @@ v0.1 must validate:
   `std = { package = "nomo-lang/std", version = "0.1.0" }` may be accepted as
   compatibility input, but the declaration is ignored as a normal dependency.
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
-  optional `registry` endpoint may be stored as source metadata, but public
-  registry fetching is out of scope.
+  optional `registry` endpoint may be stored as source metadata. `nomo add` and
+  `nomo remove` edit these registry dependency entries in `nomo.toml`; registry
+  archive fetching is a separate registry slice.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -379,6 +380,12 @@ v0.1 must validate:
   editing `nomo.toml`: registry dependencies use the value as `version`, git
   dependencies use it as `rev` with branch/tag selectors cleared, and path
   dependencies are rejected.
+- `nomo add <alias>@<owner>/<package>:<version> [path] [--registry <url>]`
+  adds a registry dependency entry to the selected package manifest. It does not
+  fetch the package archive or rewrite `nomo.lock`; callers run
+  `nomo deps resolve` when they want a lockfile refresh.
+- `nomo remove <alias> [path]` removes a dependency entry from the selected
+  package manifest. It does not rewrite `nomo.lock`.
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` ensures a
   lockfile exists, copies locked `path` and `git` dependency sources into the
   vendor directory, and writes `nomo-vendor.toml`. `--sync` removes the vendor
@@ -458,8 +465,9 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-Public registry fetching and complex version solving are out of scope for v0.1;
-v0.1 may reject multiple versions of the same canonical package ID directly.
+Registry archive fetching, publishing protocol calls, and complex version
+solving remain separate registry slices. v0.1 may reject multiple versions of
+the same canonical package ID directly.
 
 ---
 

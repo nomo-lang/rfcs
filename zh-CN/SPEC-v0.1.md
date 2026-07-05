@@ -442,7 +442,9 @@ v0.1 必须校验：
   `std = { package = "nomo-lang/std", version = "0.1.0" }` 的旧 manifest
   可以作为兼容输入接受，但该声明会被忽略，不进入普通依赖图。
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
-  endpoint 可作为 source 元数据写入，但公共 registry 拉取不属于 v0.1。
+  endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove` 会编辑
+  `nomo.toml` 中的 registry dependency entry；registry archive fetching 属于
+  独立 registry 切片。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
   字符串。workspace lockfile 额外使用 `[[root]]` table，把每个 member package id
@@ -473,6 +475,11 @@ v0.1 必须校验：
   要求显式 target，并且只改变本次生成 lockfile 时使用的 source，不写回 `nomo.toml`：
   registry dependency 将该值作为 `version`，git dependency 将该值作为 `rev` 并清除
   branch/tag selector，path dependency 会被拒绝。
+- `nomo add <alias>@<owner>/<package>:<version> [path] [--registry <url>]`
+  向选中的 package manifest 添加 registry dependency entry。它不拉取 package archive，
+  也不重写 `nomo.lock`；需要刷新 lockfile 时由调用者再执行 `nomo deps resolve`。
+- `nomo remove <alias> [path]` 从选中的 package manifest 删除 dependency entry。
+  它不重写 `nomo.lock`。
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` 确保 lockfile
   存在后，把 locked `path` 与 `git` dependency source 复制到 vendor 目录，并写入
   `nomo-vendor.toml`。`--sync` 会先删除 vendor 目录再复制。registry leaf 在 registry
@@ -530,8 +537,8 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-公共 registry 拉取和复杂版本求解不属于 v0.1；v0.1 遇到同一 canonical package id
-的多版本冲突可以直接报错。
+registry archive fetching、publish protocol 调用和复杂版本求解仍作为独立
+registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---
 
