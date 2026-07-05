@@ -344,7 +344,9 @@ v0.1 must validate:
   `/api/v1/packages/<owner>/<package>/<version>/download`; the downloaded
   `.nomo-package` archive is unpacked into `.nomo/cache/registry/` and can
   provide imported public API. `nomo publish --dry-run` validates a local package
-  and prepares a deterministic package archive, but does not upload it.
+  and prepares a deterministic package archive; `nomo publish --registry <url>`
+  uploads that archive with `PUT /api/v1/packages/<owner>/<package>/<version>`
+  to an `http://` registry endpoint.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -391,11 +393,13 @@ v0.1 must validate:
   `nomo deps resolve` when they want a lockfile refresh.
 - `nomo remove <alias> [path]` removes a dependency entry from the selected
   package manifest. It does not rewrite `nomo.lock`.
-- `nomo publish [path] --dry-run [--output <dir>] [--json-errors]` validates the
-  selected package with project checks, packages `nomo.toml` and `src/` into a
-  deterministic `.nomo-package` archive, and reports the archive path,
-  `sha256:` checksum, and byte size. Without `--dry-run`, v0.1 rejects the
-  command because registry upload is not implemented yet.
+- `nomo publish [path] (--dry-run | --registry <url>) [--output <dir>] [--json-errors]`
+  validates the selected package with project checks, packages `nomo.toml` and
+  `src/` into a deterministic `.nomo-package` archive, and reports the archive
+  path, `sha256:` checksum, and byte size. `--dry-run` stops after preparing the
+  archive; `--registry <url>` uploads it with
+  `PUT /api/v1/packages/<owner>/<package>/<version>` to an `http://` registry
+  endpoint. v0.1 refuses a publish command that specifies neither mode.
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` ensures a
   lockfile exists, copies locked `path`, `git`, and cached registry dependency
   sources into the vendor directory, and writes `nomo-vendor.toml`. `--sync`
@@ -475,9 +479,9 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTPS/TLS registry archive fetching, publishing protocol upload calls, auth,
-search, and complex version solving remain separate registry slices. v0.1 may
-reject multiple versions of the same canonical package ID directly.
+HTTPS/TLS registry archive fetching or publishing, auth, search, and complex
+version solving remain separate registry slices. v0.1 may reject multiple
+versions of the same canonical package ID directly.
 
 ---
 
