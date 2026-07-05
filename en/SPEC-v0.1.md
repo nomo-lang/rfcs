@@ -352,7 +352,11 @@ v0.1 must validate:
   `version`, and optional `description`. `nomo yank <owner/package> <version>
   --registry <url>` marks an already-published version as yanked with
   `POST /api/v1/packages/<owner>/<package>/<version>/yank`; yanked versions
-  remain buildable from existing lockfiles.
+  remain buildable from existing lockfiles. `nomo login --registry <url>
+  --token <token>` stores a bearer token in `$NOMO_HOME/credentials.toml` or,
+  when `NOMO_HOME` is unset, `$HOME/.nomo/credentials.toml`; subsequent HTTP
+  registry download, publish, and yank requests to the same endpoint include
+  `Authorization: Bearer <token>`.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -403,6 +407,9 @@ v0.1 must validate:
   index using `GET /api/v1/packages?query=<encoded>` and prints one result per
   line as `owner/package`, `owner/package version`, or
   `owner/package version - description`, depending on the fields returned.
+- `nomo login --registry <url> --token <token>` stores a local bearer token for
+  an `http://` registry endpoint. The token is used by subsequent HTTP registry
+  download, publish, and yank requests for that endpoint.
 - `nomo yank <owner/package> <version> --registry <url>` marks an
   already-published registry version as yanked using
   `POST /api/v1/packages/<owner>/<package>/<version>/yank`. Yanking does not
@@ -494,9 +501,9 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTPS/TLS registry archive fetching, publishing, or search; auth; and complex
-version solving remain separate registry slices. v0.1 may reject multiple
-versions of the same canonical package ID directly.
+HTTPS/TLS registry archive fetching, interactive auth flows, owner management,
+and complex version solving remain separate registry slices. v0.1 may reject
+multiple versions of the same canonical package ID directly.
 
 ---
 

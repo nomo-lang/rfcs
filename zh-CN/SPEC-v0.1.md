@@ -455,7 +455,11 @@ v0.1 必须校验：
   object 组成的 JSON array；object 包含 `package`，以及可选的 `version` 和
   `description`。`nomo yank <owner/package> <version> --registry <url>` 会用
   `POST /api/v1/packages/<owner>/<package>/<version>/yank` 将已发布版本标记为
-  yanked；yanked version 仍可从既有 lockfile 构建。
+  yanked；yanked version 仍可从既有 lockfile 构建。`nomo login --registry
+  <url> --token <token>` 会把 bearer token 写入
+  `$NOMO_HOME/credentials.toml`；未设置 `NOMO_HOME` 时写入
+  `$HOME/.nomo/credentials.toml`。后续访问同一 endpoint 的 HTTP registry
+  download、publish 与 yank 请求会附带 `Authorization: Bearer <token>`。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
   字符串。workspace lockfile 额外使用 `[[root]]` table，把每个 member package id
@@ -495,6 +499,9 @@ v0.1 必须校验：
   `GET /api/v1/packages?query=<encoded>` 查询 `http://` registry package index，
   并按 registry 返回字段逐行输出 `owner/package`、`owner/package version` 或
   `owner/package version - description`。
+- `nomo login --registry <url> --token <token>` 为 `http://` registry endpoint
+  写入本地 bearer token。后续访问该 endpoint 的 HTTP registry download、
+  publish 与 yank 请求会使用此 token。
 - `nomo yank <owner/package> <version> --registry <url>` 使用
   `POST /api/v1/packages/<owner>/<package>/<version>/yank` 将已发布 registry
   version 标记为 yanked。Yank 不删除 package archive，lockfile 仍可继续构建该
@@ -563,8 +570,8 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-HTTPS/TLS registry archive fetching、publishing 或 search、auth 和复杂版本求解仍作为
-独立 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
+HTTPS/TLS registry archive fetching、交互式 auth flow、owner management 和复杂版本求解
+仍作为独立 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---
 
