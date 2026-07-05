@@ -443,8 +443,11 @@ v0.1 必须校验：
   可以作为兼容输入接受，但该声明会被忽略，不进入普通依赖图。
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove` 会编辑
-  `nomo.toml` 中的 registry dependency entry；registry archive fetching 属于
-  独立 registry 切片。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
+  `nomo.toml` 中的 registry dependency entry；没有显式 endpoint 的 registry dependency
+  仍作为 leaf entry。`file://` registry endpoint 使用
+  `/api/v1/packages/<owner>/<package>/<version>/download` 路径解析；下载到的
+  `.nomo-package` archive 会解包到 `.nomo/cache/registry/`，并可向项目构建提供
+  imported public API。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
   package archive，但不会上传。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
@@ -486,12 +489,13 @@ v0.1 必须校验：
   archive，并输出 archive path、`sha256:` checksum 与 byte size。不带 `--dry-run`
   时，v0.1 会拒绝该命令，因为 registry upload 还未实现。
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` 确保 lockfile
-  存在后，把 locked `path` 与 `git` dependency source 复制到 vendor 目录，并写入
-  `nomo-vendor.toml`。`--sync` 会先删除 vendor 目录再复制。registry leaf 在 registry
-  archive fetching 实现前只记录为 skipped。locked/offline 的项目模块加载在原 locked
-  path source 或 git cache checkout 缺失时，会回退到默认 `vendor/` 目录。
-- 已解析的 `path` 与 `git` package 需要在 lockfile 中写入 `sha256:` checksum；
-  checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。registry leaf 在 v0.1 不拉取归档，因此不写 checksum。
+  存在后，把 locked `path`、`git` 与已缓存 registry dependency source 复制到 vendor
+  目录，并写入 `nomo-vendor.toml`。`--sync` 会先删除 vendor 目录再复制。没有 cached
+  archive 的 registry leaf 会记录为 skipped。locked/offline 的项目模块加载在原 locked
+  path source、git cache checkout 或 registry cache entry 缺失时，会回退到默认 `vendor/` 目录。
+- 已解析的 `path`、`git` 与已 fetch 的 registry package 需要在 lockfile 中写入
+  `sha256:` checksum；checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。没有 fetch 的
+  registry leaf 不写 checksum。
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked
   `path` source 与匹配的 git cache checkout 校验 checksum；没有 lockfile 时再解析当前
   manifest source。缺失的 `path` source 与 git cache entry 可作为离线锁定条目继续展示。
@@ -542,7 +546,7 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-registry archive fetching、publish protocol 上传调用和复杂版本求解仍作为独立
+HTTP registry archive fetching、publish protocol 上传调用和复杂版本求解仍作为独立
 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---

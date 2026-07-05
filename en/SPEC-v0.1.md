@@ -339,9 +339,12 @@ v0.1 must validate:
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata. `nomo add` and
   `nomo remove` edit these registry dependency entries in `nomo.toml`; registry
-  archive fetching is a separate registry slice. `nomo publish --dry-run`
-  validates a local package and prepares a deterministic package archive, but
-  does not upload it.
+  dependencies without an explicit endpoint remain leaf entries. A `file://`
+  registry endpoint is resolved using
+  `/api/v1/packages/<owner>/<package>/<version>/download`; the downloaded
+  `.nomo-package` archive is unpacked into `.nomo/cache/registry/` and can
+  provide imported public API. `nomo publish --dry-run` validates a local package
+  and prepares a deterministic package archive, but does not upload it.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -394,15 +397,15 @@ v0.1 must validate:
   `sha256:` checksum, and byte size. Without `--dry-run`, v0.1 rejects the
   command because registry upload is not implemented yet.
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` ensures a
-  lockfile exists, copies locked `path` and `git` dependency sources into the
-  vendor directory, and writes `nomo-vendor.toml`. `--sync` removes the vendor
-  directory before copying. Registry leaves are recorded as skipped until
-  registry archive fetching is implemented. Locked/offline project module
-  loading falls back to the default `vendor/` directory when the original locked
-  path source or git cache checkout is missing.
-- Resolved `path` and `git` packages are locked with a `sha256:` checksum over
-  the package `nomo.toml` and `src/` contents. Registry leaves do not carry a
-  checksum in v0.1 because registry archive fetching is out of scope.
+  lockfile exists, copies locked `path`, `git`, and cached registry dependency
+  sources into the vendor directory, and writes `nomo-vendor.toml`. `--sync`
+  removes the vendor directory before copying. Registry leaves without a cached
+  archive are recorded as skipped. Locked/offline project module loading falls
+  back to the default `vendor/` directory when the original locked path source,
+  git cache checkout, or registry cache entry is missing.
+- Resolved `path`, `git`, and fetched registry packages are locked with a
+  `sha256:` checksum over the package `nomo.toml` and `src/` contents. Registry
+  leaves that are not fetched do not carry a checksum.
 - `nomo deps tree` reads the existing `nomo.lock` when present, verifies
   reachable locked `path` sources and matching git cache checkouts against their
   checksum, and falls back to resolving the current manifest when no lockfile
@@ -472,7 +475,7 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-Registry archive fetching, publishing protocol upload calls, and complex
+HTTP registry archive fetching, publishing protocol upload calls, and complex
 version solving remain separate registry slices. v0.1 may reject multiple
 versions of the same canonical package ID directly.
 
