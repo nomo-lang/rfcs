@@ -349,7 +349,10 @@ v0.1 must validate:
   to an `http://` registry endpoint. `nomo search <query> --registry <url>`
   queries `GET /api/v1/packages?query=<encoded>` on an `http://` registry
   endpoint and expects a JSON array of objects with `package`, optional
-  `version`, and optional `description`.
+  `version`, and optional `description`. `nomo yank <owner/package> <version>
+  --registry <url>` marks an already-published version as yanked with
+  `POST /api/v1/packages/<owner>/<package>/<version>/yank`; yanked versions
+  remain buildable from existing lockfiles.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -400,6 +403,11 @@ v0.1 must validate:
   index using `GET /api/v1/packages?query=<encoded>` and prints one result per
   line as `owner/package`, `owner/package version`, or
   `owner/package version - description`, depending on the fields returned.
+- `nomo yank <owner/package> <version> --registry <url>` marks an
+  already-published registry version as yanked using
+  `POST /api/v1/packages/<owner>/<package>/<version>/yank`. Yanking does not
+  remove the package archive and lockfiles may continue to build that exact
+  version.
 - `nomo publish [path] (--dry-run | --registry <url>) [--output <dir>] [--json-errors]`
   validates the selected package with project checks, packages `nomo.toml` and
   `src/` into a deterministic `.nomo-package` archive, and reports the archive

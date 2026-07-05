@@ -453,7 +453,9 @@ v0.1 必须校验：
   registry endpoint。`nomo search <query> --registry <url>` 会向 `http://`
   registry endpoint 查询 `GET /api/v1/packages?query=<encoded>`，并期望得到由
   object 组成的 JSON array；object 包含 `package`，以及可选的 `version` 和
-  `description`。
+  `description`。`nomo yank <owner/package> <version> --registry <url>` 会用
+  `POST /api/v1/packages/<owner>/<package>/<version>/yank` 将已发布版本标记为
+  yanked；yanked version 仍可从既有 lockfile 构建。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
   字符串。workspace lockfile 额外使用 `[[root]]` table，把每个 member package id
@@ -493,6 +495,10 @@ v0.1 必须校验：
   `GET /api/v1/packages?query=<encoded>` 查询 `http://` registry package index，
   并按 registry 返回字段逐行输出 `owner/package`、`owner/package version` 或
   `owner/package version - description`。
+- `nomo yank <owner/package> <version> --registry <url>` 使用
+  `POST /api/v1/packages/<owner>/<package>/<version>/yank` 将已发布 registry
+  version 标记为 yanked。Yank 不删除 package archive，lockfile 仍可继续构建该
+  exact version。
 - `nomo publish [path] (--dry-run | --registry <url>) [--output <dir>] [--json-errors]`
   使用项目检查校验选中的 package，将 `nomo.toml` 与 `src/` 打成确定性的
   `.nomo-package` archive，并输出 archive path、`sha256:` checksum 与 byte size。
