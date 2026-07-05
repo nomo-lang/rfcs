@@ -359,7 +359,9 @@ v0.1 must validate:
   `Authorization: Bearer <token>`. `nomo owner add <owner/package> <user>
   --registry <url>` adds a package owner with
   `PUT /api/v1/packages/<owner>/<package>/owners/<user>` and uses the same
-  stored bearer token when present.
+  stored bearer token when present. `nomo owner remove <owner/package> <user>
+  --registry <url>` removes a package owner with
+  `DELETE /api/v1/packages/<owner>/<package>/owners/<user>`.
 - `nomo.lock` is standard TOML. Package entries are stored as `[[package]]`
   tables with `id`, `alias`, `source`, optional source metadata, `checksum`, and
   dependency edge strings. Workspace lockfiles additionally store `[[root]]`
@@ -416,6 +418,11 @@ v0.1 must validate:
 - `nomo owner add <owner/package> <user> --registry <url>` adds an owner to a
   package using `PUT /api/v1/packages/<owner>/<package>/owners/<user>`. When a
   token has been stored with `nomo login`, the request includes
+  `Authorization: Bearer <token>`.
+- `nomo owner remove <owner/package> <user> --registry <url>` removes an owner
+  from a package using
+  `DELETE /api/v1/packages/<owner>/<package>/owners/<user>`. When a token has
+  been stored with `nomo login`, the request includes
   `Authorization: Bearer <token>`.
 - `nomo yank <owner/package> <version> --registry <url>` marks an
   already-published registry version as yanked using
@@ -508,9 +515,9 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTPS/TLS registry archive fetching, interactive auth flows, owner removal,
-and complex version solving remain separate registry slices. v0.1 may reject
-multiple versions of the same canonical package ID directly.
+HTTPS/TLS registry archive fetching, interactive auth flows, and complex version
+solving remain separate registry slices. v0.1 may reject multiple versions of
+the same canonical package ID directly.
 
 ---
 
@@ -546,9 +553,8 @@ Rules for `expr?`:
 - `Option.None` causes the current function to return `Option.None` early.
 - The current function's return type must be a compatible carrier: using `expr?` on a `Result` value requires the current function to return a compatible `Result`; using `expr?` on an `Option` value requires the current function to return a compatible `Option`.
 
-v0.1 does not introduce a `try` keyword or statement syntax; `try` remains an
-ordinary identifier, and postfix `?` is the unified propagation syntax for
-errors and absence.
+v0.1 does not introduce a `try` keyword or statement syntax. Postfix `?` is the
+unified propagation syntax for errors and absence.
 
 v0.1 does not automatically merge error types. Cross-layer error conversion uses explicit `std.result.map_err(named_converter)?`, as accepted by [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md).
 

@@ -275,7 +275,7 @@ pub enum Result<T, E> {
 - `Option.None` 使当前函数提前返回 `Option.None`。
 - 当前函数返回类型必须是兼容的 carrier：对 `Result` 值使用 `expr?` 时，当前函数必须返回兼容的 `Result`；对 `Option` 值使用 `expr?` 时，当前函数必须返回兼容的 `Option`。
 
-v0.1 不引入 `try` 关键字或语句语法；`try` 保持为普通标识符，错误与缺值传播统一使用后缀 `?`。
+v0.1 不引入 `try` 关键字或语句语法；错误与缺值传播统一使用后缀 `?`。
 
 v0.1 不自动合并错误类型。跨层错误转换使用显式 `std.result.map_err(named_converter)?`，见已接受的 [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md)。
 
@@ -462,7 +462,9 @@ v0.1 必须校验：
   download、publish 与 yank 请求会附带 `Authorization: Bearer <token>`。
   `nomo owner add <owner/package> <user> --registry <url>` 会用
   `PUT /api/v1/packages/<owner>/<package>/owners/<user>` 添加 package owner，
-  并在已有登录 token 时复用同一个 Bearer token。
+  并在已有登录 token 时复用同一个 Bearer token。`nomo owner remove
+  <owner/package> <user> --registry <url>` 会用
+  `DELETE /api/v1/packages/<owner>/<package>/owners/<user>` 移除 package owner。
 - `nomo.lock` 使用标准 TOML。package entry 以 `[[package]]` table 存储，包含
   `id`、`alias`、`source`、可选 source metadata、`checksum` 和 dependency edge
   字符串。workspace lockfile 额外使用 `[[root]]` table，把每个 member package id
@@ -508,6 +510,10 @@ v0.1 必须校验：
 - `nomo owner add <owner/package> <user> --registry <url>` 使用
   `PUT /api/v1/packages/<owner>/<package>/owners/<user>` 为 package 添加 owner。
   如果此前通过 `nomo login` 写入 token，请求会附带
+  `Authorization: Bearer <token>`。
+- `nomo owner remove <owner/package> <user> --registry <url>` 使用
+  `DELETE /api/v1/packages/<owner>/<package>/owners/<user>` 从 package 移除
+  owner。如果此前通过 `nomo login` 写入 token，请求会附带
   `Authorization: Bearer <token>`。
 - `nomo yank <owner/package> <version> --registry <url>` 使用
   `POST /api/v1/packages/<owner>/<package>/<version>/yank` 将已发布 registry
@@ -577,8 +583,8 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-HTTPS/TLS registry archive fetching、交互式 auth flow、owner removal 和复杂版本求解
-仍作为独立 registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
+HTTPS/TLS registry archive fetching、交互式 auth flow 和复杂版本求解仍作为独立
+registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
 
 ---
 
