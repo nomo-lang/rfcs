@@ -454,8 +454,9 @@ v0.1 must validate:
   `build/doc/index.html`, package/module HTML
   pages, and `search-index.json`; `--json` emits the machine-readable
   documentation model without writing files. `--workspace` documents workspace members, `--package`
-  selects a package id or member name, and `--std` generates the current
-  built-in standard-library module index.
+  selects a package id or member name, `--std` generates the current
+  built-in standard-library module index, and `--open` opens the generated
+  `index.html`. `--open` is invalid with `--json`.
 
 Public registry fetching and complex version solving are out of scope for v0.1;
 v0.1 may reject multiple versions of the same canonical package ID directly.

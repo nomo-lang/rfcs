@@ -527,7 +527,8 @@ v0.1 必须校验：
   默认写入 `build/doc/index.html`、
   package/module HTML 页面与 `search-index.json`；`--json` 只输出机器可读文档模型，
   不写文件。`--workspace` 生成 workspace members 文档，`--package`
-  选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引。
+  选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
+  `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
 公共 registry 拉取和复杂版本求解不属于 v0.1；v0.1 遇到同一 canonical package id
 的多版本冲突可以直接报错。
