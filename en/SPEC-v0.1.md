@@ -236,11 +236,12 @@ v0.1 supports a minimal C FFI entry point:
 ```rust
 extern "C" {
     fn puts(message: string) -> i32
+    fn abs(value: i32) -> i32
 }
 
 fn main() -> void {
     unsafe {
-        puts("hello")
+        let value: i32 = abs(-7)
     }
 }
 ```
@@ -248,8 +249,10 @@ fn main() -> void {
 `extern "C"` declarations describe C function signatures; extern calls must be
 inside an `unsafe { ... }` block. The current MVP supports passing a Nomo
 `string` to C `puts`; codegen passes the underlying NUL-terminated byte buffer.
-Arbitrary raw pointers, C struct layout inference, header binding generation,
-multi-statement unsafe blocks, and general link metadata are left for later slices.
+Other extern calls support primitive integer, float, bool, and char parameters
+and return values, plus `void` returns. Arbitrary raw pointers, C struct layout
+inference, header binding generation, multi-statement unsafe blocks, and general
+link metadata are left for later slices.
 
 ---
 

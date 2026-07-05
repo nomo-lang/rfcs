@@ -227,19 +227,21 @@ v0.1 支持最小 C FFI 入口：
 ```rust
 extern "C" {
     fn puts(message: string) -> i32
+    fn abs(value: i32) -> i32
 }
 
 fn main() -> void {
     unsafe {
-        puts("hello")
+        let value: i32 = abs(-7)
     }
 }
 ```
 
 `extern "C"` 声明只描述 C 函数签名；调用 extern 函数必须写在 `unsafe { ... }`
 block 中。当前 MVP 支持将 Nomo `string` 传给 C `puts`，codegen 传递底层
-NUL-terminated byte buffer。任意裸指针、C struct 自动布局、header 绑定生成、
-多语句 unsafe block 和通用 link metadata 留待后续切片。
+NUL-terminated byte buffer。其他 extern 调用支持 primitive integer、float、
+bool、char 参数和返回值，以及 `void` 返回。任意裸指针、C struct 自动布局、
+header 绑定生成、多语句 unsafe block 和通用 link metadata 留待后续切片。
 
 ---
 
