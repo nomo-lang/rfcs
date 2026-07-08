@@ -250,9 +250,27 @@ fn main() -> void {
 inside an `unsafe { ... }` block. The current MVP supports passing a Nomo
 `string` to C `puts`; codegen passes the underlying NUL-terminated byte buffer.
 Other extern calls support primitive integer, float, bool, and char parameters
-and return values, plus `void` returns. Arbitrary raw pointers, C struct layout
-inference, header binding generation, multi-statement unsafe blocks, and general
-link metadata are left for later slices.
+and return values, plus `void` returns.
+
+Project manifests can declare native linker metadata:
+
+```toml
+[ffi]
+libraries = ["sqlite3"]
+library_paths = ["native/lib"]
+frameworks = ["Security"]
+link_args = ["-Wl,-rpath,@loader_path"]
+```
+
+`libraries` are emitted as `-l<name>`, `library_paths` as `-L<path>`,
+`frameworks` as macOS `-framework <name>` arguments, and `link_args` as raw
+arguments to the system C compiler. Relative `library_paths` are resolved from
+the package root that declares them. Project builds and tests aggregate `[ffi]`
+metadata from the root package and source dependencies. Standalone script mode
+does not read a manifest and therefore does not use link metadata.
+
+Arbitrary raw pointers, C struct layout inference, header binding generation,
+and multi-statement unsafe blocks are left for later slices.
 
 ---
 

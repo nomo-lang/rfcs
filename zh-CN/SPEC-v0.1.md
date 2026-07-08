@@ -240,8 +240,25 @@ fn main() -> void {
 `extern "C"` 声明只描述 C 函数签名；调用 extern 函数必须写在 `unsafe { ... }`
 block 中。当前 MVP 支持将 Nomo `string` 传给 C `puts`，codegen 传递底层
 NUL-terminated byte buffer。其他 extern 调用支持 primitive integer、float、
-bool、char 参数和返回值，以及 `void` 返回。任意裸指针、C struct 自动布局、
-header 绑定生成、多语句 unsafe block 和通用 link metadata 留待后续切片。
+bool、char 参数和返回值，以及 `void` 返回。
+
+项目 manifest 可以声明 native linker metadata：
+
+```toml
+[ffi]
+libraries = ["sqlite3"]
+library_paths = ["native/lib"]
+frameworks = ["Security"]
+link_args = ["-Wl,-rpath,@loader_path"]
+```
+
+`libraries` 会转换为 `-l<name>`，`library_paths` 会转换为 `-L<path>`，
+`frameworks` 会转换为 macOS `-framework <name>` 参数，`link_args` 会作为
+raw 参数传给系统 C compiler。相对 `library_paths` 按声明它的 package root
+解析。项目 build 和 test 会聚合 root package 与源码依赖中的 `[ffi]`
+metadata。Standalone script mode 不读取 manifest，因此不使用 link metadata。
+
+任意裸指针、C struct 自动布局、header 绑定生成和多语句 unsafe block 留待后续切片。
 
 ---
 
