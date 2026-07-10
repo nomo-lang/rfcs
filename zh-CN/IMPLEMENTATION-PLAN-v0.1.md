@@ -1,7 +1,7 @@
 # Nomo v0.1 设计实现计划
 
 > 日期：2026-07-02
-> 状态：落地执行稿
+> 状态：历史执行基线；当前范围以 `ROADMAP.md` 与 `SPEC-v0.1.md` 为准
 > 来源：`nomo_design_implementation_plan.md`
 
 ## 一句话目标
@@ -40,7 +40,7 @@ Nomo 不做“更简单的 Rust”或“带类型的 Python”，而是一门用
 - GPU、WASM、裸机、GUI。
 - 自举编译器。
 - LLVM / Cranelift 后端。
-- 完整 trait/interface 约束。
+- 完整 Rust 风格 trait/interface 系统（多 bound、`where`、trait object、associated type）。
 - 完整 lifetime/区域借用系统。
 - 宏系统。
 - 异常展开。
@@ -54,7 +54,7 @@ Nomo 不做“更简单的 Rust”或“带类型的 Python”，而是一门用
 1. `string` 明确为不可变 RC 值，不做 COW。
 2. `Array<T>` 明确为非原子 RC + COW，仅写 API 触发 `make_unique`。
 3. `mut` 活动期限定为单个调用表达式。
-4. v0.1 坚持无 trait/interface 约束。
+4. 当前预览支持最小 `T: Interface` 单接口约束；完整 trait/interface 系统仍不在范围内。
 5. `?` 在 v0.1 只支持同类型错误传播，跨层转换显式 `map_err`。
 
 ## 包管理模型

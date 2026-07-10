@@ -1,46 +1,40 @@
 # Nomo Roadmap
 
-This roadmap turns the v0.1 design plan into staged implementation goals.
+This roadmap follows the current-full-scope preview strategy. Capabilities are
+implemented in reviewable slices, but formatter, workspace, package management,
+LSP, interfaces, FFI, registry, documentation, and editor support are all part
+of the current preview target rather than deferred version buckets.
 
-## v0.1: Closed Loop
+## Current Preview Delivery Tracks
 
-Goal: users can write, check, compile, and run small native programs.
+- Compiler pipeline: lexer, parser, AST, semantic checks, mutability checks,
+  monomorphization, C99 code generation, and native linking.
+- Language model: `Option`, `Result`, postfix `?`, structs, enums, pattern
+  matching, generics, minimal interfaces, `T: Interface` constraints, C FFI,
+  and explicit `unsafe` blocks.
+- Project tooling: `nomo new/check/build/run/fmt/test/doc/clean` plus the
+  standalone `nomoc` compiler driver.
+- Package model: standard TOML manifests, workspace inheritance, canonical
+  package identities, dependency aliases, a workspace-root lockfile, resolver
+  cache, update, vendor, locked/offline/frozen modes, and registry sources.
+- Compilation graphs: `WorkspaceGraph -> PackageGraph -> ModuleGraph`, including
+  stable dependency order, visibility, source metadata, and cycle diagnostics.
+- Standard library: built-in `std` modules for core values, collections, IO,
+  filesystem, environment, path, process, time, numeric helpers, JSON, network,
+  HTTP, crypto, hash, regex, testing, debug, and logging.
+- Tooling protocol: stable E-code diagnostics, JSON diagnostics, diagnostic
+  documentation, formatter reuse, and LSP navigation, symbols, completion,
+  semantic tokens, code actions, rename, formatting, and inlay hints.
+- Ecosystem: package archives, publish/search/yank/owner/login flows, private
+  registry authentication, examples, editor integrations, CI, and release
+  packaging.
 
-- Freeze the v0.1 specification baseline.
-- Complete the lexer, parser, AST, name resolution, type checks, and mutability checks.
-- Keep `Option`, `Result`, `?`, `let mut`, call-site `mut`, structs, enums, and generics aligned with examples and tests.
-- Keep the C99 backend readable and compilable by the system C compiler.
-- Ship the minimal standard library: `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`.
-- Support stable JSON diagnostics for CLI, LSP, CI, and snapshot tests.
-- Establish the namespace-first package model in `nomo.toml`, dependency aliases, `nomo.lock`, and `nomo deps`.
+## Stabilization Gate
 
-## v0.2: Developer Experience
-
-- `nomo fmt`.
-- `nomo test`.
-- `nomo doc`.
-- LSP hover, go-to-definition, and rename.
-- Better multi-file and multi-package workspace support.
-- Resolver cache, better dependency diagnostics, `nomo deps update`, and `nomo deps vendor`.
-- Initial C FFI.
-- `std.path`, `std.process`, and `std.time`.
-
-## v0.3: Abstraction
-
-- Minimal interface or trait model.
-- Constrained generics.
-- Richer pattern matching.
-- More complete module visibility.
-- Registry protocol or private-registry story.
-- Better version conflict explanation.
-
-## v0.4: Systems Boundary
-
-- More complete C FFI.
-- `unsafe` blocks.
-- Cross-compilation configuration.
-- Static linking strategy.
-- Runtime configuration.
+The current preview is complete only when the implementation, English and
+Chinese specifications, RFCs, examples, editor integrations, and CI acceptance
+matrix agree. Remaining work is tracked as current-scope slices; it must not be
+reclassified as v0.2/v0.3 work merely to make the preview appear complete.
 
 ## v1.0: Stability Promise
 

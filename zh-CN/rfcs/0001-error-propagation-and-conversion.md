@@ -84,7 +84,7 @@ fn read_config(path: string) -> Result<string, AppError> {
 
 ### 4.1 方案 A：引入 `From`/`Into` 风格错误转换 trait
 
-- **语法**：`?` 在 `Err` 分支自动调用 `AppError::from(err)`（具体语法待定，因 v0.1 无 trait/interface，见 3.9）。例如：
+- **语法**：`?` 在 `Err` 分支自动调用 `AppError::from(err)`（具体语法待定；v0.1 的最小 interface 约束不包含 associated/static conversion lookup）。例如：
 
 ```rust
 impl AppError {
@@ -98,7 +98,7 @@ impl AppError {
 - **语义**：`expr?` 当 `Err(e)` 时，若当前函数错误类型 `E2 != E1`，查找已注册的 `E1 -> E2` 转换并应用；找不到则报错。
 - **C 后端**：在 `?` 展开点插入一次转换函数调用，再 `return` 包装后的 `Result_T_E2`。
 - **诊断**：新增「找不到错误转换」错误码（E0400-E0499 类型检查区间，例如 `E0461`）。
-- **代价**：v0.1 明确「不支持 trait/interface 约束」（3.9），引入 `From` 风格机制等于提前引入 trait 体系或一个特例化的「转换注册」子系统，与 MVP 边界冲突。
+- **代价**：v0.1 仅支持单个 `T: Interface` 的静态约束，不支持 associated function、blanket impl 或隐式转换查找；引入 `From` 风格机制仍需扩展 interface 系统或增加特例化的「转换注册」子系统。
 
 ### 4.2 方案 B：标准库 `.map_err()` 显式方法（已接受）
 

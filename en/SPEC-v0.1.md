@@ -48,7 +48,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 - Full Tensor, BigDecimal, package-publishing ecosystem.
 - Self-hosting compiler.
 - LLVM / Cranelift native backends.
-- Full trait/interface constraint system.
+- Full Rust-style trait/interface system (multiple bounds, `where`, trait objects, associated types).
 - Full lifetime/region borrow system.
 
 ---
@@ -224,10 +224,25 @@ the impl, and method type parameters, parameter count, parameter mutability,
 parameter types, and return type must match after substituting `Self` with the
 concrete impl target.
 
-The current interface MVP does not support trait objects, associated types,
-blanket impls, dynamic dispatch, or generic constraints such as
-`fn print<T: Display>(value: T)`. That full constraint system remains outside
-v0.1. Higher-kinded types and generic specialization are also out of scope.
+v0.1 supports minimal interface-constrained generics:
+
+```rust
+fn render<T: Display>(value: T) -> string {
+    return value.to_string()
+}
+
+let text: string = render<User>(user)
+```
+
+Each type parameter currently accepts at most one interface bound, and calls
+must provide explicit concrete type arguments. The compiler verifies that the
+generic body uses only operations provided by the interface and that the
+concrete non-generic struct has a matching `impl Interface for Type`, then
+monomorphizes the function and statically dispatches interface methods.
+
+The current interface MVP does not support multiple bounds, `where`, type
+argument inference, trait objects, associated types, blanket impls, dynamic
+dispatch, higher-kinded types, or generic specialization.
 
 ### 2.9 C FFI and `unsafe`
 
@@ -616,8 +631,8 @@ nums.push(1)
 - `Array.pop` and `Array.remove` return `Option<T>`; empty arrays and
   out-of-bounds removals return `None`.
 - `Array.set` and `Array.insert` trigger a `panic` on out-of-bounds.
-- `Array.iter` returns a snapshot value accepted by `for ... in`; a full
-  iterator type is deferred until traits/interfaces exist.
+- `Array.iter` returns a snapshot value accepted by `for ... in`; a general
+  `Iterator` abstraction is not part of the current standard-library API.
 
 The runtime cost and degradation strategy of ARC/COW are discussed in [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md).
 
@@ -1146,8 +1161,8 @@ regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 
 `std.collections` provides v0.1 string-specialized collections. `StringMap`
 stores string keys and string values. `StringSet` stores unique strings. Update
-helpers return the updated collection value; generic `HashMap` remains deferred
-until interface/trait-constrained generics are available.
+helpers return the updated collection value; generic `HashMap` is not part of
+the current standard-library API.
 
 ```rust
 pub struct StringMap {

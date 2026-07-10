@@ -84,7 +84,7 @@ The three options below all revolve around "how to turn `FsError` into `AppError
 
 ### 4.1 Option A: Introduce a `From`/`Into`-style error-conversion trait
 
-- **Syntax**: in the `Err` branch, `?` automatically calls `AppError::from(err)` (the exact syntax is TBD, since v0.1 has no trait/interface, see 3.9). For example:
+- **Syntax**: in the `Err` branch, `?` automatically calls `AppError::from(err)` (the exact syntax is TBD; v0.1's minimal interface constraints do not include associated/static conversion lookup). For example:
 
 ```rust
 impl AppError {
@@ -98,7 +98,7 @@ impl AppError {
 - **Semantics**: for `expr?`, when `Err(e)`, if the current function's error type `E2 != E1`, look up a registered `E1 -> E2` conversion and apply it; report an error if none is found.
 - **C backend**: insert one conversion-function call at the `?` expansion point, then `return` the wrapped `Result_T_E2`.
 - **Diagnostics**: add a "no error conversion found" error code (in the E0400-E0499 type-checking range, e.g. `E0461`).
-- **Cost**: v0.1 explicitly "does not support trait/interface constraints" (3.9); introducing a `From`-style mechanism amounts to introducing the trait system early or a specialized "conversion registration" subsystem, conflicting with the MVP boundary.
+- **Cost**: v0.1 only supports a single static `T: Interface` bound and does not support associated functions, blanket impls, or implicit conversion lookup. A `From`-style mechanism would still require extending the interface system or adding a specialized conversion registry.
 
 ### 4.2 Option B: A standard-library `.map_err()` explicit method (accepted)
 
