@@ -1290,6 +1290,20 @@ C backend principles:
 - The standard library runtime is linked as C source files.
 - Layouts such as `Result`, `Option`, `Array` must be covered by tests.
 
+### 7.1 Shared Semantic Queries
+
+Editor navigation must use the compiler's shared semantic API rather than
+reimplementing Nomo name lookup in each client. Definitions and references are
+identified by their declaration source, range, and symbol kind. Local parameters,
+`let` bindings, `let-else`/`if let`/`match` pattern bindings, and `for` bindings
+participate in lexical scope resolution, so a same-name shadow does not become a
+reference to another declaration.
+
+Rename is limited to editable sources in the current package/module graph;
+dependency sources may be definition targets but are not renamed. If the
+original program type-checks, tooling must apply the proposed edits in memory and
+type-check the resulting module graph before returning the rename operation.
+
 ---
 
 ## 8. Diagnostics Specification

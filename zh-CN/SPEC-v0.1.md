@@ -1207,6 +1207,17 @@ C 后端原则：
 - 标准库运行时以 C 源文件链接。
 - `Result`、`Option`、`Array` 等布局必须有测试覆盖。
 
+### 7.1 共享语义查询
+
+编辑器导航必须调用 compiler 的共享 semantic API，不得在各 client 中重复实现 Nomo
+名称解析。definition 与 reference 由声明源码、range 和 symbol kind 共同标识。局部参数、
+`let` binding、`let-else`/`if let`/`match` pattern binding 以及 `for` binding 都参与词法
+作用域解析，因此同名 shadow 不会被误判为另一个声明的 reference。
+
+rename 只修改当前 package/module graph 中可编辑的源码；dependency 源码可以作为
+definition target，但不参与 rename。若原程序能够通过类型检查，工具必须先在内存中应用
+拟议 edit，并对结果 module graph 再次执行类型检查，成功后才能返回 rename operation。
+
 ---
 
 ## 8. 诊断规范
