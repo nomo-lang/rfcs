@@ -1299,6 +1299,11 @@ identified by their declaration source, range, and symbol kind. Local parameters
 participate in lexical scope resolution, so a same-name shadow does not become a
 reference to another declaration.
 
+Field access, struct literal labels, and method calls must resolve against the
+receiver's compiler-checked nominal type. Same-name members owned by different
+types have distinct declaration identities and must not be renamed together. A
+method call on a constrained type parameter resolves to the declaring interface.
+
 Rename is limited to editable sources in the current package/module graph;
 dependency sources may be definition targets but are not renamed. If the
 original program type-checks, tooling must apply the proposed edits in memory and

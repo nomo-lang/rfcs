@@ -1214,6 +1214,10 @@ C 后端原则：
 `let` binding、`let-else`/`if let`/`match` pattern binding 以及 `for` binding 都参与词法
 作用域解析，因此同名 shadow 不会被误判为另一个声明的 reference。
 
+field access、struct literal label 与 method call 必须依据 receiver 经 compiler 检查后的
+nominal type 解析。不同类型拥有的同名 member 具有不同声明身份，rename 不得同时修改它们；
+constrained type parameter 上的方法调用解析到声明该方法的 interface。
+
 rename 只修改当前 package/module graph 中可编辑的源码；dependency 源码可以作为
 definition target，但不参与 rename。若原程序能够通过类型检查，工具必须先在内存中应用
 拟议 edit，并对结果 module graph 再次执行类型检查，成功后才能返回 rename operation。
