@@ -239,12 +239,20 @@ associated type、blanket impl、动态分派、高阶类型或泛型特化。
 v0.1 支持最小 C FFI 入口：
 
 ```rust
+import std.ffi
+
 extern "C" {
-    fn puts(message: string) -> i32
+    fn puts(message: CString) -> i32
     fn abs(value: i32) -> i32
+    fn open_handle() -> Opaque
+    fn close_handle(handle: Opaque) -> void
 }
 
 fn main() -> void {
+    let message: CString = CString.from_string("hello")
+    unsafe {
+        puts(message)
+    }
     unsafe {
         let value: i32 = abs(-7)
     }
@@ -252,9 +260,11 @@ fn main() -> void {
 ```
 
 `extern "C"` 声明只描述 C 函数签名；调用 extern 函数必须写在 `unsafe { ... }`
-block 中。当前 MVP 支持将 Nomo `string` 传给 C `puts`，codegen 传递底层
-NUL-terminated byte buffer。其他 extern 调用支持 primitive integer、float、
-bool、char 参数和返回值，以及 `void` 返回。
+block 中。`CString.from_string` 创建 owned NUL-terminated copy，作为 extern
+parameter 时映射到 `const char *`。C 不能直接返回 `CString`，因为 foreign pointer
+ownership 不明确。`Opaque` 映射到 `void *`，可以由 extern 返回、在 Nomo 中传递并
+传回 extern，但不能解引用、检查、比较或参与运算。其他 extern 调用支持 primitive
+integer、float、bool、char 参数和返回值，以及 `void` 返回。
 
 项目 manifest 可以声明 native linker metadata：
 
@@ -262,17 +272,20 @@ bool、char 参数和返回值，以及 `void` 返回。
 [ffi]
 libraries = ["sqlite3"]
 library_paths = ["native/lib"]
+sources = ["native/bridge.c"]
 frameworks = ["Security"]
 link_args = ["-Wl,-rpath,@loader_path"]
 ```
 
 `libraries` 会转换为 `-l<name>`，`library_paths` 会转换为 `-L<path>`，
-`frameworks` 会转换为 macOS `-framework <name>` 参数，`link_args` 会作为
-raw 参数传给系统 C compiler。相对 `library_paths` 按声明它的 package root
-解析。项目 build 和 test 会聚合 root package 与源码依赖中的 `[ffi]`
-metadata。Standalone script mode 不读取 manifest，因此不使用 link metadata。
+`sources` 中的 package-relative C 文件会交给系统 C compiler，`frameworks` 会转换为
+macOS `-framework <name>` 参数，`link_args` 会作为 raw 参数传递。相对路径按声明它的
+package root 解析；FFI source 进入 package checksum、publish archive 和 vendor。
+项目 build 和 test 会聚合 root package 与源码依赖中的 `[ffi]` metadata。
+Standalone script mode 不读取 manifest，因此不使用 link metadata。
 
-任意裸指针、C struct 自动布局、header 绑定生成和多语句 unsafe block 留待后续切片。
+`Opaque` 不开放任意裸指针操作；C struct 自动布局、header 绑定生成和多语句 unsafe
+block 留待后续切片。
 
 ---
 
