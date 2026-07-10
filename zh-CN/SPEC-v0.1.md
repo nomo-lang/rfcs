@@ -495,13 +495,13 @@ v0.1 必须校验：
 - registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
   endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove` 会编辑
   `nomo.toml` 中的 registry dependency entry；没有显式 endpoint 的 registry dependency
-  仍作为 leaf entry。`file://` 或 `http://` registry endpoint 使用
+  仍作为 leaf entry。`file://`、`http://` 或 `https://` registry endpoint 使用
   `/api/v1/packages/<owner>/<package>/<version>/download` 路径解析；下载到的
   `.nomo-package` archive 会解包到 `.nomo/cache/registry/`，并可向项目构建提供
   imported public API。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
   package archive；`nomo publish --registry <url>` 会用
-  `PUT /api/v1/packages/<owner>/<package>/<version>` 把 archive 上传到 `http://`
-  registry endpoint。`nomo search <query> --registry <url>` 会向 `http://`
+  `PUT /api/v1/packages/<owner>/<package>/<version>` 把 archive 上传到 HTTP 或 HTTPS
+  registry endpoint。`nomo search <query> --registry <url>` 会向 HTTP 或 HTTPS
   registry endpoint 查询 `GET /api/v1/packages?query=<encoded>`，并期望得到由
   object 组成的 JSON array；object 包含 `package`，以及可选的 `version` 和
   `description`。`nomo yank <owner/package> <version> --registry <url>` 会用
@@ -509,8 +509,8 @@ v0.1 必须校验：
   yanked；yanked version 仍可从既有 lockfile 构建。`nomo login --registry
   <url> --token <token>` 会把 bearer token 写入
   `$NOMO_HOME/credentials.toml`；未设置 `NOMO_HOME` 时写入
-  `$HOME/.nomo/credentials.toml`。后续访问同一 endpoint 的 HTTP registry
-  download、publish 与 yank 请求会附带 `Authorization: Bearer <token>`。
+  `$HOME/.nomo/credentials.toml`。后续访问同一 endpoint 的 HTTP 或 HTTPS registry
+  请求会附带 `Authorization: Bearer <token>`。
   `nomo owner add <owner/package> <user> --registry <url>` 会用
   `PUT /api/v1/packages/<owner>/<package>/owners/<user>` 添加 package owner，
   并在已有登录 token 时复用同一个 Bearer token。`nomo owner remove
@@ -552,12 +552,12 @@ v0.1 必须校验：
 - `nomo remove <alias> [path]` 从选中的 package manifest 删除 dependency entry。
   它不重写 `nomo.lock`。
 - `nomo search <query> --registry <url>` 使用
-  `GET /api/v1/packages?query=<encoded>` 查询 `http://` registry package index，
+  `GET /api/v1/packages?query=<encoded>` 查询 HTTP 或 HTTPS registry package index，
   并按 registry 返回字段逐行输出 `owner/package`、`owner/package version` 或
   `owner/package version - description`。
-- `nomo login --registry <url> --token <token>` 为 `http://` registry endpoint
-  写入本地 bearer token。后续访问该 endpoint 的 HTTP registry download、
-  publish 与 yank 请求会使用此 token。
+- `nomo login --registry <url> --token <token>` 为 HTTP 或 HTTPS registry endpoint
+  写入本地 bearer token。后续访问该 endpoint 的 registry download、search、
+  publish、yank 与 owner 请求会使用此 token。
 - `nomo owner add <owner/package> <user> --registry <url>` 使用
   `PUT /api/v1/packages/<owner>/<package>/owners/<user>` 为 package 添加 owner。
   如果此前通过 `nomo login` 写入 token，请求会附带
@@ -574,7 +574,7 @@ v0.1 必须校验：
   使用项目检查校验选中的 package，将 `nomo.toml` 与 `src/` 打成确定性的
   `.nomo-package` archive，并输出 archive path、`sha256:` checksum 与 byte size。
   `--dry-run` 在准备 archive 后停止；`--registry <url>` 会用
-  `PUT /api/v1/packages/<owner>/<package>/<version>` 上传到 `http://` registry
+  `PUT /api/v1/packages/<owner>/<package>/<version>` 上传到 HTTP 或 HTTPS registry
   endpoint。v0.1 会拒绝既没有 `--dry-run` 也没有 `--registry` 的 publish 命令。
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` 确保 lockfile
   存在后，把 locked `path`、`git` 与已缓存 registry dependency source 复制到 vendor
@@ -634,8 +634,8 @@ v0.1 必须校验：
   选择 package id 或 member name，`--std` 生成当前内置标准库 module 索引，
   `--open` 打开生成的 `index.html`。`--open` 不能与 `--json` 同用。
 
-HTTPS/TLS registry archive fetching、交互式 auth flow 和复杂版本求解仍作为独立
-registry 切片推进；v0.1 遇到同一 canonical package id 的多版本冲突可以直接报错。
+交互式 auth flow 和复杂版本求解仍作为独立 registry 切片推进；v0.1 遇到同一
+canonical package id 的多版本冲突可以直接报错。
 
 ---
 

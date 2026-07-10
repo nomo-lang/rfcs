@@ -397,23 +397,23 @@ v0.1 must validate:
 - Registry/version sources are recorded as leaf lockfile entries in v0.1; an
   optional `registry` endpoint may be stored as source metadata. `nomo add` and
   `nomo remove` edit these registry dependency entries in `nomo.toml`; registry
-  dependencies without an explicit endpoint remain leaf entries. A `file://` or
-  `http://` registry endpoint is resolved using
+  dependencies without an explicit endpoint remain leaf entries. A `file://`,
+  `http://`, or `https://` registry endpoint is resolved using
   `/api/v1/packages/<owner>/<package>/<version>/download`; the downloaded
   `.nomo-package` archive is unpacked into `.nomo/cache/registry/` and can
   provide imported public API. `nomo publish --dry-run` validates a local package
   and prepares a deterministic package archive; `nomo publish --registry <url>`
   uploads that archive with `PUT /api/v1/packages/<owner>/<package>/<version>`
-  to an `http://` registry endpoint. `nomo search <query> --registry <url>`
-  queries `GET /api/v1/packages?query=<encoded>` on an `http://` registry
+  to an HTTP or HTTPS registry endpoint. `nomo search <query> --registry <url>`
+  queries `GET /api/v1/packages?query=<encoded>` on an HTTP or HTTPS registry
   endpoint and expects a JSON array of objects with `package`, optional
   `version`, and optional `description`. `nomo yank <owner/package> <version>
   --registry <url>` marks an already-published version as yanked with
   `POST /api/v1/packages/<owner>/<package>/<version>/yank`; yanked versions
   remain buildable from existing lockfiles. `nomo login --registry <url>
   --token <token>` stores a bearer token in `$NOMO_HOME/credentials.toml` or,
-  when `NOMO_HOME` is unset, `$HOME/.nomo/credentials.toml`; subsequent HTTP
-  registry download, publish, and yank requests to the same endpoint include
+  when `NOMO_HOME` is unset, `$HOME/.nomo/credentials.toml`; subsequent HTTP or
+  HTTPS registry requests to the same endpoint include
   `Authorization: Bearer <token>`. `nomo owner add <owner/package> <user>
   --registry <url>` adds a package owner with
   `PUT /api/v1/packages/<owner>/<package>/owners/<user>` and uses the same
@@ -466,13 +466,13 @@ v0.1 must validate:
   `nomo deps resolve` when they want a lockfile refresh.
 - `nomo remove <alias> [path]` removes a dependency entry from the selected
   package manifest. It does not rewrite `nomo.lock`.
-- `nomo search <query> --registry <url>` queries an `http://` registry package
+- `nomo search <query> --registry <url>` queries an HTTP or HTTPS registry package
   index using `GET /api/v1/packages?query=<encoded>` and prints one result per
   line as `owner/package`, `owner/package version`, or
   `owner/package version - description`, depending on the fields returned.
 - `nomo login --registry <url> --token <token>` stores a local bearer token for
-  an `http://` registry endpoint. The token is used by subsequent HTTP registry
-  download, publish, and yank requests for that endpoint.
+  an HTTP or HTTPS registry endpoint. The token is used by subsequent registry
+  download, search, publish, yank, and owner requests for that endpoint.
 - `nomo owner add <owner/package> <user> --registry <url>` adds an owner to a
   package using `PUT /api/v1/packages/<owner>/<package>/owners/<user>`. When a
   token has been stored with `nomo login`, the request includes
@@ -492,7 +492,7 @@ v0.1 must validate:
   `src/` into a deterministic `.nomo-package` archive, and reports the archive
   path, `sha256:` checksum, and byte size. `--dry-run` stops after preparing the
   archive; `--registry <url>` uploads it with
-  `PUT /api/v1/packages/<owner>/<package>/<version>` to an `http://` registry
+  `PUT /api/v1/packages/<owner>/<package>/<version>` to an HTTP or HTTPS registry
   endpoint. v0.1 refuses a publish command that specifies neither mode.
 - `nomo deps vendor [path] [--workspace] [--dir vendor] [--sync]` ensures a
   lockfile exists, copies locked `path`, `git`, and cached registry dependency
@@ -573,8 +573,8 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-HTTPS/TLS registry archive fetching, interactive auth flows, and complex version
-solving remain separate registry slices. v0.1 may reject multiple versions of
+Interactive auth flows and complex version solving remain separate registry
+slices. v0.1 may reject multiple versions of
 the same canonical package ID directly.
 
 ---
