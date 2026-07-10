@@ -384,6 +384,12 @@ v0.1 must validate:
 - `std` is a built-in reserved import root. User manifests do not need to
   declare it, ordinary dependencies cannot use `std` as an alias, and `std` is
   not written as a normal package entry in `nomo.lock`.
+- The toolchain ships a canonical `nomo-lang/std` workspace package. Its
+  `std/src/*.nomo` files establish standard module identities and documentation
+  roots, while one shared package registry defines accepted public import paths
+  for the compiler, documentation generator, and LSP. Builtin bodies may lower
+  through compiler intrinsics and the native runtime during source migration;
+  this does not turn `std` into a user-managed dependency.
 - Exactly one dependency source among `path`, `git`, and `version`.
 - Legacy manifests that still declare `std = "0.1.0"` or
   `std = { package = "nomo-lang/std", version = "0.1.0" }` may be accepted as

@@ -19,9 +19,10 @@ of the current preview target rather than deferred version buckets.
   cache, update, vendor, locked/offline/frozen modes, and registry sources.
 - Compilation graphs: `WorkspaceGraph -> PackageGraph -> ModuleGraph`, including
   stable dependency order, visibility, source metadata, and cycle diagnostics.
-- Standard library: built-in `std` modules for core values, collections, IO,
-  filesystem, environment, path, process, time, numeric helpers, JSON, network,
-  HTTP, crypto, hash, regex, testing, debug, and logging.
+- Standard library: a canonical toolchain `nomo-lang/std` workspace package,
+  shared compiler/doc/LSP module metadata, and built-in modules for core values,
+  collections, IO, filesystem, environment, path, process, time, numeric
+  helpers, JSON, network, HTTP, crypto, hash, regex, testing, debug, and logging.
 - Tooling protocol: stable E-code diagnostics, JSON diagnostics, diagnostic
   documentation, formatter reuse, and LSP navigation, symbols, completion,
   semantic tokens, code actions, rename, formatting, and inlay hints.

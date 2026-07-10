@@ -483,6 +483,11 @@ v0.1 必须校验：
 - `std`、`nomo`、`core` namespace 为语言和标准工具链保留，不可作为 package owner。
 - `std` 是内置保留 import root。用户 manifest 不需要声明 `std` 依赖，普通依赖不可使用
   `std` 作为 alias，`std` 也不作为普通 package entry 写入 `nomo.lock`。
+- toolchain 随附 canonical `nomo-lang/std` workspace package。`std/src/*.nomo`
+  文件建立标准模块身份与文档根；compiler、文档生成器和 LSP 共同使用同一份 package
+  registry 判定可接受的 public import path。在 public implementation 迁移到 Nomo source
+  期间，builtin body 可以继续通过 compiler intrinsic 与 native runtime lower；这不会把
+  `std` 变成用户管理的普通依赖。
 - dependency source 在 `path`、`git`、`version` 三类中必须且只能声明一种。
 - 仍写有 `std = "0.1.0"` 或
   `std = { package = "nomo-lang/std", version = "0.1.0" }` 的旧 manifest
