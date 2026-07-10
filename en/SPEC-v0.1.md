@@ -394,14 +394,26 @@ v0.1 must validate:
 - Legacy manifests that still declare `std = "0.1.0"` or
   `std = { package = "nomo-lang/std", version = "0.1.0" }` may be accepted as
   compatibility input, but the declaration is ignored as a normal dependency.
-- Registry/version sources are recorded as leaf lockfile entries in v0.1; an
-  optional `registry` endpoint may be stored as source metadata. `nomo add` and
-  `nomo remove` edit these registry dependency entries in `nomo.toml`; registry
-  dependencies without an explicit endpoint remain leaf entries. A `file://`,
+- Registry/version sources without an explicit endpoint are recorded as leaf
+  lockfile entries in v0.1. An optional `registry` endpoint may be stored as
+  source metadata. `nomo add` and `nomo remove` edit these registry dependency
+  entries in `nomo.toml`; registry dependencies with an explicit endpoint load
+  their packaged manifest and participate in transitive resolution. A `file://`,
   `http://`, or `https://` registry endpoint is resolved using
-  `/api/v1/packages/<owner>/<package>/<version>/download`; the downloaded
+  `/api/v1/packages/<owner>/<package>/<version>/download`. Fresh HTTP or HTTPS
+  resolution first queries exact-version metadata from
+  `GET /api/v1/packages/<owner>/<package>/<version>` and expects `package`,
+  `version`, archive `checksum`, and `yanked` fields. The package index endpoint
+  `GET /api/v1/packages/<owner>/<package>` returns `package` and a `versions`
+  array with `version`, `checksum`, and `yanked` fields. The downloaded
   `.nomo-package` archive is unpacked into `.nomo/cache/registry/` and can
-  provide imported public API. `nomo publish --dry-run` validates a local package
+  provide imported public API. Fresh resolution rejects yanked versions and
+  verifies the archive checksum before unpacking; an existing lockfile may keep
+  using a yanked version from a verified cache or vendor directory without a
+  metadata request. File registries may optionally expose equivalent
+  `index.json` and per-version `metadata.json` files. v0.1 dependency manifests
+  continue to use exact versions; metadata does not introduce version ranges or
+  latest-version selection. `nomo publish --dry-run` validates a local package
   and prepares a deterministic package archive; `nomo publish --registry <url>`
   uploads that archive with `PUT /api/v1/packages/<owner>/<package>/<version>`
   to an HTTP or HTTPS registry endpoint. `nomo search <query> --registry <url>`
@@ -503,7 +515,8 @@ v0.1 must validate:
   git cache checkout, or registry cache entry is missing.
 - Resolved `path`, `git`, and fetched registry packages are locked with a
   `sha256:` checksum over the package `nomo.toml` and `src/` contents. Registry
-  leaves that are not fetched do not carry a checksum.
+  leaves that are not fetched do not carry a checksum. This source checksum is
+  distinct from the registry metadata checksum over the downloadable archive.
 - `nomo deps tree` reads the existing `nomo.lock` when present, verifies
   reachable locked `path` sources and matching git cache checkouts against their
   checksum, and falls back to resolving the current manifest when no lockfile

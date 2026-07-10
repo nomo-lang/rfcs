@@ -492,13 +492,23 @@ v0.1 必须校验：
 - 仍写有 `std = "0.1.0"` 或
   `std = { package = "nomo-lang/std", version = "0.1.0" }` 的旧 manifest
   可以作为兼容输入接受，但该声明会被忽略，不进入普通依赖图。
-- registry/version source 在 v0.1 作为 lockfile 叶子节点记录；可选 `registry`
-  endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove` 会编辑
-  `nomo.toml` 中的 registry dependency entry；没有显式 endpoint 的 registry dependency
-  仍作为 leaf entry。`file://`、`http://` 或 `https://` registry endpoint 使用
-  `/api/v1/packages/<owner>/<package>/<version>/download` 路径解析；下载到的
+- 没有显式 endpoint 的 registry/version source 在 v0.1 作为 lockfile 叶子节点记录。
+  可选 `registry` endpoint 可作为 source 元数据写入。`nomo add` 与 `nomo remove`
+  会编辑 `nomo.toml` 中的 registry dependency entry；有显式 endpoint 的 registry
+  dependency 会加载包内 manifest 并参与传递依赖解析。`file://`、`http://` 或
+  `https://` registry endpoint 使用
+  `/api/v1/packages/<owner>/<package>/<version>/download` 路径解析。HTTP 或 HTTPS
+  fresh resolution 会先查询
+  `GET /api/v1/packages/<owner>/<package>/<version>` exact-version metadata，响应必须包含
+  `package`、`version`、archive `checksum` 与 `yanked`。package index endpoint
+  `GET /api/v1/packages/<owner>/<package>` 返回 `package` 与 `versions` array，
+  每个 version 包含 `version`、`checksum` 和 `yanked`。下载到的
   `.nomo-package` archive 会解包到 `.nomo/cache/registry/`，并可向项目构建提供
-  imported public API。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
+  imported public API。fresh resolution 会拒绝 yanked version，并在解包前校验 archive
+  checksum；已有 lockfile 可以从已校验的 cache 或 vendor 继续使用 yanked version，
+  不重新查询 metadata。file registry 可以选择提供等价的 `index.json` 与逐 version
+  `metadata.json`。v0.1 dependency manifest 继续使用 exact version；metadata 不引入
+  version range 或 latest-version 选择。`nomo publish --dry-run` 会校验本地 package 并准备确定性的
   package archive；`nomo publish --registry <url>` 会用
   `PUT /api/v1/packages/<owner>/<package>/<version>` 把 archive 上传到 HTTP 或 HTTPS
   registry endpoint。`nomo search <query> --registry <url>` 会向 HTTP 或 HTTPS
@@ -583,7 +593,8 @@ v0.1 必须校验：
   path source、git cache checkout 或 registry cache entry 缺失时，会回退到默认 `vendor/` 目录。
 - 已解析的 `path`、`git` 与已 fetch 的 registry package 需要在 lockfile 中写入
   `sha256:` checksum；checksum 覆盖目标包 `nomo.toml` 与 `src/` 内容。没有 fetch 的
-  registry leaf 不写 checksum。
+  registry leaf 不写 checksum。该 source checksum 与 registry metadata 中覆盖下载
+  archive 的 checksum 是两个不同的校验值。
 - `nomo deps tree` 在存在 `nomo.lock` 时读取锁定依赖图，并对仍可访问的 locked
   `path` source 与匹配的 git cache checkout 校验 checksum；没有 lockfile 时再解析当前
   manifest source。缺失的 `path` source 与 git cache entry 可作为离线锁定条目继续展示。
