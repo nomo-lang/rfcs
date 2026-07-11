@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First through fourth slices implemented: the intrinsic manifest, validated source contracts, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
+| Implementation | First through fifth slices implemented: the intrinsic manifest, validated source contracts, core source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -82,6 +82,18 @@ source is included in both compiler and LSP release archives; installed binaries
 resolve it from `NOMO_STD_SOURCE_ROOT` or the archive's adjacent `std/src`
 directory. Bootstrap acceptance covers source parsing, manifest identity,
 semantic queries, documentation output, and release-package layout.
+
+### 4.5 Fifth slice: core source-defined API surface
+
+The canonical source files for `std.io`, `std.fs`, `std.path`, `std.env`,
+`std.process`, `std.time`, `std.num`, `std.math`, `std.char`, and `std.os` now
+declare their public structs, functions, signatures, and doc comments. The
+toolchain validates each source package declaration and compares its public
+top-level names with the standard import registry. Host-sensitive calls still
+lower through the existing compiler/runtime builtin implementations, preserving
+the current behavior while making source the public documentation and semantic
+surface. Numeric overload-like behavior remains a compiler intrinsic boundary
+until constrained generic interfaces can express it directly.
 
 ## 5. Alternatives
 

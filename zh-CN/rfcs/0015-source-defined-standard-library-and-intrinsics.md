@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一至四切片已落地：intrinsic 清单、经过校验的 source contract、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
+| 实现状态 | 第一至五切片已落地：intrinsic 清单、经过校验的 source contract、核心源码 API、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -75,6 +75,17 @@ type，因此它的导航符号锚定到源码，但表示仍由 runtime ABI 提
 LSP 的发行包都会携带标准库源码；安装后的 binary 优先读取
 `NOMO_STD_SOURCE_ROOT`，否则探测发行包旁边的 `std/src`。bootstrap 验收覆盖
 源码解析、manifest identity、semantic query、文档输出与发行包目录布局。
+
+### 4.5 第五切片：核心标准库源码 API surface
+
+`std.io`、`std.fs`、`std.path`、`std.env`、`std.process`、`std.time`、
+`std.num`、`std.math`、`std.char` 与 `std.os` 的 canonical source file 现在
+声明 public struct、function、signature 与 doc comment。toolchain 会校验每个
+source package declaration，并将其 public top-level name 与标准 import registry
+对照。主机相关行为继续通过现有 compiler/runtime builtin 实现 lower，在保持
+当前行为的同时让 source 成为 public documentation 与 semantic surface。数值
+重载式行为仍是 compiler intrinsic boundary，等 constrained generic interface
+可以直接表达后再进一步迁移。
 
 ## 5. 备选方案
 
