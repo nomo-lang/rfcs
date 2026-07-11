@@ -396,6 +396,12 @@ v0.1 must validate:
   for the compiler, documentation generator, and LSP. Builtin bodies may lower
   through compiler intrinsics and the native runtime during source migration;
   this does not turn `std` into a user-managed dependency.
+- The toolchain also ships `std/intrinsics.toml`. It is a read-only, schema-
+  versioned binding for identities that still require compiler/runtime support,
+  including `Option`, `Result`, and postfix `?`. Compiler and `nomo doc --std`
+  bootstrap paths validate its canonical package, source mapping, uniqueness,
+  and required bindings; malformed metadata reports `E0800`. User packages
+  cannot provide or override these bindings.
 - Exactly one dependency source among `path`, `git`, and `version`.
 - Legacy manifests that still declare `std = "0.1.0"` or
   `std = { package = "nomo-lang/std", version = "0.1.0" }` may be accepted as

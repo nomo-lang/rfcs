@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 部分前置已落地：已有 canonical `nomo-lang/std` package 与公共模块 metadata；核心类型仍由编译器/runtime 提供 |
+| 实现状态 | 第一切片已落地：已加载并校验 canonical `nomo-lang/std/intrinsics.toml`；核心类型仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -39,6 +39,14 @@
 2. `Option`/`Result` 声明和纯 Nomo 方法迁移，双实现对照测试。
 3. `string`/`Array` 公共表面迁移并冻结 runtime ABI。
 4. doc/LSP/source navigation、发行包和 bootstrap 验收。
+
+### 4.1 第一切片：intrinsic 清单
+
+第一切片新增 `std/intrinsics.toml`，记录 schema version、canonical package 身份、源码
+模块映射、binding kind、ABI 标签和必需身份。`nomo-std` 暴露解析器与校验器；compiler
+lowering 和 `nomo doc --std` 会调用校验。重复 binding、未知模块、源码映射漂移、不支持的
+kind，以及缺失 `Option`/`Result`/`?` 必需身份都会报告稳定的 `E0800`。本切片尚未迁移
+carrier 声明或 runtime lowering。
 
 ## 5. 备选方案
 

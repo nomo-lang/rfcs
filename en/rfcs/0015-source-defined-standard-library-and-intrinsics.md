@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | Prerequisites are partial: a canonical `nomo-lang/std` package and public module metadata exist, while core types still come from the compiler/runtime |
+| Implementation | First slice implemented: canonical `nomo-lang/std/intrinsics.toml` is loaded and validated; core types still come from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -39,6 +39,16 @@ Public modules are stable today, but key facts for `Option`, `Result`, `string`,
 2. Move `Option`/`Result` declarations and pure Nomo methods, with dual-path conformance tests.
 3. Move the `string`/`Array` public surface and freeze the runtime ABI.
 4. Documentation/LSP source navigation, distribution packaging, and bootstrap acceptance.
+
+### 4.1 First slice: intrinsic manifest
+
+The first implementation slice adds `std/intrinsics.toml` with schema version,
+canonical package identity, source module mapping, binding kind, ABI label, and
+required identities. `nomo-std` exposes a parser and validator; compiler
+lowering and `nomo doc --std` invoke the validator. Duplicate bindings,
+unknown modules, source mapping drift, unsupported kinds, and missing required
+`Option`/`Result`/`?` identities report stable `E0800` diagnostics. This slice
+does not move carrier declarations or runtime lowering yet.
 
 ## 5. Alternatives
 

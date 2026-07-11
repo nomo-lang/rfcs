@@ -493,6 +493,10 @@ v0.1 必须校验：
   registry 判定可接受的 public import path。在 public implementation 迁移到 Nomo source
   期间，builtin body 可以继续通过 compiler intrinsic 与 native runtime lower；这不会把
   `std` 变成用户管理的普通依赖。
+- toolchain 同时携带 `std/intrinsics.toml`。它是只读、带 schema version 的身份绑定清单，
+  记录仍需 compiler/runtime 支持的 `Option`、`Result` 与 postfix `?` 等身份。compiler
+  与 `nomo doc --std` bootstrap 路径会校验 canonical package、源码映射、唯一性和必需
+  binding；元数据损坏报告 `E0800`。用户 package 不能提供或覆盖这些 binding。
 - dependency source 在 `path`、`git`、`version` 三类中必须且只能声明一种。
 - 仍写有 `std = "0.1.0"` 或
   `std = { package = "nomo-lang/std", version = "0.1.0" }` 的旧 manifest
