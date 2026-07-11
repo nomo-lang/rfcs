@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First through seventh slices implemented: the intrinsic manifest, validated source contracts, core, extension, network, and HTTP source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
+| Implementation | First through eighth slices implemented: the intrinsic manifest, validated source contracts, core, extension, network, HTTP, and FFI source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -115,6 +115,15 @@ runtime remains responsible for sockets, HTTP parsing, and host errors; these so
 files define the public signatures and documentation. Callers can combine `defer`
 with postfix `?` to close accepted exchanges, servers, and other handles on both
 normal returns and propagation paths.
+
+### 4.8 Eighth slice: FFI source contract
+
+`std/src/ffi.nomo` now declares the public `CString` and `Opaque` source surface
+and documents `CString.from_string`. The compiler still owns their special value
+representations, C ABI lowering, ownership checks, and restrictions on foreign
+returns or pointer operations. This source contract is therefore intentionally a
+semantic and documentation anchor, not a replacement for the compiler FFI
+implementation.
 
 ## 5. Alternatives
 
