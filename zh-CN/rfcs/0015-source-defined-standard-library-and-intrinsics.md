@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一至五切片已落地：intrinsic 清单、经过校验的 source contract、核心源码 API、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
+| 实现状态 | 第一至六切片已落地：intrinsic 清单、经过校验的 source contract、核心与扩展源码 API、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -86,6 +86,15 @@ source package declaration，并将其 public top-level name 与标准 import re
 当前行为的同时让 source 成为 public documentation 与 semantic surface。数值
 重载式行为仍是 compiler intrinsic boundary，等 constrained generic interface
 可以直接表达后再进一步迁移。
+
+### 4.6 第六切片：扩展标准库源码 API surface
+
+source package 现在也声明 `std.collections`、`std.hash`、`std.crypto`、
+`std.json`、`std.regex`、`std.debug`、`std.log` 与 `std.testing`。public
+struct、function、contextual `debug.panic` 及文档都会从 source 解析，并与
+import registry 对照校验；主机/runtime 行为继续使用现有 builtin lowering。
+由于 `panic` 同时是表达式关键字和标准库必须提供的 API 名称，parser 允许
+它作为 contextual function declaration name。
 
 ## 5. 备选方案
 

@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First through fifth slices implemented: the intrinsic manifest, validated source contracts, core source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
+| Implementation | First through sixth slices implemented: the intrinsic manifest, validated source contracts, core and extension source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -94,6 +94,16 @@ lower through the existing compiler/runtime builtin implementations, preserving
 the current behavior while making source the public documentation and semantic
 surface. Numeric overload-like behavior remains a compiler intrinsic boundary
 until constrained generic interfaces can express it directly.
+
+### 4.6 Sixth slice: extension source-defined API surface
+
+The source package now also declares `std.collections`, `std.hash`, `std.crypto`,
+`std.json`, `std.regex`, `std.debug`, `std.log`, and `std.testing`. Public
+structs, functions, contextual `debug.panic`, and documentation are parsed from
+source and checked against the import registry. Their host/runtime behavior
+continues to use the existing builtin lowerings. `panic` is accepted as a
+contextual function declaration name because it is both an expression keyword
+and a required standard-library API name.
 
 ## 5. Alternatives
 
