@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一、二切片已落地：intrinsic 清单与经过校验的 `Option`/`Result` source contract 已存在；carrier ABI 仍由编译器/runtime 提供 |
+| 实现状态 | 第一至三切片已落地：intrinsic 清单与经过校验的 `Option`/`Result`、`Array`、`string` source contract 已存在；表示相关 ABI 仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -55,6 +55,16 @@ carrier 声明或 runtime lowering。
 module 解析并 type-check；compiler 测试将 source 形状与普通项目使用的兼容 carrier 注入
 进行对照。由于当前语言还没有 function-value type，`map`、`map_err`、`and_then` 继续由
 intrinsic 提供。
+
+### 4.3 第三切片：`Array` 与 `string` source surface
+
+`std/src/array.nomo` 与 `std/src/string.nomo` 现在声明完整的 v0.1 public
+helper surface。其 body 将表示相关操作委托给现有 compiler lowering，因此迁移期间
+source signature 与生成 C 行为保持一致。intrinsic 清单要求 canonical `Array` 与
+`string` layout binding，并固定当前 ABI label：`array-header` 使用带类型的
+`len`/`cap`/`data` 存储、非原子引用计数和写入时 COW；`string-header` 使用不可变
+`data` 与非原子引用计数 ownership。source parse、type-check、manifest identity 与
+标准库文档都覆盖这一契约。
 
 ## 5. 备选方案
 

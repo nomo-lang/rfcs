@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First and second slices implemented: the intrinsic manifest and the validated `Option`/`Result` source contract are present; carrier ABI still comes from the compiler/runtime |
+| Implementation | First through third slices implemented: the intrinsic manifest and validated source contracts for `Option`/`Result`, `Array`, and `string` are present; representation-sensitive ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -58,6 +58,18 @@ toolchain parses and type-checks those files as library modules, and compiler
 tests compare their shapes with the compatibility carrier injection used by
 normal projects. `map`, `map_err`, and `and_then` stay intrinsic-backed because
 the current language has no function-value type.
+
+### 4.3 Third slice: `Array` and `string` source surface
+
+`std/src/array.nomo` and `std/src/string.nomo` now declare the complete v0.1
+public helper surface. Their bodies delegate representation-sensitive work to
+the existing compiler lowerings, so source signatures and generated C behavior
+remain aligned during migration. The intrinsic manifest requires the canonical
+`Array` and `string` layout bindings and pins the current ABI labels:
+`array-header` uses typed `len`/`cap`/`data` storage with non-atomic reference
+counting and copy-on-write on writes; `string-header` uses immutable `data` plus
+non-atomic reference-counted ownership. Source parsing, type checking, manifest
+identity, and standard-library documentation all cover this contract.
 
 ## 5. Alternatives
 
