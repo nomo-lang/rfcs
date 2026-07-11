@@ -8,17 +8,18 @@
 | --- | --- |
 | Number | 0003 |
 | Title | The v0.1 runtime cost and degradation strategy of value semantics + reference counting + copy-on-write |
-| Status | Draft |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
+| Implementation | Landed: immutable `string` sharing uses non-atomic RC; `Array<T>` uses non-atomic RC+COW with retain/release, early-cleanup, and write-separation coverage |
 | Related topics | memory model, `string`, `Array<T>`, ARC, COW, C backend |
-| Related RFCs | [RFC 0004](./0004-mutable-borrow-uniqueness.md) (mutable-borrow uniqueness), [RFC 0006](./0006-option-result-lang-items.md) (lang items) |
+| Related RFCs | [RFC 0004](./0004-mutable-borrow-uniqueness.md) (mutable-borrow uniqueness), [RFC 0006](./0006-option-result-lang-items.md) (compiler-owned identities) |
 
 ---
 
 ## 1. Summary
 
-The current memory-model specification prescribes "value semantics + reference counting (ARC) + copy-on-write (COW)" for both `string` and `Array<T>`, layered on top of `mut`-borrow uniqueness. This is the part of the v0.1 runtime with the highest implementation complexity and the greatest risk of slipping: it requires correctly handling reference-count increments/decrements, COW trigger determination, the interaction with the C backend's value-passing semantics, and the trade-off of "whether ARC needs to be atomic" while concurrency does not yet exist. This RFC assesses the implementation cost and discusses whether v0.1 can degrade to a simpler strategy. It leans toward "using non-atomic reference counting + COW in v0.1, but confining COW to a few explicit write operations, and allowing `string` to be implemented first as immutable sharing (no COW, since it is inherently immutable)", remaining Draft.
+This RFC accepts a divided memory model: `string` is an immutable shared value using non-atomic reference counting and therefore needs no COW; `Array<T>` uses non-atomic reference counting and copy-on-write, with separation triggered only by write APIs. The C backend implements retain/release, `make_unique`, managed-value cleanup on early exits, and nested lifecycles, covered by codegen, CLI COW, and ASan smoke tests.
 
 ---
 
@@ -62,7 +63,7 @@ If this part of the workload is underestimated, it is most likely to drag down v
 - **Cost**: highest. It must fully cover move semantics, early returns, and `defer` order, and the test matrix is large.
 - **Risk**: most likely to become the long tail of v0.1.
 
-### 4.2 Option B: Divide and conquer (preferred)
+### 4.2 Option B: Divide and conquer (accepted)
 
 - **`string`**: implemented as **immutable sharing + reference counting, no COW**. Since it is immutable, it is never written in place, eliminating all COW complexity; concatenation (8.5 `concat`) always allocates a new string.
 - **`Array<T>`**: keep **reference counting + COW**, but converge the COW trigger surface to explicit write APIs (`push`/`set`), calling `make_unique` before a write.
@@ -87,7 +88,7 @@ If this part of the workload is underestimated, it is most likely to drag down v
 | Option | Approach | Advantages | Disadvantages |
 | --- | --- | --- | --- |
 | A Full ARC+COW | Literally implement both types | Fully matches the current memory model | Highest cost, most likely to slip |
-| B Divide and conquer (preferred) | string no COW, Array has COW, non-atomic | Cut the pseudo-requirement, focus on the real complexity, semantics unchanged | Still need to get Array COW right |
+| B Divide and conquer (accepted) | string no COW, Array has COW, non-atomic | Cut the pseudo-requirement, focus on the real complexity, semantics unchanged | Still need to get Array COW right |
 | C Pure-copy degradation | Full deep copy | Simplest and safest | Violates performance and memory-model promises, poor performance |
 | D Pure RC no COW | Shared mutable | Simple implementation | Breaks value semantics, unusable for mutable Array |
 
@@ -97,26 +98,25 @@ If this part of the workload is underestimated, it is most likely to drag down v
 
 - Option B still requires implementing `Array<T>`'s COW and release-point insertion, which is the real difficulty; it needs ample Mutability/Codegen tests.
 - The non-atomic count is a one-time technical debt: when v0.3 introduces concurrency, it must switch to atomic or change strategy, which must be explicitly marked in the runtime source and the RFC to avoid being misused across threads.
-- If compile-time borrow uniqueness ([RFC 0004](./0004-mutable-borrow-uniqueness.md)) is strong enough, in theory some writes could "modify in place without checking refcount"; but if v0.1 borrow checking is weak (see the lean of [RFC 0004](./0004-mutable-borrow-uniqueness.md)), a runtime refcount backstop is still needed, and the relationship between the two must be locked down across the two RFCs.
+- Compile-time borrow uniqueness ([RFC 0004](./0004-mutable-borrow-uniqueness.md)) covers path conflicts only within one call expression and cannot prove that every shared value is unique, so write APIs still require the runtime refcount and `make_unique` backstop.
 
 ---
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: Option B. `string` takes "immutable sharing + non-atomic RC"; `Array<T>` takes "non-atomic RC + COW (triggered only by write APIs such as `push`/`set`)".
-- **Recommended current-specification revision**: correct the "ARC+COW" in the current string design to "`string` is reference-counted sharing only (immutable, no COW needed)", to avoid misleading implementers.
-- **Keep a fallback gate**: if `Array<T>` COW is still unstable before release, allow temporarily switching to Option C (pure copy) to preserve "complete pipeline", with COW as a patch following close behind.
-- **Acceptance impact**: the acceptance test matrix needs to add runtime smoke + memory checks (e.g. ASan) for "COW trigger (write at refcount>1)" and "release points (`defer`/`?` early exit)".
+- **Landed in v0.1**: Option B. `string` uses immutable sharing with non-atomic RC; `Array<T>` uses non-atomic RC+COW triggered only by write APIs.
+- **Adopted by the specification**: `string` is reference-counted sharing only, while `Array<T>` preserves value semantics through COW.
+- **Acceptance coverage exists**: COW separation, retain/release, cleanup across `defer`/`?`/`return`, and an ASan smoke test when available.
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward **Option B**: distinguish `string` (immutable, COW-free) from `Array<T>` (RC+COW), use non-atomic counting uniformly, and treat pure copying (Option C) as the pre-release emergency fallback. This significantly reduces the implementation and slippage risk of the v0.1 runtime without weakening the external value semantics. Remains Draft.
+Accept **Option B**: distinguish `string` (immutable, RC, COW-free) from `Array<T>` (RC+COW), using non-atomic counting throughout. Pure copying is no longer the current implementation path; any future representation change must preserve the same public value semantics and pass the existing lifecycle and COW tests.
 
 ---
 
-## 9. Open Questions
+## 9. Follow-up Questions
 
 - Does the `Array<T>` runtime header layout (`refcount/len/cap`) and the C backend ABI need to be fixed now? (4.4 mentions the Result layout can be optimized later; the same applies to arrays.)
 - How much runtime refcount checking can compile-time borrow uniqueness eliminate? This depends on the conclusion of [RFC 0004](./0004-mutable-borrow-uniqueness.md).
@@ -127,4 +127,4 @@ Lean toward **Option B**: distinguish `string` (immutable, COW-free) from `Array
 ## 10. References
 
 - The current performance promise, memory model, `std.array`, `std.string`, C backend principles.
-- [RFC 0004](./0004-mutable-borrow-uniqueness.md) (the difficulty of mutable-borrow uniqueness checking), [RFC 0006](./0006-option-result-lang-items.md) (lang items and runtime awareness).
+- [RFC 0004](./0004-mutable-borrow-uniqueness.md) (the difficulty of mutable-borrow uniqueness checking), [RFC 0006](./0006-option-result-lang-items.md) (compiler-owned identities and runtime awareness).

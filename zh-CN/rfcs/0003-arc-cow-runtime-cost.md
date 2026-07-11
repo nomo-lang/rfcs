@@ -8,17 +8,18 @@
 | --- | --- |
 | 编号 | 0003 |
 | 标题 | 值语义 + 引用计数 + 写时复制的 v0.1 运行时成本与退化策略 |
-| 状态 | Draft（待决） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-06-18 |
+| 实现状态 | 已落地：`string` 使用非原子 RC 的不可变共享；`Array<T>` 使用非原子 RC+COW，并覆盖 retain/release、早退清理与写时分离测试 |
 | 关联主题 | 内存模型、`string`、`Array<T>`、ARC、COW、C 后端 |
-| 关联 RFC | [RFC 0004](./0004-mutable-borrow-uniqueness.md)（可变借用唯一性）、[RFC 0006](./0006-option-result-lang-items.md)（lang item） |
+| 关联 RFC | [RFC 0004](./0004-mutable-borrow-uniqueness.md)（可变借用唯一性）、[RFC 0006](./0006-option-result-lang-items.md)（编译器内建身份） |
 
 ---
 
 ## 1. 摘要
 
-当前内存模型规格 对 `string` 和 `Array<T>` 都规定「值语义 + 引用计数（ARC）+ 写时复制（COW）」，并叠加 `mut` 借用唯一性。这是 v0.1 运行时中实现复杂度最高、最易超期的部分：需要正确处理引用计数增减、COW 触发判定、与 C 后端值传递语义的交互，以及并发尚未存在时「ARC 是否需要原子」的取舍。本 RFC 评估实现成本，并讨论 v0.1 是否可退化为更简单策略。倾向于「v0.1 用非原子引用计数 + COW，但把 COW 限定在少数明确写操作上，并允许把 `string` 先实现为不可变共享（无 COW，因其本就不可变）」，保持 Draft。
+本 RFC 接受「分而治之」的内存模型：`string` 是不可变共享值，使用非原子引用计数且无需 COW；`Array<T>` 使用非原子引用计数与写时复制，只有写 API 触发分离。当前 C 后端已实现 retain/release、`make_unique`、受管值早退清理与嵌套生命周期处理，并有 codegen、CLI COW 与 ASan smoke 覆盖。
 
 ---
 
@@ -62,7 +63,7 @@
 - **成本**：最高。需完整覆盖移动语义、提前返回、`defer` 顺序，测试矩阵大。
 - **风险**：最可能成为 v0.1 长尾。
 
-### 4.2 方案 B：分而治之（倾向）
+### 4.2 方案 B：分而治之（已接受）
 
 - **`string`**：实现为**不可变共享 + 引用计数，无 COW**。因不可变，永不就地写，省掉 COW 全部复杂度；拼接（8.5 `concat`）始终分配新串。
 - **`Array<T>`**：保留 **引用计数 + COW**，但把 COW 触发面收敛到明确的写 API（`push`/`set`），写前 `make_unique`。
@@ -87,7 +88,7 @@
 | 方案 | 做法 | 优点 | 缺点 |
 | --- | --- | --- | --- |
 | A 完整 ARC+COW | 字面实现两类型 | 完全符合当前内存模型 | 成本最高、最易超期 |
-| B 分而治之（倾向） | string 无 COW、Array 有 COW、非原子 | 砍掉伪需求、聚焦真复杂点、语义不变 | 仍需把 Array COW 做对 |
+| B 分而治之（已接受） | string 无 COW、Array 有 COW、非原子 | 砍掉伪需求、聚焦真复杂点、语义不变 | 仍需把 Array COW 做对 |
 | C 纯拷贝退化 | 全深拷贝 | 最简单最安全 | 违背性能与内存模型承诺、性能差 |
 | D 纯 RC 无 COW | 共享可变 | 实现简单 | 破坏值语义，不可用于可变 Array |
 
@@ -97,26 +98,25 @@
 
 - 方案 B 仍要实现 `Array<T>` 的 COW 与 release 点插入，这是真正的难点；需要充分的 Mutability/Codegen 测试。
 - 非原子计数是一次性技术债：v0.3 引入并发时必须切原子或换策略，需在运行时源码与 RFC 中显式标注，避免被误用于跨线程。
-- 编译期借用唯一性（[RFC 0004](./0004-mutable-borrow-uniqueness.md)）若足够强，理论上某些写可以「就地改而不查 refcount」；但 v0.1 借用检查若较弱（见 [RFC 0004](./0004-mutable-borrow-uniqueness.md) 倾向），仍需运行期 refcount 兜底，二者关系要在两篇 RFC 间锁定。
+- 编译期借用唯一性（[RFC 0004](./0004-mutable-borrow-uniqueness.md)）只覆盖单个调用表达式内的路径冲突，不能证明所有共享值唯一，因此写 API 仍必须用运行期 refcount 与 `make_unique` 兜底。
 
 ---
 
 ## 7. 对 v0.1 范围的影响
 
-- **建议 v0.1 落地**：方案 B。`string` 走「不可变共享 + 非原子 RC」；`Array<T>` 走「非原子 RC + COW（仅 `push`/`set` 等写 API 触发）」。
-- **建议当前规格修订**：把当前字符串设计中的「ARC+COW」更正为「`string` 仅引用计数共享（不可变，无需 COW）」，避免误导实现者。
-- **保留回退闸门**：若 `Array<T>` COW 在发布前仍不稳定，允许临时切换到方案 C（纯拷贝）保住「链路完整」，COW 作为紧随其后的补丁。
-- **验收影响**：验收测试矩阵需新增「COW 触发（refcount>1 写）」「release 点（`defer`/`?` 早退）」的运行时 smoke + 内存检查（如 ASan）。
+- **已在 v0.1 落地**：方案 B。`string` 走「不可变共享 + 非原子 RC」；`Array<T>` 走「非原子 RC + COW（仅写 API 触发）」。
+- **规格已采用**：`string` 仅引用计数共享（不可变，无需 COW），`Array<T>` 保持值语义 COW。
+- **验收已覆盖**：COW 分离、retain/release、`defer`/`?`/`return` 早退清理以及可用时的 ASan smoke。
 
 ---
 
-## 8. 倾向性建议（保持 Draft，不拍板）
+## 8. 决议
 
-倾向 **方案 B**：区分 `string`（不可变，免 COW）与 `Array<T>`（RC+COW），统一用非原子计数，并把纯拷贝（方案 C）作为发布前的应急回退。这样在不削弱对外值语义的前提下，显著降低 v0.1 运行时的实现与超期风险。保持 Draft。
+接受 **方案 B**：区分 `string`（不可变、RC、免 COW）与 `Array<T>`（RC+COW），统一使用非原子计数。纯拷贝不再作为当前实现路径；若未来更换表示，必须维持相同的对外值语义并通过现有生命周期与 COW 测试。
 
 ---
 
-## 9. 未决问题
+## 9. 后续问题
 
 - `Array<T>` 的运行时头部布局（`refcount/len/cap`）与 C 后端 ABI 是否需要现在固定？（4.4 提到 Result 布局后续可优化，数组同理。）
 - 编译期借用唯一性能消除多少运行期 refcount 检查？依赖 [RFC 0004](./0004-mutable-borrow-uniqueness.md) 的结论。
@@ -127,4 +127,4 @@
 ## 10. 参考
 
 - 当前性能承诺、内存模型、`std.array`、`std.string`、C 后端原则。
-- [RFC 0004](./0004-mutable-borrow-uniqueness.md)（可变借用唯一性检查难度）、[RFC 0006](./0006-option-result-lang-items.md)（lang item 与运行时认知）。
+- [RFC 0004](./0004-mutable-borrow-uniqueness.md)（可变借用唯一性检查难度）、[RFC 0006](./0006-option-result-lang-items.md)（编译器内建身份与运行时认知）。

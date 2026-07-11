@@ -11,8 +11,9 @@
 | 状态 | Accepted（已接受） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-06-18 |
+| 实现状态 | 已落地：`Result`/`Option` 后缀 `?`、同 carrier 早退及 `std.result.map_err(named_converter)?` 均有编译器与运行测试覆盖 |
 | 关联主题 | 错误处理、`Result`、`?` 传播、错误转换、C 后端 |
-| 关联 RFC | [RFC 0006](./0006-option-result-lang-items.md)（Option/Result 作为 lang item） |
+| 关联 RFC | [RFC 0006](./0006-option-result-lang-items.md)（Option/Result 的编译器内建身份） |
 
 ---
 
@@ -49,7 +50,7 @@
 > v0.1 不提供匿名错误联合体，不自动合并错误类型。跨层错误转换必须显式完成。
 > 自动错误联合体可作为后续 RFC，不进入 v0.1。
 
-待决问题列表中的错误转换议题亦把「`Result` 错误转换是否引入 `From` 风格 trait」列为待决问题。
+早期错误转换议题还提出过「`Result` 错误转换是否引入 `From` 风格 trait」；本 RFC 将其明确推迟到后续版本。
 
 ### 3.2 问题分析
 
@@ -147,7 +148,7 @@ fn read_config(path: string) -> Result<string, AppError> {
 ## 7. 对 v0.1 范围的影响
 
 - **v0.1 落地**：方案 B 的 `std.result.map_err`，先支持具名 converter 函数，并把 `.map_err(...)?` 记录为跨层转换后的推荐传播方式。
-- **明确推迟**：方案 A（`From` 风格）与方案 C（匿名联合体）留作 v0.2+ RFC，与待决问题列表中的错误转换议题绑定。
+- **明确推迟**：方案 A（`From` 风格）与方案 C（匿名联合体）留作 v0.2+ 的独立 RFC。
 - **验收影响**：验收矩阵包含 `map_err` + `?` 跨层传播示例与测试。
 
 ---
@@ -169,5 +170,5 @@ fn read_config(path: string) -> Result<string, AppError> {
 ## 10. 参考
 
 - 当前错误处理、`Result<T, E>`、`?` 传播、C 后端表示、文件读取示例。
-- 错误转换待决议题（`From` 风格 trait 待决）。
-- [RFC 0006](./0006-option-result-lang-items.md)（`Option`/`Result` 作为 lang item 的耦合）。
+- 后续错误转换议题（`From` 风格 trait）。
+- [RFC 0006](./0006-option-result-lang-items.md)（`Option`/`Result` 的编译器内建身份）。

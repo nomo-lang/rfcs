@@ -8,7 +8,7 @@
 
 Nomo v0.1 的目标不是一次性设计一门完整的大语言，而是交付一条可以被实现、测试和讨论持续校正的 Stage 0 闭环：从 `.nomo` 源码出发，经前端检查、类型与可变性分析、C99 转译、系统 C 编译器链接，最终运行可执行程序。
 
-这份白皮书是 `rfcs` 仓库内的总览文档。它说明 v0.1 的设计边界、工程取舍和 RFC 决策轴；详细的可执行规格以 [中文规格基线](zh-CN/SPEC-v0.1.md) 和 [English specification baseline](en/SPEC-v0.1.md) 为准，具体待决问题以各 RFC 为准。
+这份白皮书是 `rfcs` 仓库内的总览文档。它说明 v0.1 的设计边界、工程取舍和已经落地的 RFC 决议；详细的可执行规格以 [中文规格基线](zh-CN/SPEC-v0.1.md) 和 [English specification baseline](en/SPEC-v0.1.md) 为准，后续演进问题记录在各 RFC 的「后续问题」中。
 
 ### 1. 设计目标
 
@@ -19,7 +19,7 @@ Nomo v0.1 追求的是“最小完整性”：
 - 错误与诊断可被工具消费：除人类可读输出外，诊断还应有稳定 JSON 结构。
 - 设计演进可追踪：所有需要正式决策的争议进入 RFC，而不是散落在临时讨论里。
 
-v0.1 明确不做协程、GPU、WebAssembly、裸机、自举、LLVM/Cranelift 原生后端、完整 trait/interface 约束系统或完整 lifetime 系统。它先把“语言规格、编译器实现、标准库、示例、测试、RFC 决策”串成一条能跑通的线。
+v0.1 明确不做协程、GPU、WebAssembly、裸机、自举、LLVM/Cranelift 原生后端、完整 Rust 风格 trait/interface 系统或完整 lifetime 系统；当前只提供单 interface bound 的静态约束。它先把“语言规格、编译器实现、标准库、示例、测试、RFC 决策”串成一条能跑通的线。
 
 ### 2. 语言模型
 
@@ -27,7 +27,7 @@ Nomo 采用显式包与导入模型，符号来源必须可追踪；变量默认
 
 类型系统在 v0.1 覆盖基础类型、结构体、枚举、泛型函数与泛型类型。`Result<T, E>` 表达业务失败，`Option<T>` 表达可能缺值；程序缺陷由 `panic` 处理，不引入异常展开。
 
-`match` 默认要求穷尽所有枚举变体，通配分支、嵌套解构、非限定变体等人体工学问题由 RFC 分层讨论，避免在 v0.1 初期把便利性和可解释性混在一起。
+`match` 要求穷尽所有枚举变体并继续禁用 `_` 通配分支；`let else`、`if let` 与后缀 `?` 用于压平常见嵌套。核心 prelude 允许非限定 `Some`/`None`/`Ok`/`Err`，用户枚举仍保持限定形式。
 
 ### 3. 编译器与运行时
 
@@ -52,32 +52,40 @@ v0.1 的编译链路面向 C99：
 
 ### 4. 标准库边界
 
-v0.1 标准库只覆盖闭环必需能力：
+v0.1 从闭环必需能力起步，当前实现已经覆盖：
 
-- `std.io`：输出。
-- `std.fs`：最小文件读写与错误类型。
-- `std.env`：环境变量读取。
+- `std.io`、`std.fs`、`std.env`：输入输出、文件系统与进程环境。
 - `std.result` / `std.option`：错误与缺值建模。
-- `std.array`：动态数组。
-- `std.string`：字符串基础操作。
+- `std.array` / `std.string` / `std.collections`：托管容器与字符串。
+- `std.path`、`std.process`、`std.time`、`std.math`、`std.num`：系统与数值 helper。
+- `std.json`、`std.net`、`std.http`、`std.regex`、`std.hash`、`std.crypto`：数据、网络与常用运行时能力。
+- `std.testing`、`std.debug`、`std.log`、`std.ffi`：测试、诊断、日志与原生边界。
 
-标准库不是“语法糖堆放处”。`Option`、`Result`、`Array`、`string` 这类类型同时影响类型检查、穷尽性、C 后端和运行时布局，因此哪些内容保持普通库类型、哪些内容成为编译器可识别的 lang item，需要由 RFC 明确。
+标准库不是“语法糖堆放处”。`Option`、`Result`、`Array`、`string` 同时影响类型检查、穷尽性、C 后端和运行时布局。当前 `Option`/`Result` 采用编译器内建 carrier 身份，`std.option`/`std.result` 保持公共模块契约；v0.1 不依赖 `#[lang]` 属性或可独立编译的标准库源码层。
 
-### 5. RFC 决策轴
+### 5. 已接受的 RFC 决议
 
-当前 v0.1 的核心待决问题集中在七条线上：
+当前十三篇 RFC 均已按实现事实完成决议，并同步进入规格基线：
 
-| RFC | 主题 | 决策轴 |
+| RFC | 主题 | 已接受结论 |
 | --- | --- | --- |
-| [0001](zh-CN/rfcs/0001-error-propagation-and-conversion.md) | 错误传播与转换 | `?` 是否需要显式 `map_err` 或后续自动转换机制 |
-| [0002](zh-CN/rfcs/0002-match-wildcard-and-nesting.md) | `match` 通配与嵌套 | 穷尽性与人体工学如何平衡 |
-| [0003](zh-CN/rfcs/0003-arc-cow-runtime-cost.md) | ARC/COW 成本 | `string` 与 `Array<T>` 的运行时策略如何收敛 |
-| [0004](zh-CN/rfcs/0004-mutable-borrow-uniqueness.md) | 可变借用唯一性 | 不引入 lifetime 的前提下做到多强的别名检查 |
-| [0005](zh-CN/rfcs/0005-newline-sensitivity-and-dot-resolution.md) | 换行与点消解 | 显著换行和 `.` 统一访问如何落地 |
-| [0006](zh-CN/rfcs/0006-option-result-lang-items.md) | `Option`/`Result` lang item | 标准库定义与编译器认知如何解耦又对齐 |
-| [0007](zh-CN/rfcs/0007-unqualified-variant-access.md) | 非限定枚举变体 | `Ok`/`Err`/`Some`/`None` 是否进入 prelude |
+| [0001](zh-CN/rfcs/0001-error-propagation-and-conversion.md) | 错误传播与转换 | `?` 保持同 carrier 传播；跨层转换显式使用 `map_err(named_converter)?`。 |
+| [0002](zh-CN/rfcs/0002-match-wildcard-and-nesting.md) | `match` 通配与嵌套 | 禁用 `_`，提供 `let else`、`if let` 与 Option `?`。 |
+| [0003](zh-CN/rfcs/0003-arc-cow-runtime-cost.md) | ARC/COW 成本 | `string` 使用不可变 RC；`Array<T>` 使用非原子 RC+COW。 |
+| [0004](zh-CN/rfcs/0004-mutable-borrow-uniqueness.md) | 可变借用唯一性 | 借用限定为单调用表达式并检查路径冲突，不引入 lifetime。 |
+| [0005](zh-CN/rfcs/0005-newline-sensitivity-and-dot-resolution.md) | 换行与点消解 | 接受显著换行、续行锚点与统一点链的名称解析分派。 |
+| [0006](zh-CN/rfcs/0006-option-result-lang-items.md) | `Option`/`Result` 内建身份 | 编译器内建 carrier 身份，`std.*` 保持公共模块契约。 |
+| [0007](zh-CN/rfcs/0007-unqualified-variant-access.md) | 非限定枚举变体 | 仅核心四个变体进入 prelude，局部符号优先，限定写法兼容。 |
+| [0008](zh-CN/rfcs/0008-canonical-package-identity-and-aliases.md) | 包身份与 alias | canonical id、局部 import alias 与物理 source 分层。 |
+| [0009](zh-CN/rfcs/0009-reproducible-workspace-and-package-graphs.md) | 可复现依赖图 | 三层 typed graph、root lockfile、checksum 与 offline/vendor 契约。 |
+| [0010](zh-CN/rfcs/0010-constrained-generics-and-static-interface-dispatch.md) | 受约束泛型 | 单 interface bound、显式 concrete type argument 与静态分派。 |
+| [0011](zh-CN/rfcs/0011-c-ffi-safety-and-link-boundary.md) | C FFI 边界 | call-site unsafe、CString/Opaque 与 package linker metadata。 |
+| [0012](zh-CN/rfcs/0012-shared-semantic-identities-and-verified-rename.md) | 共享语义查询 | compiler-owned declaration/member identity 与重检 rename。 |
+| [0013](zh-CN/rfcs/0013-registry-protocol-and-package-integrity.md) | Registry 协议 | exact version、metadata/checksum、认证、yank 与 verified HTTPS。 |
 
-这些 RFC 不替代规格基线。它们用于记录争议、备选方案、倾向建议和状态流转；一旦 RFC 被接受，对应变更应同步进入规格基线和实现。
+这些 RFC 不替代规格基线。它们记录原始问题、备选方案、最终决议、实现状态与后续问题；规格基线描述当前对外契约。
+
+下一阶段另有六篇实现 RFC 保持 `Proposed`：[0014](zh-CN/rfcs/0014-semver-resolution-and-conflict-explanations.md) 版本求解、[0015](zh-CN/rfcs/0015-source-defined-standard-library-and-intrinsics.md) 标准库源码化、[0016](zh-CN/rfcs/0016-incremental-semantic-graph-and-cache.md) 增量语义、[0017](zh-CN/rfcs/0017-target-triples-and-cross-compilation.md) 交叉编译、[0018](zh-CN/rfcs/0018-package-signing-provenance-and-transparency.md) 包签名与透明日志，以及 [0019](zh-CN/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) 类型化 FFI。它们描述需要实现的方向，不代表当前代码已经支持。
 
 ### 6. 成立性判断
 
@@ -88,7 +96,7 @@ v0.1 标准库只覆盖闭环必需能力：
 - `?` 的错误类型转换如果没有最小方案，会削弱错误处理的人体工学。
 - `Option`/`Result` 的标准库身份与编译器内建认知需要稳定锚点。
 
-因此，v0.1 的合理推进方式是：先保住 check/build/run 闭环和规格-测试一致性，再逐个接受或推迟 RFC 中的争议点。只要 RFC 决策能持续回写规格与实现，这份架构可以作为一个小而真实的语言起点。
+因此，v0.1 接下来的重点不是重复讨论已经落地的决议，而是保持 check/build/run 闭环、规格、测试、诊断文档和编辑器语义一致，并完成发布稳定化。
 
 ---
 
@@ -96,7 +104,7 @@ v0.1 标准库只覆盖闭环必需能力：
 
 Nomo v0.1 is not an attempt to design a complete large language in one step. Its goal is to deliver an implementable, testable, and reviewable Stage 0 loop: `.nomo` source goes through frontend checks, type and mutability analysis, C99 transpilation, system C compilation, and execution.
 
-This whitepaper is the repository-level overview for the `rfcs` repository. It describes the v0.1 boundary, engineering trade-offs, and RFC decision axes. The detailed executable baseline is maintained in the [Chinese specification baseline](zh-CN/SPEC-v0.1.md) and [English specification baseline](en/SPEC-v0.1.md); each pending design decision is tracked by its RFC.
+This whitepaper is the repository-level overview for the `rfcs` repository. It describes the v0.1 boundary, engineering trade-offs, and implemented RFC decisions. The detailed executable baseline is maintained in the [Chinese specification baseline](zh-CN/SPEC-v0.1.md) and [English specification baseline](en/SPEC-v0.1.md); future evolution is tracked in each RFC's follow-up questions.
 
 ### 1. Design Goals
 
@@ -107,7 +115,7 @@ Nomo v0.1 optimizes for minimal completeness:
 - Diagnostics are tool-friendly: stable JSON diagnostics are required alongside human-readable output.
 - Design evolution is traceable: formal decisions live in RFCs instead of scattered temporary discussions.
 
-v0.1 explicitly excludes coroutines, GPU targets, WebAssembly, bare metal, self-hosting, LLVM/Cranelift native backends, a full trait/interface constraint system, and a full lifetime system. It first connects specification, implementation, standard library, examples, tests, and RFC decisions into one working loop.
+v0.1 explicitly excludes coroutines, GPU targets, WebAssembly, bare metal, self-hosting, LLVM/Cranelift native backends, a full Rust-style trait/interface system, and a full lifetime system; the current model supports one static interface bound per type parameter. It first connects specification, implementation, standard library, examples, tests, and RFC decisions into one working loop.
 
 ### 2. Language Model
 
@@ -115,7 +123,7 @@ Nomo uses explicit packages and imports, and every symbol origin must be traceab
 
 The v0.1 type system covers basic types, structs, enums, generic functions, and generic types. `Result<T, E>` represents business failure, `Option<T>` represents absence, and `panic` handles program defects. Exception unwinding is not part of v0.1.
 
-`match` is exhaustive by default. Wildcard arms, nested destructuring, and unqualified variants are discussed separately through RFCs so that ergonomics and explainability remain distinguishable.
+`match` is exhaustive and keeps `_` wildcard arms disabled. `let else`, `if let`, and postfix `?` flatten common nesting. The core prelude permits unqualified `Some`/`None`/`Ok`/`Err`, while user enums remain qualified.
 
 ### 3. Compiler and Runtime
 
@@ -140,32 +148,40 @@ The user-facing memory model is value semantics. Pure values use C value passing
 
 ### 4. Standard Library Boundary
 
-The v0.1 standard library only covers what the closed loop needs:
+The v0.1 standard library started with the closed-loop minimum and now covers:
 
-- `std.io`: output.
-- `std.fs`: minimal file I/O and error types.
-- `std.env`: environment variable access.
+- `std.io`, `std.fs`, `std.env`: I/O, filesystem, and process environment.
 - `std.result` / `std.option`: failure and absence modeling.
-- `std.array`: dynamic arrays.
-- `std.string`: basic string operations.
+- `std.array` / `std.string` / `std.collections`: managed containers and strings.
+- `std.path`, `std.process`, `std.time`, `std.math`, `std.num`: system and numeric helpers.
+- `std.json`, `std.net`, `std.http`, `std.regex`, `std.hash`, `std.crypto`: data, network, and common runtime capabilities.
+- `std.testing`, `std.debug`, `std.log`, `std.ffi`: testing, diagnostics, logging, and native boundaries.
 
-The standard library is not a dumping ground for syntax sugar. Types such as `Option`, `Result`, `Array`, and `string` also affect type checking, exhaustiveness, C codegen, and runtime layout. RFCs decide which parts remain ordinary library definitions and which parts become compiler-recognized lang items.
+The standard library is not a dumping ground for syntax sugar. `Option`, `Result`, `Array`, and `string` affect type checking, exhaustiveness, C codegen, and runtime layout. `Option`/`Result` currently use compiler-owned carrier identities while `std.option`/`std.result` remain public module contracts; v0.1 does not depend on a `#[lang]` attribute or independently compiled standard-library source layer.
 
-### 5. RFC Decision Axes
+### 5. Accepted RFC Decisions
 
-The current v0.1 open decisions concentrate around seven tracks:
+All thirteen RFCs now record accepted decisions reflected by the implementation baseline:
 
-| RFC | Topic | Decision axis |
+| RFC | Topic | Accepted decision |
 | --- | --- | --- |
-| [0001](en/rfcs/0001-error-propagation-and-conversion.md) | Error propagation and conversion | Whether `?` needs explicit `map_err` or later automatic conversion |
-| [0002](en/rfcs/0002-match-wildcard-and-nesting.md) | `match` wildcard and nesting | How to balance exhaustiveness and ergonomics |
-| [0003](en/rfcs/0003-arc-cow-runtime-cost.md) | ARC/COW cost | How to narrow the runtime strategy for `string` and `Array<T>` |
-| [0004](en/rfcs/0004-mutable-borrow-uniqueness.md) | Mutable-borrow uniqueness | How much alias checking is possible without lifetimes |
-| [0005](en/rfcs/0005-newline-sensitivity-and-dot-resolution.md) | Newlines and dot resolution | How significant newlines and unified `.` access land |
-| [0006](en/rfcs/0006-option-result-lang-items.md) | `Option`/`Result` lang items | How standard-library definitions and compiler awareness align |
-| [0007](en/rfcs/0007-unqualified-variant-access.md) | Unqualified enum variants | Whether `Ok`/`Err`/`Some`/`None` enter the prelude |
+| [0001](en/rfcs/0001-error-propagation-and-conversion.md) | Error propagation and conversion | `?` preserves the carrier; cross-layer conversion uses explicit `map_err(named_converter)?`. |
+| [0002](en/rfcs/0002-match-wildcard-and-nesting.md) | `match` wildcard and nesting | Keep `_` disabled and provide `let else`, `if let`, and Option `?`. |
+| [0003](en/rfcs/0003-arc-cow-runtime-cost.md) | ARC/COW cost | Immutable RC for `string`; non-atomic RC+COW for `Array<T>`. |
+| [0004](en/rfcs/0004-mutable-borrow-uniqueness.md) | Mutable-borrow uniqueness | One-call-expression borrows with path-conflict checks and no lifetimes. |
+| [0005](en/rfcs/0005-newline-sensitivity-and-dot-resolution.md) | Newlines and dot resolution | Significant newlines, continuation anchors, and name-resolved uniform dot chains. |
+| [0006](en/rfcs/0006-option-result-lang-items.md) | `Option`/`Result` identities | Compiler-owned carriers with public `std.*` module contracts. |
+| [0007](en/rfcs/0007-unqualified-variant-access.md) | Unqualified enum variants | Only the four core variants enter the prelude; local names win and qualified forms remain compatible. |
+| [0008](en/rfcs/0008-canonical-package-identity-and-aliases.md) | Package identity and aliases | Separate canonical ids, package-local import aliases, and physical sources. |
+| [0009](en/rfcs/0009-reproducible-workspace-and-package-graphs.md) | Reproducible dependency graphs | Three typed graph layers, root lockfiles, checksums, and offline/vendor contracts. |
+| [0010](en/rfcs/0010-constrained-generics-and-static-interface-dispatch.md) | Constrained generics | One interface bound, explicit concrete type arguments, and static dispatch. |
+| [0011](en/rfcs/0011-c-ffi-safety-and-link-boundary.md) | C FFI boundary | Call-site unsafe, CString/Opaque, and package linker metadata. |
+| [0012](en/rfcs/0012-shared-semantic-identities-and-verified-rename.md) | Shared semantic queries | Compiler-owned declaration/member identity and rechecked rename. |
+| [0013](en/rfcs/0013-registry-protocol-and-package-integrity.md) | Registry protocol | Exact versions, metadata/checksums, authentication, yank, and verified HTTPS. |
 
-These RFCs do not replace the specification baseline. They record disputes, alternatives, recommendations, and status transitions. Once an RFC is accepted, the corresponding change should be reflected in both the specification baseline and the implementation.
+These RFCs do not replace the specification baseline. They record the original problem, alternatives, final decision, implementation status, and follow-up questions; the specification baseline states the current public contract.
+
+Six implementation RFCs remain `Proposed` for the next stage: [0014](en/rfcs/0014-semver-resolution-and-conflict-explanations.md) version solving, [0015](en/rfcs/0015-source-defined-standard-library-and-intrinsics.md) source-defined standard library, [0016](en/rfcs/0016-incremental-semantic-graph-and-cache.md) incremental semantics, [0017](en/rfcs/0017-target-triples-and-cross-compilation.md) cross compilation, [0018](en/rfcs/0018-package-signing-provenance-and-transparency.md) signing and transparency, and [0019](en/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) typed FFI. They describe work to implement and do not claim current code support.
 
 ### 6. Viability
 
@@ -176,4 +192,4 @@ Given the v0.1 positioning, the Nomo design is viable. It does not try to solve 
 - `?` needs a minimal error-conversion story, or its ergonomics will be weak in real layered code.
 - `Option`/`Result` need a stable anchor between standard-library identity and compiler awareness.
 
-The right way to advance v0.1 is to preserve the check/build/run loop and specification-test consistency, then accept or defer the RFC decisions one by one. As long as accepted RFCs are reflected back into the specification and implementation, this architecture is a sound small starting point for the language.
+The next v0.1 priority is not to reopen decisions already implemented, but to keep the check/build/run loop, specification, tests, diagnostic docs, and editor semantics aligned while completing release stabilization.

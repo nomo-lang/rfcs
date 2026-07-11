@@ -8,9 +8,10 @@
 | --- | --- |
 | Number | 0002 |
 | Title | The ergonomics of `match` lacking the `_` wildcard arm and nested destructuring |
-| Status | Draft |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
+| Implementation | Landed: `_` remains rejected in `match`; `let else` and `if let` are covered by parser, type-checker, C-backend, and example tests |
 | Related topics | pattern matching, exhaustiveness, nested destructuring, `Option` |
 | Related RFCs | [RFC 0001](./0001-error-propagation-and-conversion.md) (`?` propagation), [RFC 0007](./0007-unqualified-variant-access.md) (simplified variant access) |
 
@@ -18,7 +19,7 @@
 
 ## 1. Summary
 
-The current pattern-matching specification disables the `_` wildcard arm in order to "enforce exhaustiveness + let diagnostics cover all missing arms". This is reasonable for simple enums, but for nested `Option`/`Result` (see the double `match` in the array-swap example), it produces a lot of boilerplate, where every `None`/`Err` must be repeated. This RFC presents four kinds of mitigation (keep `_` disabled, conditionally allow `_`, introduce `if let`/`let else`, introduce `?`-style Option destructuring), and leans toward "keeping `_` disabled in v0.1 to preserve exhaustiveness diagnostics, while introducing `if let` / `let else` as relief tools for nested scenarios", remaining Draft.
+The pattern-matching specification keeps `_` disabled so exhaustiveness diagnostics enumerate every missing arm. Nested `Option`/`Result` boilerplate is addressed with `let else`, `if let`, and the existing postfix `?`. This RFC accepts the A + C combination, which is implemented across the parser, type checker, C backend, and example tests.
 
 ---
 
@@ -87,7 +88,7 @@ The core tension: **exhaustiveness diagnostics (want everything listed)** and **
 - **Diagnostics**: add a name-resolution/type-checking warning, e.g. `E0410` (`_` masked enumerable remaining variants).
 - **Disadvantages**: once opened, AI/users will tend toward "always `_`", gradually eroding the exhaustiveness culture.
 
-### 4.3 Option C: Introduce `if let` / `let else` (preferred)
+### 4.3 Option C: Introduce `if let` / `let else` (accepted)
 
 - **Syntax**:
 
@@ -119,7 +120,7 @@ fn swap(mut items: Array<i32>, i: u64, j: u64) {
 | --- | --- | --- | --- |
 | A Keep disabled | Unchanged | Strongest exhaustiveness, simplest | No solution for nesting boilerplate |
 | B Conditional `_` | Restricted wildcard + lint | Directly reduces burden | Erodes exhaustiveness culture, needs an extra lint |
-| C `if let`/`let else` (preferred) | Single-branch extraction + divergent else | Preserves `match` exhaustiveness, removes the main nesting source | Adds syntactic surface area |
+| C `if let`/`let else` (accepted) | Single-branch extraction + divergent else | Preserves `match` exhaustiveness, removes the main nesting source | Adds syntactic surface area |
 | D Option `?` | Early exit on `Option` | Consistent with `?` | Only applies to functions returning `Option` |
 
 ---
@@ -134,24 +135,23 @@ fn swap(mut items: Array<i32>, i: u64, j: u64) {
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: Option C's `let else` (divergent), prioritizing "extract or panic" cases such as array swap; `if let` can be in the same batch or follow closely. Option D lands through the existing postfix `expr?` propagation model for `Option`-returning functions.
-- **Keep unchanged**: `match` continues to disable `_` (Option A), guarding exhaustiveness diagnostics.
+- **Landed in v0.1**: Option C's diverging `let else` and `if let`; Option D is served by the existing postfix `expr?` model for functions returning `Option`.
+- **Unchanged**: `match` continues to disable `_` (Option A), locked by parser and exhaustiveness tests.
 - **Defer**: Option B (restricted `_`) is left for v0.2 discussion, to avoid weakening exhaustiveness culture in v0.1.
 - **Acceptance impact**: the acceptance test matrix's Parser/Type checker tests need to add success/failure cases for `let else` (a non-diverging `else` should error).
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward **the A + C combination**: `match` keeps `_` disabled (guarding exhaustiveness), and introduce `let else` (and `if let` if necessary) to absorb the main boilerplate source of nested `Option`/`Result`. This neither sacrifices the diagnostics dividend nor leaves the array-swap example's double `match`, flattening it into linear early exits. Remains Draft.
+Accept **the A + C combination**: `match` keeps `_` disabled, while diverging `let else` and `if let` absorb the main boilerplate source of nested `Option`/`Result`. A non-diverging `else` is rejected by type checking, and both constructs are covered by the current implementation and acceptance tests.
 
 ---
 
-## 9. Open Questions
+## 9. Follow-up Questions
 
-- How is the divergence of the `let else` `else` block determined in type checking (does it reuse the "never returns" analysis)?
-- Should v0.1 provide `if let` at the same time, or only `let else`?
 - If `_` is still to be introduced in the future, is it "globally opened" or "only top-level `match`"?
+- Future richer nested destructuring should continue to reuse the current exhaustiveness and binding-scope rules.
 
 ---
 

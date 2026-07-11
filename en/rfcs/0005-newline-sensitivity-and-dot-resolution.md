@@ -8,17 +8,18 @@
 | --- | --- |
 | Number | 0005 |
 | Title | Significant-newline separation and the polysemy-resolution rules of `.` |
-| Status | Draft |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
+| Implementation | Landed: significant newlines, continuation anchors, dot-chain parsing, and value/module/type dispatch have parser and semantic-query coverage |
 | Related topics | lexical syntax, significant newlines, dot access, name resolution, module path |
-| Related RFCs | [RFC 0006](./0006-option-result-lang-items.md) (lang items), [RFC 0007](./0007-unqualified-variant-access.md) (simplified variant access) |
+| Related RFCs | [RFC 0006](./0006-option-result-lang-items.md) (core carrier identities), [RFC 0007](./0007-unqualified-variant-access.md) (simplified variant access) |
 
 ---
 
 ## 1. Summary
 
-There is no comma or semicolon between the current struct-field and enum-variant syntax; they rely on newlines for separation, meaning Nomo is a **newline-sensitive** language. But the keyword/grammar rules only list keywords and do not define newline/separation rules, so the parser implementation lacks a basis. Meanwhile `.` simultaneously carries three semantics: module path (`std.io`), variant access (`Result.Ok`), and field/method access (`self.email`, `items.get`); name resolution needs explicit resolution rules. This RFC proposes writing the newline rules and the `.` resolution rules into the specification, leaning toward "significant newlines as the statement/member separator + explicit continuation rules" and "`.` unified as postfix dot access, dispatched by name resolution based on the kind of the left-hand entity", remaining Draft.
+This RFC accepts significant newlines as member and statement separators, with continuation rules anchored by operators, dot chains, calls, type arguments, `=>`, and other incomplete syntactic positions. The parser keeps `.` as a uniform dot chain; name resolution and shared semantic queries then dispatch it as a value binding, module path, or type/enum variant. Same-name members are distinguished by the receiver's checked type.
 
 ---
 
@@ -74,7 +75,7 @@ The keyword/grammar rules only give keywords/reserved words/literals, with **no*
 
 ## 4. Detailed Design
 
-### 4.1 Newline Rules (preferred)
+### 4.1 Newline Rules (accepted)
 
 - **Significant newlines**: the newline character is the default "statement/member separator". Struct fields, enum variants, `match` arms, and statement sequences are all separated by newlines, not commas/semicolons.
 - **Explicit continuation**: when a line is syntactically "clearly unfinished", it continues automatically; the determination anchors include:
@@ -84,9 +85,9 @@ The keyword/grammar rules only give keywords/reserved words/literals, with **no*
 - **Diagnostics** (E0100-E0199 / E0200-E0299):
   - `E0120` two members/statements appear on the same line without a separator (e.g. two fields written on one line).
   - `E0220` illegal continuation / a newline separator was expected but excess tokens were found.
-- **Alternative**: explicit separators (mandatory commas/semicolons). Easier to parse, friendlier to tooling, but conflicts with the current example layout, requires rewriting all examples, and is more verbose relative to the "restrained" temperament. Lean toward significant newlines to keep the existing examples unchanged.
+- **Alternative**: explicit separators (mandatory commas/semicolons). Easier to parse and friendlier to tooling, but conflicts with the current example layout and requires rewriting all examples; this RFC does not adopt it.
 
-### 4.2 `.` Resolution Rules (preferred: unified postfix dot + name-resolution dispatch)
+### 4.2 `.` Resolution Rules (accepted: unified dot chain + name-resolution dispatch)
 
 Unify `.` as a "postfix dot-access expression", with no syntactic distinction of purpose; the distinction is handed to **name resolution**, dispatching by the binding kind of the leftmost identifier:
 
@@ -104,7 +105,7 @@ Unify `.` as a "postfix dot-access expression", with no syntactic distinction of
 
 ### 4.3 Connection with [RFC 0007](./0007-unqualified-variant-access.md)
 
-This RFC fixes the resolution of the **qualified form** (`Enum.Variant`); if [RFC 0007](./0007-unqualified-variant-access.md) decides to introduce prelude/imported unqualified variants (`Ok`/`None`), name resolution needs to add a lookup path for "a bare identifier may be a variant" — this will be extended on top of this rule by [RFC 0007](./0007-unqualified-variant-access.md), not expanded here.
+This RFC fixes qualified `Enum.Variant` resolution. Accepted [RFC 0007](./0007-unqualified-variant-access.md) adds core-prelude bare-variant lookup on top of this rule: lexical variables/functions win, and only then does resolution try `Some`/`None`/`Ok`/`Err`. Both rules are implemented together in the compiler.
 
 ---
 
@@ -112,9 +113,9 @@ This RFC fixes the resolution of the **qualified form** (`Enum.Variant`); if [RF
 
 | Dimension | Option | Advantages | Disadvantages |
 | --- | --- | --- | --- |
-| Separation | Significant newlines (preferred) | Keeps existing examples, restrained style | Parser needs continuation rules, demanding on auto-formatting |
+| Separation | Significant newlines (accepted) | Keeps existing examples, restrained style | Parser needs continuation rules, demanding on auto-formatting |
 | Separation | Explicit commas/semicolons | Simplest to parse, no ambiguity | Rewrites all examples, more verbose |
-| `.` | Unified postfix dot + name-resolution dispatch (preferred) | Simple syntax, consistent with existing style | Parsing depends on name-resolution info, needs priority definition |
+| `.` | Unified dot chain + name-resolution dispatch (accepted) | Simple syntax, consistent with existing style | Semantics depend on name-resolution info and defined priority |
 | `.` | A different symbol for module paths (e.g. `::`) | Module paths distinguishable at the lexical level | Introduces a new symbol, deviates from the current unified `.` style |
 
 ---
@@ -129,27 +130,27 @@ This RFC fixes the resolution of the **qualified form** (`Enum.Variant`); if [RF
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: formally write "significant newlines + continuation anchors" and "`.` unified postfix dot + name-resolution dispatch" into the specification (recommended to add to the keyword/grammar rules and the name-resolution details of the compiler architecture).
-- **Acceptance impact**: the Lexer/Parser golden tests in the acceptance test matrix must cover: multiple members on one line are rejected, chained continuation is accepted, and each of the three resolution paths of `A.B.C` has a case.
+- **Landed in v0.1**: significant newlines plus continuation anchors, and uniform dot chains plus name-resolution dispatch.
+- **Acceptance coverage exists**: multiple members on one line are rejected; dot/operator/call continuations are accepted; fields, methods, modules, enum variants, and receiver ownership are resolved by tests.
 - It does not affect the delivery boundary, but **is a prerequisite for whether the Lexer/Parser can be implemented stably**, with high priority.
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward: **significant newlines** as the member/statement separator with defined explicit continuation anchors; **`.` unified as postfix dot access**, dispatched by name resolution into the three kinds of left-hand entity "value / module / type", with value bindings prioritized. This option keeps all current existing examples unchanged while giving the parser and name resolution an implementable basis. Remains Draft.
+Accept **significant newlines** as member/statement separators with explicit continuation anchors. The parser keeps `.` as a uniform dot chain, and name resolution dispatches it across value/module/type entities with lexical value bindings taking precedence. Shared semantic APIs must reuse the compiler's checked receiver/owner facts rather than re-guessing them in editor clients.
 
 ---
 
-## 9. Open Questions
+## 9. Follow-up Questions
 
 - The complete list of continuation anchors (whether a leading binary operator continuation is allowed, e.g. the next line starts with `+`).
 - Whether the newline rules for a `match` arm body as a block `{ ... }` and for a single-expression arm are unified.
-- How to order the name-resolution priority conflict after [RFC 0007](./0007-unqualified-variant-access.md) introduces unqualified variants.
+- Future optional chaining, static members, or other dot operations require a separate extension that preserves the current resolution precedence.
 
 ---
 
 ## 10. References
 
 - The current file and module design, struct and enum syntax, `Result` usage, keyword/grammar rules, name-resolution pipeline, file-reading and array-swap examples.
-- [RFC 0006](./0006-option-result-lang-items.md) (the impact of lang items on name resolution), [RFC 0007](./0007-unqualified-variant-access.md) (simplified variant access).
+- [RFC 0006](./0006-option-result-lang-items.md) (the impact of core carrier identities on name resolution), [RFC 0007](./0007-unqualified-variant-access.md) (simplified variant access).

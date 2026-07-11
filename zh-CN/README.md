@@ -22,7 +22,7 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 
 | 状态 | 含义 |
 | --- | --- |
-| `Draft`（待决） | 草案。问题已成形、备选已列出，但尚未做出决策。当前目录下所有 RFC 均为此状态。 |
+| `Draft`（待决） | 草案。问题已成形、备选已列出，但尚未做出决策。 |
 | `Proposed`（已提案） | 草案已完成、进入正式评审，等待接受或拒绝。 |
 | `Accepted`（已接受） | 已被采纳，应据此更新语言规格与实现。 |
 | `Rejected`（已拒绝） | 经讨论后不采纳，保留记录与理由。 |
@@ -65,11 +65,23 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | 编号 | 标题 | 状态 | 关联主题 | 一句话结论/倾向 |
 | --- | --- | --- | --- | --- |
 | [0001](./rfcs/0001-error-propagation-and-conversion.md) | `?` 传播与缺少自动错误转换的体验矛盾 | Accepted（已接受） | 错误处理、`Result`、`?` 传播、C 后端 | v0.1 使用显式 `std.result.map_err(named_converter)?`；`From` 风格自动转换推迟。 |
-| [0002](./rfcs/0002-match-wildcard-and-nesting.md) | `match` 缺少 `_` 通配分支与嵌套解构 | Draft（待决） | 模式匹配、穷尽性、嵌套解构 | 倾向 `match` 继续禁用 `_`（守穷尽性），改用 `let else`/`if let` 压平嵌套样板。 |
-| [0003](./rfcs/0003-arc-cow-runtime-cost.md) | 值语义 + ARC + COW 的运行时实现成本 | Draft（待决） | 内存模型、`string`、`Array<T>`、运行时 | 倾向「分而治之」：`string` 仅引用计数（不可变免 COW），`Array<T>` 用非原子 RC+COW，纯拷贝作为应急回退。 |
-| [0004](./rfcs/0004-mutable-borrow-uniqueness.md) | 可变借用唯一性检查的真实难度 | Draft（待决） | 可变借用、别名检查、逃逸检查 | 倾向把借用存活期限定为「单调用表达式」，做调用点别名 + 逃逸兜底（L1），不引入 lifetime。 |
-| [0005](./rfcs/0005-newline-sensitivity-and-dot-resolution.md) | 显著换行分隔与 `.` 命名空间消解 | Draft（待决） | 词法语法、换行规则、名称解析、`.` 消解 | 倾向显著换行 + 显式续行锚点；`.` 统一为后缀点访问，由名称解析按「值/模块/类型」分派。 |
-| [0006](./rfcs/0006-option-result-lang-items.md) | `Option`/`Result` 与编译器内建认知的循环依赖 | Draft（待决） | lang item、`Option`、`Result`、标准库边界 | 倾向把 `Option`/`Result` 设为 lang item：定义留在标准库，编译器经 `#[lang]` 标注识别。 |
-| [0007](./rfcs/0007-unqualified-variant-access.md) | `Enum.Variant` 是否可简化为非限定 `Variant` | Draft（待决） | 枚举变体、prelude、名称解析、人体工学 | 倾向仅对 prelude 的 `Option`/`Result` 变体（`Some/None/Ok/Err`）允许非限定，其余枚举保持限定。 |
+| [0002](./rfcs/0002-match-wildcard-and-nesting.md) | `match` 缺少 `_` 通配分支与嵌套解构 | Accepted（已接受） | 模式匹配、穷尽性、嵌套解构 | `match` 继续禁用 `_`；`let else`、`if let` 与 `Option` 的 `?` 已落地并压平嵌套样板。 |
+| [0003](./rfcs/0003-arc-cow-runtime-cost.md) | 值语义 + ARC + COW 的运行时实现成本 | Accepted（已接受） | 内存模型、`string`、`Array<T>`、运行时 | `string` 使用不可变非原子 RC；`Array<T>` 使用非原子 RC+COW，生命周期与写时分离已有测试。 |
+| [0004](./rfcs/0004-mutable-borrow-uniqueness.md) | 可变借用唯一性检查的真实难度 | Accepted（已接受） | 可变借用、别名检查、逃逸检查 | 借用存活期限定为单个调用表达式，检查调用点路径冲突，不引入 lifetime 或命名借用。 |
+| [0005](./rfcs/0005-newline-sensitivity-and-dot-resolution.md) | 显著换行分隔与 `.` 命名空间消解 | Accepted（已接受） | 词法语法、换行规则、名称解析、`.` 消解 | 显著换行与续行锚点已落地；点链由名称解析按值/模块/类型及接收者所有权分派。 |
+| [0006](./rfcs/0006-option-result-lang-items.md) | `Option`/`Result` 与编译器内建认知的循环依赖 | Accepted（已接受） | lang item、`Option`、`Result`、标准库边界 | 接受编译器内建 carrier 身份 + `std.option`/`std.result` 公共模块契约；v0.1 不使用 `#[lang]` 属性。 |
+| [0007](./rfcs/0007-unqualified-variant-access.md) | `Enum.Variant` 是否可简化为非限定 `Variant` | Accepted（已接受） | 枚举变体、prelude、名称解析、人体工学 | 仅核心 `Some/None/Ok/Err` 可非限定；局部符号优先，用户枚举仍需限定，限定核心写法继续兼容。 |
+| [0008](./rfcs/0008-canonical-package-identity-and-aliases.md) | Canonical 包身份与依赖别名分离 | Accepted（已接受） | package identity、manifest、import | canonical id 固定为 `owner/package`；alias 仅控制局部 import，source 不参与语言身份。 |
+| [0009](./rfcs/0009-reproducible-workspace-and-package-graphs.md) | 可复现的 Workspace、Package 与 Module 图 | Accepted（已接受） | workspace、dependency graph、lockfile | 使用三层 typed graph、稳定依赖序、workspace root lockfile、checksum 与 locked/offline/vendor 契约。 |
+| [0010](./rfcs/0010-constrained-generics-and-static-interface-dispatch.md) | 受约束泛型与 Interface 静态分派 | Accepted（已接受） | interface、generics、monomorphization | 每个 type parameter 最多一个 interface bound，显式 concrete type argument，单态化静态分派。 |
+| [0011](./rfcs/0011-c-ffi-safety-and-link-boundary.md) | C FFI 的安全、所有权与链接边界 | Accepted（已接受） | FFI、unsafe、CString、Opaque | extern 调用要求 call-site `unsafe`，使用显式 CString/Opaque 和 manifest linker metadata。 |
+| [0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md) | 共享语义身份与类型检查后的 Rename | Accepted（已接受） | semantic API、LSP、rename | compiler 是语义事实源；reference 按声明/receiver owner 解析，rename edits 必须重过类型检查。 |
+| [0013](./rfcs/0013-registry-protocol-and-package-integrity.md) | Registry 协议、认证与包完整性 | Accepted（已接受） | registry、metadata、checksum、auth | exact-version `/api/v1`、确定性 archive、双层 checksum、yank、Bearer token 与 verified HTTPS。 |
+| [0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md) | 语义化版本求解与冲突解释 | Proposed（已提案） | semver、resolver、lockfile | 实现确定性单版本求解、锁定语义与可追踪冲突解释。 |
+| [0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md) | 标准库源码化与受控 Intrinsic 身份 | Proposed（已提案） | standard library、intrinsic、bootstrap | 将可表达的标准库迁入 Nomo 源码，以工具链清单约束最小 intrinsic。 |
+| [0016](./rfcs/0016-incremental-semantic-graph-and-cache.md) | 增量语义图与持久化缓存 | Proposed（已提案） | incremental compilation、LSP、cache | compiler-owned query graph 为 CLI/LSP 提供可验证失效与持久化缓存。 |
+| [0017](./rfcs/0017-target-triples-and-cross-compilation.md) | Target Triple、条件依赖与交叉编译 | Proposed（已提案） | target、cross compilation、linker | 统一 resolver、ABI、标准库和链接阶段的 target context。 |
+| [0018](./rfcs/0018-package-signing-provenance-and-transparency.md) | 包签名、来源证明与透明日志 | Proposed（已提案） | signing、provenance、registry | 在 checksum 之上验证 publisher 授权与 registry 历史一致性。 |
+| [0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) | 类型化 FFI Handle、Callback 与 Binding | Proposed（已提案） | FFI、callback、C ABI | 用 nominal handle、显式 null、受限 callback 和可审查 binding 扩展 C 边界。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。

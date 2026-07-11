@@ -2,7 +2,7 @@
 
 > 语言 / Language: [中文](../zh-CN/SPEC-v0.1.md) | English
 
-> **Status**: Draft baseline
+> **Status**: Implementation baseline (release stabilization in progress)
 > **Purpose**: To serve as the common discussion baseline for all RFCs in this RFC repository.
 > **Principle**: First define an implementable, testable, deliverable v0.1 closed loop, then evolve the language capabilities through RFCs.
 
@@ -192,7 +192,7 @@ fn label(value: Option<i32>) -> string {
 
 - `match` must be exhaustive over all variants.
 - v0.1 does not yet support the `_` wildcard arm.
-- Whether `Option` / `Result` allow unqualified variants is discussed in [RFC 0007](./rfcs/0007-unqualified-variant-access.md).
+- The core prelude allows unqualified `Some`/`None`/`Ok`/`Err`; same-named lexical bindings or functions take precedence. User-defined enums still require `Enum.Variant`, while qualified core variants remain valid for compatibility and explicit disambiguation. See accepted [RFC 0007](./rfcs/0007-unqualified-variant-access.md).
 
 ### 2.8 Generics
 
@@ -243,6 +243,9 @@ monomorphizes the function and statically dispatches interface methods.
 The current interface MVP does not support multiple bounds, `where`, type
 argument inference, trait objects, associated types, blanket impls, dynamic
 dispatch, higher-kinded types, or generic specialization.
+
+Accepted [RFC 0010](./rfcs/0010-constrained-generics-and-static-interface-dispatch.md)
+fixes this static abstraction boundary.
 
 ### 2.9 C FFI and `unsafe`
 
@@ -302,6 +305,9 @@ therefore does not use link metadata.
 `Opaque` does not expose arbitrary raw pointer operations. C struct layout
 inference, header binding generation, and multi-statement unsafe blocks are left
 for later slices.
+
+Accepted [RFC 0011](./rfcs/0011-c-ffi-safety-and-link-boundary.md) fixes the
+call-site safety, ownership-type, and package linker-metadata boundary.
 
 ---
 
@@ -586,9 +592,12 @@ v0.1 must validate:
   built-in standard-library module index, and `--open` opens the generated
   `index.html`. `--open` is invalid with `--json`.
 
-Interactive auth flows and complex version solving remain separate registry
-slices. v0.1 may reject multiple versions of
-the same canonical package ID directly.
+Accepted [RFC 0008](./rfcs/0008-canonical-package-identity-and-aliases.md),
+[RFC 0009](./rfcs/0009-reproducible-workspace-and-package-graphs.md), and
+[RFC 0013](./rfcs/0013-registry-protocol-and-package-integrity.md) fix the
+package identity, graph/lockfile, and registry contracts. Interactive OAuth,
+token refresh, and complex version solving remain future work; v0.1 directly
+rejects multiple versions of the same canonical package id.
 
 ---
 
@@ -629,9 +638,9 @@ unified propagation syntax for errors and absence.
 
 v0.1 does not automatically merge error types. Cross-layer error conversion uses explicit `std.result.map_err(named_converter)?`, as accepted by [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md).
 
-### 3.4 The Compiler's Awareness of `Option` / `Result`
+### 3.4 Compiler-owned `Option` / `Result` Identities
 
-`Option` and `Result` are both standard library types and are used by `?`, exhaustiveness checking, and the C backend layout. Whether to fix them as lang items is discussed in [RFC 0006](./rfcs/0006-option-result-lang-items.md).
+`Option` and `Result` are both public standard-library types and compiler-recognized core carriers. In v0.1 the compiler provides their generic enum shapes, core-prelude variants, `?` rules, and C-backend layouts; `std.option` / `std.result` remain stable user-facing module and helper APIs. The current implementation does not depend on a `#[lang]` attribute or a precompiled Nomo standard-library source tree. See accepted [RFC 0006](./rfcs/0006-option-result-lang-items.md).
 
 ---
 
@@ -669,7 +678,7 @@ nums.push(1)
 - `Array.iter` returns a snapshot value accepted by `for ... in`; a general
   `Iterator` abstraction is not part of the current standard-library API.
 
-The runtime cost and degradation strategy of ARC/COW are discussed in [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md).
+The current ARC/COW runtime strategy is fixed by accepted [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md).
 
 ### 4.3 Mutable Borrow
 
@@ -689,7 +698,7 @@ fn main() {
 - A mutable borrow must not escape.
 - The same value must not be mutably borrowed more than once within the same call expression.
 
-The checking strength is discussed in [RFC 0004](./rfcs/0004-mutable-borrow-uniqueness.md).
+The current call-site checking strength is fixed by accepted [RFC 0004](./rfcs/0004-mutable-borrow-uniqueness.md).
 
 ---
 
@@ -1322,6 +1331,10 @@ dependency sources may be definition targets but are not renamed. If the
 original program type-checks, tooling must apply the proposed edits in memory and
 type-check the resulting module graph before returning the rename operation.
 
+Accepted [RFC 0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md)
+fixes the shared declaration identity, receiver ownership, and rechecked-rename
+contract.
+
 ---
 
 ## 8. Diagnostics Specification
@@ -1409,14 +1422,36 @@ Before releasing v0.1, the following must be satisfied:
 
 ---
 
-## 11. RFC Index Entry
+## 11. Accepted RFCs
 
-Currently pending RFCs:
+The decisions in these RFCs are reflected by this implementation baseline:
 
 - [RFC 0001](./rfcs/0001-error-propagation-and-conversion.md): Error propagation and conversion.
 - [RFC 0002](./rfcs/0002-match-wildcard-and-nesting.md): `match` wildcard and nested destructuring.
 - [RFC 0003](./rfcs/0003-arc-cow-runtime-cost.md): ARC/COW runtime cost.
 - [RFC 0004](./rfcs/0004-mutable-borrow-uniqueness.md): Mutable-borrow uniqueness.
 - [RFC 0005](./rfcs/0005-newline-sensitivity-and-dot-resolution.md): Newline-sensitive syntax and `.` resolution.
-- [RFC 0006](./rfcs/0006-option-result-lang-items.md): `Option`/`Result` lang items.
+- [RFC 0006](./rfcs/0006-option-result-lang-items.md): compiler-owned `Option`/`Result` identities and standard module contracts.
 - [RFC 0007](./rfcs/0007-unqualified-variant-access.md): Unqualified enum variants.
+- [RFC 0008](./rfcs/0008-canonical-package-identity-and-aliases.md): canonical package identity separated from dependency aliases.
+- [RFC 0009](./rfcs/0009-reproducible-workspace-and-package-graphs.md): reproducible workspace/package/module graphs and lockfiles.
+- [RFC 0010](./rfcs/0010-constrained-generics-and-static-interface-dispatch.md): constrained generics and static interface dispatch.
+- [RFC 0011](./rfcs/0011-c-ffi-safety-and-link-boundary.md): the C FFI safety, ownership, and link boundary.
+- [RFC 0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md): shared semantic identities and type-checked rename.
+- [RFC 0013](./rfcs/0013-registry-protocol-and-package-integrity.md): registry protocol, authentication, and package integrity.
+
+---
+
+## 12. Proposed Implementation RFCs
+
+The following RFCs describe capabilities that follow the current direction but
+are not part of this implementation baseline. They remain `Proposed` and enter
+the specification only after their code, tests, documentation, and individual
+acceptance gates land:
+
+- [RFC 0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md): semantic version resolution and conflict explanations.
+- [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md): source-defined standard library and controlled intrinsic identities.
+- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md): incremental semantic graph and persistent cache.
+- [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md): target triples, conditional dependencies, and cross compilation.
+- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md): package signing, provenance, and transparency.
+- [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md): typed FFI handles, callbacks, and bindings.

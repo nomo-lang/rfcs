@@ -7,18 +7,19 @@
 | Field | Content |
 | --- | --- |
 | Number | 0006 |
-| Title | Are `Option`/`Result` pure library types or compiler lang items |
-| Status | Draft |
+| Title | Are `Option`/`Result` pure library types or compiler-owned carriers |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
-| Related topics | lang item, `Option`, `Result`, standard library boundary, C backend |
+| Implementation | Landed: the compiler owns the `Option`/`Result` carrier identities, variants, `?` semantics, and C layouts; `std.option`/`std.result` are stable public module contracts and do not depend on a `#[lang]` attribute |
+| Related topics | compiler-owned identities, lang-item migration, `Option`, `Result`, standard library boundary, C backend |
 | Related RFCs | [RFC 0001](./0001-error-propagation-and-conversion.md) (`?` propagation), [RFC 0002](./0002-match-wildcard-and-nesting.md) (match exhaustiveness), [RFC 0007](./0007-unqualified-variant-access.md) (variant access) |
 
 ---
 
 ## 1. Summary
 
-`std.option` and `std.result` are listed as standard-library packages in the current specification (standard-library design), but they are also the carriers of core language mechanisms: `?` propagation depends on the `Ok`/`Err` structure of `Result`, and `match` exhaustiveness and the C backend's `Result_T_E` layout also require the compiler to "recognize" these two types. The current specification does not point out this layer of coupling — it wants them to be ordinary libraries yet also wants the compiler to have built-in awareness of them, forming a circular dependency. This RFC discusses whether they should be set as compiler "known lang items" or pure libraries, leaning toward "declaring `Option`/`Result` as lang items: the definitions are still written in `std.option`/`std.result`, but the compiler recognizes them via an attribute/convention to support `?`, exhaustiveness, and codegen", remaining Draft.
+`Option` and `Result` are both public standard-library APIs and core language carriers. The current implementation uses compiler-owned identities: the compiler directly provides their generic enum shapes, `?` semantics, core-prelude variants, and C layouts, while `std.option` and `std.result` remain stable user-facing module contracts. v0.1 does not parse or compile a Nomo standard library annotated with `#[lang]`, so it does not introduce an unimplemented internal attribute mechanism or standard-library bootstrap order.
 
 ---
 
@@ -36,21 +37,21 @@ If we treat them as "ordinary library types the compiler knows nothing about", `
 
 ## 3. Status and Problem
 
-### 3.1 Current Specification Status
+### 3.1 Current Implementation Status
 
 - Enum example: `Option<T>` is given as a payload-bearing enum example (`Some(T)` / `None`).
-- `Result` definition: `Result<T,E>` is defined in `package std.result` (`Ok(T)` / `Err(E)`).
+- The public identities of `Result` and `Option` are exposed through `std.result` and `std.option`; the compiler injects the corresponding enum definitions when required.
 - `?` semantics: the semantics of `?` are described directly in terms of `Result.Ok`/`Result.Err`.
 - C backend: the C backend gives a **dedicated** `Result_T_E` (`bool is_ok; union {ok; err;}`).
 - Standard-library design: `std.option`, `std.result` are listed as v0.1 standard-library packages.
-- Examples (the file-reading and array-swap examples) bring them in via `import std.result.Result` / `import std.option.Option`.
+- Examples may import `std.result.Result` / `std.option.Option` explicitly; use of core-prelude variants also causes the compiler to provide the required carrier.
 
 ### 3.2 Problem Analysis
 
-- **Circular dependency**: the standard library defines the type → the compiler must have built-in awareness of the type → only then can it compile the standard library itself (the definition of `Result` in `std.result`, and any library code that uses `?`).
-- **`?` must have an anchor**: the expansion rule of `expr?` must be bound to known carrier types, otherwise can a user define any same-named `Result` or `Option` and `?` it too? Or can only `std.result.Result` and `std.option.Option` be `?`'d? The current specification does not answer.
-- **codegen dedicated layout**: the `Result_T_E` of 4.4 shows that codegen does not use a "generic enum layout" for `Result` but a **special case**, which already treats it as a lang item, only without saying so.
-- **The degree of `Option`'s built-in-ness**: `Array.get` (8.4) and `std.env.get` (8.3) both return `Option`, and the v0.1 postfix `?` model now treats `Option.None` as an early return from an `Option`-returning function. Its degree of built-in-ness must therefore be decided together with `Result`.
+- **The cycle is removed**: the v0.1 standard library is implemented through compiler-provided APIs and the C runtime, not by first compiling a Nomo standard-library source tree, so no layered bootstrap is required.
+- **`?` has a stable anchor**: type checking accepts only the compiler-recognized `Result<T,E>` and `Option<T>` carriers; an ordinary user enum with the same short name cannot replace the standard type.
+- **Codegen-specific layouts**: the C backend emits dedicated `Result`/`Option` layouts and early-return paths from the checked carrier type.
+- **Built-in awareness is aligned**: `Option` and `Result` use the same class of compiler-owned identity and jointly support standard-library returns, `?`, and the core prelude.
 
 ---
 
@@ -62,15 +63,15 @@ If we treat them as "ordinary library types the compiler knows nothing about", `
 - **Advantages**: cleanest compiler, no special types.
 - **Disadvantages**: `?` loses a clear anchor; the dedicated C layout loses its basis (either all enums use this layout, or the dedicated layout is abandoned); it is hard to guarantee "`?` takes effect only for error-propagation semantics". It basically cannot fulfill the existing promises of the current specification.
 
-### 4.2 Option B: Fully built-in (compiler built-in types, the library only re-exports)
+### 4.2 Option B: Compiler-owned identities plus standard module contracts (accepted)
 
-- **Approach**: `Option`/`Result` are defined built-in by the compiler, and `std.option`/`std.result` merely re-export.
+- **Approach**: the generic enum shapes and carrier semantics of `Option`/`Result` are compiler-owned; `std.option`/`std.result` are the public contracts for imports, documentation, and standard helpers. The compiler injects required standard types based on imports, type use, standard API return types, and core-prelude use.
 - **Advantages**: `?`, exhaustiveness, and codegen all have stable anchors.
-- **Disadvantages**: literally conflicts with the standard-library design's "they are standard-library packages"; when users read the standard-library source they do not see the real definition, violating the readability of "stable anchors".
+- **Disadvantages**: the normative type definitions currently live in the compiler and specification rather than independently compilable Nomo standard-library source; moving them out later requires a migration plan.
 
-### 4.3 Option C: lang item (preferred)
+### 4.3 Option C: source-level `#[lang]` annotation (not adopted for v0.1)
 
-- **Approach**: the type **definitions are still written in** the `std.option`/`std.result` source (preserving the standard-library design's fact that "they are standard-library packages"), but the compiler recognizes them via a **lang-item annotation**, e.g. an internal attribute:
+- **Candidate approach**: keep the type definitions in `std.option`/`std.result` source and let the compiler recognize them through a lang-item attribute, for example:
 
 ```rust
 package std.result
@@ -92,16 +93,14 @@ pub enum Option<T> {
 }
 ```
 
-- **Semantics**:
+- **If adopted later, its semantics would be**:
   - `?` takes effect only on types annotated as `lang = "result"`, with a clear anchor.
   - `match` exhaustiveness treats them the same as ordinary enums (no special-casing needed), but codegen can recognize the lang item and apply the dedicated `Result_T_E` layout.
   - Name resolution treats `Result.Ok`/`Option.Some` as ordinary enum variants (consistent with [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md)), and [RFC 0007](./0007-unqualified-variant-access.md)'s prelude/unqualified variants also act on these two lang items.
-- **Resolving the circular dependency**: when compiling `std.result` itself, the lang item is registered before use; the standard library can be split into two layers — the pure-definition layer (not depending on `?`) is compiled first, and library code that depends on `?` is compiled afterward.
-- **C backend**: when codegen sees the lang item `result`, it applies the 4.4 layout; `option` uses a similar `Option_T` (`bool is_some; union{...}`).
-- **Diagnostics**:
-  - `E0330` the `result`/`option` lang item is not found (standard library missing or not annotated).
-  - `?` used on a non-`result` lang item → type checking error (N04xx).
-- **Attribute-syntax dependency**: a minimal internal attribute mechanism (`#[lang = "..."]`) is needed. This attribute can be made **available only to the compiler/standard library internally**, not exposed to users, to avoid introducing a full attribute system early.
+- **Migration requirement**: this first needs compilable standard-library source, a controlled internal attribute, and a clear bootstrap order.
+- **C backend (if adopted later)**: codegen would select the `Result`/`Option` layouts through the controlled lang-item identity.
+- **Diagnostics (if adopted later)**: migration would need diagnostics for missing, duplicate, or incorrectly annotated standard carriers, plus `?` on a non-carrier type; a migration RFC would assign the exact codes.
+- **Attribute-syntax dependency**: a minimal internal attribute mechanism (`#[lang = "..."]`) is required. The current parser exposes only supported user attributes, so v0.1 documentation must not assume this mechanism already exists.
 
 ---
 
@@ -110,38 +109,38 @@ pub enum Option<T> {
 | Option | Approach | Advantages | Disadvantages |
 | --- | --- | --- | --- |
 | A Pure library | No special-casing | Cleanest compiler | `?`/4.4 lose anchors, cannot fulfill the current specification |
-| B Fully built-in | Compiler built-in, library forwards | Most stable anchors | Conflicts with "they are standard-library packages", source unreadable |
-| C lang item (preferred) | Defined in the library, recognized by the compiler via annotation | Balances "library" and "built-in awareness", readable, clear anchors | Needs a minimal internal attribute mechanism |
+| B Compiler-owned identity (accepted) | Compiler provides the carriers; `std.*` provides public module contracts | Matches the current runtime/type checker and has no bootstrap cycle | Standard type definitions are not yet independently compilable Nomo source |
+| C Source lang item | Defined in the library, recognized by the compiler via annotation | Balances library source and built-in awareness | The attribute mechanism and standard-library bootstrap pipeline do not exist today |
 
 ---
 
 ## 6. Drawbacks and Risks
 
-- Option C needs to introduce the internal attribute `#[lang = "..."]`. It must be made clear that it is **not** a general user-facing attribute system (that is a follow-up RFC), and is only for standard-library/compiler internal use, otherwise it would expand the v0.1 syntactic surface area.
-- The layered compilation of the standard library (definition layer first, `?`-using layer later) needs to be reflected in the build order, to avoid a bootstrap-style cycle.
-- The degree of built-in-ness of `Option` and `Result` must be aligned: both are set as lang items, and v0.1's `?` acts on both `Result` and `Option` through carrier-specific early return.
+- Option B makes the compiler the source of truth for standard carrier shapes; the specification, diagnostic docs, and injected definitions must remain synchronized.
+- If standard-library source is moved out later, recognition must not rely on a user-controlled short name; it needs a controlled package identity or internal annotation migration.
+- The built-in degree of `Option` and `Result` must remain aligned, with carrier-specific early-return rules for `?`.
 
 ---
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: Option C. Declare `Option`/`Result` as lang items, with the definitions kept in `std.option`/`std.result`; the compiler uses this to support `?`, the codegen dedicated layout, and the (future) prelude.
-- **Recommended current-specification supplement**: add a section to the standard-library design or compiler architecture pointing out that "`Option`/`Result` are lang items: both standard-library packages and recognized by the compiler", eliminating the current implicit coupling.
-- **Acceptance impact**: the acceptance test matrix needs to add "report `E0330` when a lang item is missing/unannotated" and "`?` takes effect only on recognized `Result`/`Option` carriers" tests; codegen tests confirm the lang item applies the 4.4 layout.
+- **Landed in v0.1**: Option B. The compiler owns the `Option`/`Result` carriers, while `std.option`/`std.result` retain their public module/API identities.
+- **Specification treatment**: state the current built-in boundary without claiming a `#[lang]` attribute or independently compiled standard-library definition layer.
+- **Acceptance coverage**: `?` accepts only compatible carriers; conflicting user types are rejected; codegen and lifecycle tests cover the dedicated `Result`/`Option` representations and early-return paths.
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward **Option C (lang item)**: use the minimal internal `#[lang = "..."]` annotation to unify "standard-library package" and "compiler built-in awareness", preserving the fact of the standard-library design while giving `?` ([RFC 0001](./0001-error-propagation-and-conversion.md)), exhaustiveness ([RFC 0002](./0002-match-wildcard-and-nesting.md)), codegen, and variant simplification ([RFC 0007](./0007-unqualified-variant-access.md)) stable anchors. Remains Draft.
+Accept **Option B (compiler-owned identities plus standard module contracts)**. This is the architecture implemented today: the compiler injects `Option`/`Result` and recognizes them across type checking, `?`, the prelude, and the C backend; `std.option`/`std.result` provide stable user-facing module identities. v0.1 does not introduce an unimplemented `#[lang]` attribute. A future move to Nomo-authored standard-library source may adopt a controlled lang-item mechanism through a separate RFC.
 
 ---
 
-## 9. Open Questions
+## 9. Follow-up Questions
 
-- The exact syntax and visibility of the internal attribute `#[lang]` (whether it is hidden from users).
-- Beyond `Option`/`Result`, should `string`/`Array` ([RFC 0003](./0003-arc-cow-runtime-cost.md)) also be set as lang items to support dedicated runtimes?
-- How to fix the standard-library layered-compilation order in `nomo build` and the compiler pipeline.
+- If the standard library moves to Nomo source, whether internal identity should use package paths, a controlled attribute, or a generated manifest.
+- Whether other compiler/runtime-special types such as `string` and `Array` need a unified internal identity model.
+- How to preserve the existing `std.option`/`std.result` APIs, diagnostic codes, and generated C ABI during such a migration.
 
 ---
 

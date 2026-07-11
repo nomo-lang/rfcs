@@ -11,8 +11,9 @@
 | Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
+| Implementation | Landed: postfix `?` for `Result`/`Option`, same-carrier early return, and `std.result.map_err(named_converter)?` have compiler and runtime coverage |
 | Related topics | error handling, `Result`, `?` propagation, error conversion, C backend |
-| Related RFCs | [RFC 0006](./0006-option-result-lang-items.md) (Option/Result as lang items) |
+| Related RFCs | [RFC 0006](./0006-option-result-lang-items.md) (compiler-owned Option/Result identities) |
 
 ---
 
@@ -49,7 +50,7 @@ It also emphasizes:
 > v0.1 does not provide anonymous error unions and does not automatically merge error types. Cross-layer error conversion must be done explicitly.
 > Automatic error unions can be a follow-up RFC and do not enter v0.1.
 
-In the list of pending issues, the error-conversion topic also lists "whether `Result` error conversion introduces a `From`-style trait" as a pending issue.
+An early error-conversion issue also asked whether `Result` conversion should introduce a `From`-style trait; this RFC explicitly defers it to a later version.
 
 ### 3.2 Problem Analysis
 
@@ -147,7 +148,7 @@ fn read_config(path: string) -> Result<string, AppError> {
 ## 7. Impact on v0.1 Scope
 
 - **Lands in v0.1**: Option B's `std.result.map_err` with named converter functions, documented as the recommended way to write cross-layer conversion before `?`.
-- **Explicitly deferred**: Option A (`From`-style) and Option C (anonymous union) are left for a v0.2+ RFC, bound to the error-conversion topic in the pending-issues list.
+- **Explicitly deferred**: Option A (`From`-style) and Option C (anonymous union) are left for separate v0.2+ RFCs.
 - **Acceptance impact**: the acceptance matrix includes `map_err` + `?` cross-layer propagation examples and tests.
 
 ---
@@ -169,5 +170,5 @@ Accepted **Option B**. v0.1 uses postfix `?` as the only propagation syntax and 
 ## 10. References
 
 - The current error handling, `Result<T, E>`, `?` propagation, C backend representation, file-reading example.
-- The error-conversion pending topic (`From`-style trait pending).
-- [RFC 0006](./0006-option-result-lang-items.md) (the coupling of `Option`/`Result` as lang items).
+- Follow-up error-conversion work (`From`-style traits).
+- [RFC 0006](./0006-option-result-lang-items.md) (compiler-owned `Option`/`Result` identities).

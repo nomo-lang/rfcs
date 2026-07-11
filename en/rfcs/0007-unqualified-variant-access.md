@@ -8,17 +8,18 @@
 | --- | --- |
 | Number | 0007 |
 | Title | Whether `Enum.Variant` can/should be simplified to an unqualified `Variant` |
-| Status | Draft |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
+| Implementation | Landed: `Some`/`None`/`Ok`/`Err` may be unqualified; local names win; user enums remain qualified; qualified core variants stay compatible |
 | Related topics | enum variants, prelude, name resolution, `Option`, `Result`, ergonomics |
-| Related RFCs | [RFC 0002](./0002-match-wildcard-and-nesting.md) (match readability), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (`.` resolution), [RFC 0006](./0006-option-result-lang-items.md) (lang items) |
+| Related RFCs | [RFC 0002](./0002-match-wildcard-and-nesting.md) (match readability), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (`.` resolution), [RFC 0006](./0006-option-result-lang-items.md) (core carrier identities) |
 
 ---
 
 ## 1. Summary
 
-The current language design uniformly uses qualified variant access `EnumName.Variant` (`Option.Some`, `Option.None`, `Result.Ok`, `Result.Err`, `Color.Red`), both in construction and in `match` patterns. This RFC evaluates whether the unqualified forms `Some`, `None`, `Ok`, `Err` should be allowed. Conclusion first: **partially necessary** — leaning toward "allowing the unqualified form only for the core lang-item variants such as the prelude `Option`/`Result`, while user-defined enums always stay qualified". The reasoning: core type variants (`Some/None/Ok/Err`) appear extremely frequently and their names are de facto unique within the ecosystem, so the benefit of un-qualifying is large and the conflict risk is low; whereas globally opening up unqualified forms for general enums would introduce naming conflicts, weaken exhaustiveness readability, and conflict with "avoiding multiple ways to write the same semantics" and "no wildcard imports". Remains Draft.
+This RFC accepts unqualified access only for the core prelude `Option`/`Result` variants: `Some`, `None`, `Ok`, and `Err` may be used in constructors and patterns, while user-defined enums still require `Enum.Variant`. A local binding or function with the same name wins through lexical scope; callers can use `Option.Some` or `Result.Ok` to disambiguate. The formatter does not force qualified forms into unqualified forms, so both core spellings remain compatible.
 
 ---
 
@@ -49,9 +50,9 @@ For imports, the current module system supports `import std.result.Result` (impo
 - **Advantages**: the origin is traceable (consistent with 3.1 "the origin of every symbol must be traceable"), brought in on demand, conflicts controllable (same-name conflicts are reported at the import site).
 - **Disadvantages**: every file must write an import line; it needs to be clearly distinguished from "no wildcard imports" (this is a **named** import, not a wildcard, so it does not violate it).
 
-### 4.2 Option (b): Global pre-import of core-type variants (prelude, preferred)
+### 4.2 Option (b): Global pre-import of core-type variants (prelude, accepted)
 
-- **Approach**: the compiler implicitly pre-imports a set of prelude symbols for every package, including `Option`'s `Some`/`None` and `Result`'s `Ok`/`Err` (depending on [RFC 0006](./0006-option-result-lang-items.md) setting them as lang items). Users can write the following without importing:
+- **Approach**: the compiler implicitly pre-imports a set of prelude symbols for every package, including `Option`'s `Some`/`None` and `Result`'s `Ok`/`Err` (based on the compiler-owned carrier identities from [RFC 0006](./0006-option-result-lang-items.md)). Users can write the following without importing:
 
 ```rust
 fn read_config(path: string) -> Result<string, AppError> {
@@ -91,23 +92,23 @@ fn read_config(path: string) -> Result<string, AppError> {
 - **Exhaustiveness and readability**: exhaustiveness checking enumerates all variants based on "the type of the matched value", **independent** of whether variants are qualified, so un-qualifying does not weaken exhaustiveness ([RFC 0002](./0002-match-wildcard-and-nesting.md)). For readability, the qualified form makes "which enum's arm is this" clear at a glance; but for universally known types like `Ok/Err/Some/None`, the prefix is noise instead. Conclusion: un-prefix core types to improve readability, keep the prefix on custom enums for clarity.
 - **Impact on parser / name resolution (compiler architecture)**:
   - Status quo (d): name resolution suffices with the `.` rules of [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md), the simplest.
-  - prelude (b) / import (a): name resolution needs to support a "bare identifier → variant" lookup path and define its priority relative to variable/function names (recommended: local binding > prelude variant, to avoid shadowing user variables).
+  - prelude (b) / import (a): name resolution supports a "bare identifier → variant" lookup path; the current priority is local binding/parameter/function > prelude variant.
   - Type inference (c): needs to introduce expected-type-driven variant resolution, the most complex.
 - **AI-friendliness (avoiding multiple ways to write the same semantics)**: this is the **biggest objection**. If both `Result.Ok` and `Ok` are allowed, "two ways to write the same semantics" appears, violating 2.2. Mitigation: **keep only one recommended way** — uniformly recommend the unqualified form for core types (`Ok`/`Err`/`Some`/`None`) and converge it via the formatter/lint; uniformly qualify custom enums. That is "one form per domain", rather than "two forms everywhere".
 - **Consistency with "no wildcard imports"**: Option (a) is a **named** import, not a `*` wildcard, and does not violate 3.1; Option (b) prelude is a fixed set built into the language, similar to keyword-level visibility, and is also not a wildcard import. Both are compatible with 3.1; what really must be avoided is "`import std.option.*`-style wildcards".
 
 ---
 
-## 6. Detailed Design (preferred option: prelude-only)
+## 6. Detailed Design (accepted option: prelude-only)
 
 - **Syntax**: `Some`/`None`/`Ok`/`Err` may be used unqualified in construction and in `match` patterns; all other enum variants stay `Enum.Variant`.
 - **Semantics/name resolution (compiler architecture)**:
-  - The pre-imported set (prelude) = `Result.{Ok, Err}` + `Option.{Some, None}`, depending on the lang-item recognition of [RFC 0006](./0006-option-result-lang-items.md).
-  - The order for resolving a bare identifier: local binding/parameter > current-package symbol > prelude variant. If a user defines a same-named symbol, it **shadows** the prelude (with a concurrent lint hint), guaranteeing existing code is not broken.
+  - The pre-imported set (prelude) = `Result.{Ok, Err}` + `Option.{Some, None}`, based on the compiler-owned carrier identities accepted by [RFC 0006](./0006-option-result-lang-items.md).
+  - The order for resolving a bare identifier is local binding/parameter > current-package symbol > prelude variant. A same-named user symbol shadows the prelude; no extra lint is emitted today.
   - Exhaustiveness, codegen, and the qualified form are fully equivalent (the same variant).
 - **Diagnostics**:
   - `E0340` ambiguous bare variant name (only if a future prelude expansion causes a conflict).
-  - lint: when a qualified form is detected on a core type (`Result.Ok`), suggest switching to the unqualified form (uniform style, implementing "one form per domain").
+  - No mandatory style lint is emitted today; qualified core forms remain available for compatibility and explicit disambiguation.
 - **C backend**: no impact; after resolution it generates the same code as the qualified form.
 - **Relationship with (a)**: the named variant import of Option (a) can be kept alongside as an explicit outlet for "custom enums that want to drop the prefix", but v0.1 can do only the prelude first, leaving (a) for v0.2.
 
@@ -115,29 +116,28 @@ fn read_config(path: string) -> Result<string, AppError> {
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: the minimal form of Option (b) — only the four `Option`/`Result` variants are unqualified via the prelude, with shadowing rules + style lint. Depends on the lang item of [RFC 0006](./0006-option-result-lang-items.md) going first.
-- **Recommended current-specification handling**: examples can gradually switch to unqualified core variants (e.g. the file-reading and array-swap examples), but must be unified globally consistent with the "one form per domain" principle, avoiding mixing old and new.
+- **Landed in v0.1**: the minimal form of Option (b) — only the four `Option`/`Result` variants enter the core prelude, with lexical shadowing rules.
+- **Compatibility policy**: qualified core variants remain valid; the formatter currently performs no mandatory rewrite or style lint.
 - **Defer**: Option (a) named variant imports and Option (c) type-inference omission are left for v0.2.
 - **Acceptance impact**: the name-resolution tests in the acceptance test matrix need to cover "bare `Ok`/`None` resolves correctly", "a user same-named symbol shadows the prelude", and "a bare variant of a custom enum still reports unresolved".
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward: **allow the unqualified form only for the prelude `Option`/`Result` variants (`Some`/`None`/`Ok`/`Err`), keeping all other enums qualified**, and implement "only one recommended form per domain" via the formatter/lint, thereby gaining the benefit of un-prefixing high-frequency spots without violating 2.2 and 3.1. Remains Draft.
+Accept **unqualified forms only for the core prelude `Option`/`Result` variants (`Some`/`None`/`Ok`/`Err`), with all other enums remaining qualified**. Lexical names take precedence over the prelude; qualified core variants remain available for explicit disambiguation and compatibility. This decision does not require the formatter or a lint to enforce a single spelling.
 
 ---
 
-## 9. Open Questions
+## 9. Follow-up Questions
 
 - Whether the precise prelude list is limited to `Option`/`Result`, or includes more core types in the future.
-- When a user same-named symbol shadows the prelude, is it a warning or must it be explicitly annotated?
-- Whether to also provide the named variant imports of Option (a) in v0.1, or to do strictly only the prelude.
-- Whether the current examples are uniformly rewritten to unqualified core variants after this RFC is accepted.
+- Whether to provide Option (a)'s named variant imports in the future.
+- Whether to add an optional style lint without changing the semantic compatibility of the two core spellings.
 
 ---
 
 ## 10. References
 
 - The current AI-friendliness principle, module import rules, enum design, `Result` semantics, name resolution, file-reading and array-swap examples.
-- [RFC 0002](./0002-match-wildcard-and-nesting.md) (match nesting readability), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (`.` resolution and bare-identifier resolution), [RFC 0006](./0006-option-result-lang-items.md) (lang items as the prelude basis).
+- [RFC 0002](./0002-match-wildcard-and-nesting.md) (match nesting readability), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (`.` resolution and bare-identifier resolution), [RFC 0006](./0006-option-result-lang-items.md) (compiler-owned carriers as the prelude basis).

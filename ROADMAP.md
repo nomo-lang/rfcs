@@ -37,6 +37,28 @@ Chinese specifications, RFCs, examples, editor integrations, and CI acceptance
 matrix agree. Remaining work is tracked as current-scope slices; it must not be
 reclassified as v0.2/v0.3 work merely to make the preview appear complete.
 
+## Proposed Implementation RFCs
+
+These proposals define the next implementation tracks. They are not part of the
+accepted implementation baseline until their individual acceptance gates pass:
+
+- [RFC 0014](./en/rfcs/0014-semver-resolution-and-conflict-explanations.md):
+  deterministic semantic-version solving and actionable conflicts.
+- [RFC 0015](./en/rfcs/0015-source-defined-standard-library-and-intrinsics.md):
+  migrate expressible standard-library definitions to Nomo source.
+- [RFC 0016](./en/rfcs/0016-incremental-semantic-graph-and-cache.md):
+  compiler-owned incremental queries shared by CLI and LSP.
+- [RFC 0017](./en/rfcs/0017-target-triples-and-cross-compilation.md):
+  one target model for resolution, ABI, compilation, and linking.
+- [RFC 0018](./en/rfcs/0018-package-signing-provenance-and-transparency.md):
+  publisher signatures, provenance, and auditable registry history.
+- [RFC 0019](./en/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md):
+  typed handles, callbacks, C layout, and deterministic bindings.
+
+Recommended implementation order is 0014 -> 0017 -> 0019 for the package/native
+toolchain, 0016 -> 0015 for compiler/editor architecture, and 0018 after the
+registry protocol and operational trust model are stable.
+
 ## v1.0: Stability Promise
 
 Before v1.0, Nomo must stabilize syntax, core types, standard library APIs,

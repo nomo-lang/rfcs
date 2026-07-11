@@ -8,9 +8,10 @@
 | --- | --- |
 | Number | 0004 |
 | Title | What checking strength should mutable-borrow uniqueness achieve in v0.1 |
-| Status | Draft |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
+| Implementation | Landed: declaration/call-site `mut` pairing, within-call path alias checks, field-prefix conflicts, and immutable-value rejection are covered by tests |
 | Related topics | mutable borrow, aliasing check, escape check, diagnostics, C backend |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md) (ARC+COW), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (syntax resolution) |
 
@@ -18,7 +19,7 @@
 
 ## 1. Summary
 
-The current mutable-borrow specification requires that "within the same scope a value can have only one active mutable borrow at a time" and that "a mutable borrow must not escape the current function", while deliberately deferring the full lifetime system. The problem is: even without lifetimes, reliably rejecting "repeated active mutable borrows" and "borrow escapes" still requires a certain amount of flow analysis, which is in tension with the MVP intent of "not introducing a full lifetime system". This RFC discusses which tier v0.1 should reach (pure syntactic layer / intra-function flow-sensitive analysis), and leans toward "doing lightweight intra-function, call-site-granularity flow-sensitive checking in v0.1 (enough to reject same-frame repeated `mut` argument passing and simple escapes), without introducing regions/lifetimes", remaining Draft.
+This RFC accepts a restricted call-site borrow model: a `mut` borrow is active only for one call expression. The compiler checks declaration/call-site `mut` pairing, immutable-value borrowing, repeated paths, and overlapping field prefixes without introducing regions or lifetimes. Current syntax cannot create a storable or returnable named borrow, so borrows do not escape a call expression.
 
 ---
 
@@ -39,7 +40,7 @@ The current mutable-borrow semantics:
 - Within the same scope a value can have only one active mutable borrow at a time.
 - v0.1 does not expose a general raw-reference type, to avoid introducing a full lifetime system.
 
-The call syntax requires `mut` at both ends (declaration `fn move_point(mut p: Point)`, call `move_point(mut pt)`). The mutable-borrow example is a single `inc(mut counter)`, which does not touch aliasing conflicts. The mutable-borrow syntax topic in the pending-issues list also lists whether to change `mut p: T` to `borrow mut p: T` as pending (see the [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) association).
+Call syntax requires `mut` at both ends (declaration `fn move_point(mut p: Point)`, call `move_point(mut pt)`). An early issue list considered changing `mut p: T` to `borrow mut p: T`; this RFC keeps the existing `mut` syntax, and the implementation now provides matching diagnostics and tests.
 
 ### 3.2 Problem Analysis
 
@@ -58,11 +59,11 @@ The tension: 3.6 wants "a small part of Rust-style aliasing safety" but "not Rus
 ### 4.1 Checking-Strength Tiers
 
 - **L0 pure syntactic layer**: only check that the `mut` keyword appears in pairs at the declaration/call ends, with no aliasing analysis.
-- **L1 call-site aliasing check (the preferred core)**: within a single call expression, perform "path aliasing" determination on all `mut` arguments, rejecting the same mutable path being passed more than once (e.g. `f(mut p, mut p)`, `f(mut p, mut p.x)` are treated as conflicts).
+- **L1 call-site aliasing check (accepted core)**: within a single call expression, perform path-conflict checks on all `mut` arguments, rejecting the same mutable path being passed more than once (e.g. `f(mut p, mut p)`, `f(mut p, mut p.x)` are treated as conflicts).
 - **L2 intra-function flow-sensitive**: track the "active interval" of a mutable borrow across a statement sequence, handling cross-statement overlap (only needed if v0.1 allows binding a borrow to a local variable — currently not allowed).
 - **L3 regions/lifetimes**: the full lifetime system. The current specification explicitly **does not** do this.
 
-### 4.2 Lean: L1 + Restricted L2
+### 4.2 Accepted: L1 + Restricted Path Checking
 
 - **Semantics**: a mutable borrow's active period is defined as "during the evaluation of the call expression that produces it". Since v0.1 has no reference type and cannot store a borrow in a variable/field/array (this itself is guaranteed by the type system — there is no nameable type like `&mut T`), then:
   - Same-frame aliasing conflicts can only occur between **multiple `mut` arguments of the same call** → covered by L1.
@@ -85,7 +86,7 @@ L1's compile-time uniqueness lets `Array.push(mut self)` safely modify in place 
 | Option | Approach | Advantages | Disadvantages |
 | --- | --- | --- | --- |
 | L0 pure syntactic | Only check `mut` pairing | Easiest to implement | Misses `f(mut p, mut p)`, fails acceptance |
-| L1 + restricted L2 (preferred) | Call-site aliasing + escape backstop | Meets acceptance, controllable cost, no lifetimes needed | Needs path-aliasing determination (medium complexity) |
+| L1 + restricted path checking (accepted) | Call-site aliasing; syntax prevents named-borrow escape | Meets acceptance, controllable cost, no lifetimes needed | Needs path-aliasing determination (medium complexity) |
 | L3 regions/lifetimes | Full borrow checking | Strongest guarantee | Violates the 3.6 promise, severe slippage |
 
 ---
@@ -94,33 +95,33 @@ L1's compile-time uniqueness lets `Array.push(mut self)` safely modify in place 
 
 - "Path-aliasing determination" requires canonicalized comparison of lvalue paths (`p`, `p.x`, `items` vs some element of `items`); for subscript paths such as `Array` elements, v0.1 can conservatively treat "any two mutable borrows of the same array" as a conflict, avoiding subscript-aliasing analysis.
 - If binding a mutable borrow to a local variable (named borrow) is allowed in the future, L1 is immediately insufficient and must be upgraded to true L2 active-interval analysis — this is a potential rework point and should be stated in the documentation as "v0.1 does not support named mutable borrows".
-- Coupled with the mutable-borrow syntax topic in the pending-issues list (`mut p: T` vs `borrow mut p: T`): if the syntax is renamed, the diagnostic wording and examples must be synchronized (see [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md)).
+- Reintroducing a `borrow` keyword later requires a new RFC and synchronized diagnostics, formatter, LSP, and examples; it is not part of the current v0.1 decision.
 
 ---
 
 ## 7. Impact on v0.1 Scope
 
-- **Recommended to land in v0.1**: L1 (call-site aliasing) + escape backstop rule, with a set of `E0501-E0510` diagnostics; do not implement regions/lifetimes.
+- **Landed in v0.1**: L1 call-site aliasing plus restricted path-conflict rules, with `E0501-E0511` diagnostics; no region/lifetime implementation.
 - **Explicitly not doing**: named mutable borrows, storing a borrow in a struct/array, cross-function borrows.
 - **Acceptance impact**: the acceptance test matrix's "Mutability tests" need to cover: `f(mut p, mut p)` is rejected, initiating `mut` on a `let` (non-mut) is rejected, missing the call-side `mut` is rejected, and (restricted) escape is rejected.
 
 ---
 
-## 8. Recommendation (remains Draft, not decided)
+## 8. Decision
 
-Lean toward **L1 + restricted L2**: strictly limit the mutable borrow's lifetime to "a single call expression", so that call-site aliasing checking + escape backstop suffice to meet the safety goal of 3.6 and acceptance, **without introducing** a lifetime/region system. For array-element aliasing, take the conservative "same array means conflict" strategy. Remains Draft, and synchronize the wording after the mutable-borrow syntax topic in the pending-issues list is decided.
+Accept **L1 + restricted path checking**: a mutable borrow is active for exactly one call expression; repeated root paths and prefix overlaps such as `p`/`p.x` are rejected. v0.1 keeps the `fn f(mut p: T)` / `f(mut value)` syntax and does not introduce a `borrow` keyword, named borrows, or a lifetime/region system.
 
 ---
 
-## 9. Open Questions
+## 9. Follow-up Questions
 
 - The details of the canonicalization rules for lvalue-path aliasing (does a field-path prefix overlap count as a conflict, e.g. `p` vs `p.x`).
 - Whether array elements are worth more fine-grained subscript-aliasing analysis, or should be handled conservatively in the long term.
-- Coordination with the final form of the `mut p: T` syntax in [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md).
+- If indexed lvalues or named borrows are introduced later, a separate RFC must extend the current call-site model.
 
 ---
 
 ## 10. References
 
-- The current mutable-borrow parameters, error-code range (E0500-E0599), compiler pipeline and IR, the mutable-borrow example, the mutable-borrow syntax pending topic.
+- The current mutable-borrow parameters, error-code range (E0500-E0599), compiler pipeline and IR, examples, and tests.
 - [RFC 0003](./0003-arc-cow-runtime-cost.md) (the boundary between compile-time uniqueness and runtime COW), [RFC 0005](./0005-newline-sensitivity-and-dot-resolution.md) (`mut`/`.` syntax resolution).
