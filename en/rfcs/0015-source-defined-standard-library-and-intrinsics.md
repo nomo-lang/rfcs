@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First through third slices implemented: the intrinsic manifest and validated source contracts for `Option`/`Result`, `Array`, and `string` are present; representation-sensitive ABI still comes from the compiler/runtime |
+| Implementation | First through fourth slices implemented: the intrinsic manifest, validated source contracts, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -70,6 +70,18 @@ remain aligned during migration. The intrinsic manifest requires the canonical
 counting and copy-on-write on writes; `string-header` uses immutable `data` plus
 non-atomic reference-counted ownership. Source parsing, type checking, manifest
 identity, and standard-library documentation all cover this contract.
+
+### 4.4 Fourth slice: source-backed tooling and distribution
+
+Compiler semantic queries, `nomo doc --std`, and `nomo-lsp` now read the
+canonical `std/src/*.nomo` files for public signatures, documentation, hover,
+workspace symbols, and definition targets. `Array` remains a compiler-owned
+special type during this migration, so its navigation symbol is source-anchored
+while its representation is still supplied by the runtime ABI. Standard-library
+source is included in both compiler and LSP release archives; installed binaries
+resolve it from `NOMO_STD_SOURCE_ROOT` or the archive's adjacent `std/src`
+directory. Bootstrap acceptance covers source parsing, manifest identity,
+semantic queries, documentation output, and release-package layout.
 
 ## 5. Alternatives
 

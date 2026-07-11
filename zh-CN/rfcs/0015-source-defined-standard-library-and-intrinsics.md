@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一至三切片已落地：intrinsic 清单与经过校验的 `Option`/`Result`、`Array`、`string` source contract 已存在；表示相关 ABI 仍由编译器/runtime 提供 |
+| 实现状态 | 第一至四切片已落地：intrinsic 清单、经过校验的 source contract、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -65,6 +65,16 @@ source signature 与生成 C 行为保持一致。intrinsic 清单要求 canonic
 `len`/`cap`/`data` 存储、非原子引用计数和写入时 COW；`string-header` 使用不可变
 `data` 与非原子引用计数 ownership。source parse、type-check、manifest identity 与
 标准库文档都覆盖这一契约。
+
+### 4.4 第四切片：源码驱动工具链与发行包
+
+compiler semantic query、`nomo doc --std` 与 `nomo-lsp` 现在读取 canonical
+`std/src/*.nomo`，为 public signature、文档、hover、workspace symbol 与
+definition 提供真实源码位置。迁移期间 `Array` 仍是 compiler-owned special
+type，因此它的导航符号锚定到源码，但表示仍由 runtime ABI 提供。compiler 与
+LSP 的发行包都会携带标准库源码；安装后的 binary 优先读取
+`NOMO_STD_SOURCE_ROOT`，否则探测发行包旁边的 `std/src`。bootstrap 验收覆盖
+源码解析、manifest identity、semantic query、文档输出与发行包目录布局。
 
 ## 5. 备选方案
 
