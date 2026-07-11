@@ -396,6 +396,12 @@ v0.1 must validate:
   for the compiler, documentation generator, and LSP. Builtin bodies may lower
   through compiler intrinsics and the native runtime during source migration;
   this does not turn `std` into a user-managed dependency.
+- `std/src/option.nomo` and `std/src/result.nomo` now define the canonical
+  `Option<T>`/`Result<T, E>` enum shapes and pure predicate/`unwrap_or` helpers.
+  The compiler validates and type-checks these library modules while retaining
+  injected carrier layout as the compatibility path. Higher-order helpers
+  (`map`, `map_err`, `and_then`) remain intrinsic-backed until function values
+  are expressible in the language.
 - The toolchain also ships `std/intrinsics.toml`. It is a read-only, schema-
   versioned binding for identities that still require compiler/runtime support,
   including `Option`, `Result`, and postfix `?`. Compiler and `nomo doc --std`

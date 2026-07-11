@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First slice implemented: canonical `nomo-lang/std/intrinsics.toml` is loaded and validated; core types still come from the compiler/runtime |
+| Implementation | First and second slices implemented: the intrinsic manifest and the validated `Option`/`Result` source contract are present; carrier ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -49,6 +49,15 @@ lowering and `nomo doc --std` invoke the validator. Duplicate bindings,
 unknown modules, source mapping drift, unsupported kinds, and missing required
 `Option`/`Result`/`?` identities report stable `E0800` diagnostics. This slice
 does not move carrier declarations or runtime lowering yet.
+
+### 4.2 Second slice: carrier source contract
+
+`std/src/option.nomo` and `std/src/result.nomo` now define the canonical enum
+shapes and pure `is_some`/`is_none`/`is_ok`/`is_err`/`unwrap_or` helpers. The
+toolchain parses and type-checks those files as library modules, and compiler
+tests compare their shapes with the compatibility carrier injection used by
+normal projects. `map`, `map_err`, and `and_then` stay intrinsic-backed because
+the current language has no function-value type.
 
 ## 5. Alternatives
 

@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一切片已落地：已加载并校验 canonical `nomo-lang/std/intrinsics.toml`；核心类型仍由编译器/runtime 提供 |
+| 实现状态 | 第一、二切片已落地：intrinsic 清单与经过校验的 `Option`/`Result` source contract 已存在；carrier ABI 仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -47,6 +47,14 @@
 lowering 和 `nomo doc --std` 会调用校验。重复 binding、未知模块、源码映射漂移、不支持的
 kind，以及缺失 `Option`/`Result`/`?` 必需身份都会报告稳定的 `E0800`。本切片尚未迁移
 carrier 声明或 runtime lowering。
+
+### 4.2 第二切片：carrier source contract
+
+`std/src/option.nomo` 与 `std/src/result.nomo` 现在定义 canonical enum 形状及纯
+`is_some`/`is_none`/`is_ok`/`is_err`/`unwrap_or` helper。toolchain 会把它们作为 library
+module 解析并 type-check；compiler 测试将 source 形状与普通项目使用的兼容 carrier 注入
+进行对照。由于当前语言还没有 function-value type，`map`、`map_err`、`and_then` 继续由
+intrinsic 提供。
 
 ## 5. 备选方案
 

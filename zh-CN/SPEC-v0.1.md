@@ -493,6 +493,11 @@ v0.1 必须校验：
   registry 判定可接受的 public import path。在 public implementation 迁移到 Nomo source
   期间，builtin body 可以继续通过 compiler intrinsic 与 native runtime lower；这不会把
   `std` 变成用户管理的普通依赖。
+- `std/src/option.nomo` 与 `std/src/result.nomo` 现在定义 canonical
+  `Option<T>`/`Result<T, E>` enum 形状及纯 predicate/`unwrap_or` helper。compiler 会校验
+  并 type-check 这些 library module，同时保留 injected carrier layout 作为兼容路径。
+  higher-order helper（`map`、`map_err`、`and_then`）在语言支持 function value 前继续由
+  intrinsic 提供。
 - toolchain 同时携带 `std/intrinsics.toml`。它是只读、带 schema version 的身份绑定清单，
   记录仍需 compiler/runtime 支持的 `Option`、`Result` 与 postfix `?` 等身份。compiler
   与 `nomo doc --std` bootstrap 路径会校验 canonical package、源码映射、唯一性和必需
