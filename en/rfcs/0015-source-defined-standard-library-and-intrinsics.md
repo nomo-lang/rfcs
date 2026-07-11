@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First through sixth slices implemented: the intrinsic manifest, validated source contracts, core and extension source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
+| Implementation | First through seventh slices implemented: the intrinsic manifest, validated source contracts, core, extension, network, and HTTP source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -104,6 +104,17 @@ source and checked against the import registry. Their host/runtime behavior
 continues to use the existing builtin lowerings. `panic` is accepted as a
 contextual function declaration name because it is both an expression keyword
 and a required standard-library API name.
+
+### 4.7 Seventh slice: network and HTTP source-defined API surface
+
+The source package now also declares `std.net` and `std.http`. Their public error,
+response, datagram, and opaque handle types plus blocking client/server functions
+are checked against the standard import registry. TCP, UDP, and HTTP handles expose
+source-level methods or close helpers matching the existing builtin lowering. The
+runtime remains responsible for sockets, HTTP parsing, and host errors; these source
+files define the public signatures and documentation. Callers can combine `defer`
+with postfix `?` to close accepted exchanges, servers, and other handles on both
+normal returns and propagation paths.
 
 ## 5. Alternatives
 

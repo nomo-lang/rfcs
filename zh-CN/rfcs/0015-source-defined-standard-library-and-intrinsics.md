@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一至六切片已落地：intrinsic 清单、经过校验的 source contract、核心与扩展源码 API、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
+| 实现状态 | 第一至七切片已落地：intrinsic 清单、经过校验的 source contract、核心、扩展、网络与 HTTP 源码 API、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -95,6 +95,15 @@ struct、function、contextual `debug.panic` 及文档都会从 source 解析，
 import registry 对照校验；主机/runtime 行为继续使用现有 builtin lowering。
 由于 `panic` 同时是表达式关键字和标准库必须提供的 API 名称，parser 允许
 它作为 contextual function declaration name。
+
+### 4.7 第七切片：网络与 HTTP 源码 API surface
+
+source package 现在也声明 `std.net` 与 `std.http`。网络错误、响应、数据报、
+opaque handle 类型以及阻塞式 client/server 函数都会与标准 import registry
+对照校验；TCP、UDP、HTTP handle 的 source-level method 或 close helper 与现有
+builtin lowering 保持一致。socket、HTTP parsing 与主机错误仍由 runtime 负责，
+这些 source file 定义 public signature 与文档。调用方可以把 `defer` 与 postfix
+`?` 组合，在正常返回和 propagation 路径上都关闭 exchange、server 及其他 handle。
 
 ## 5. 备选方案
 
