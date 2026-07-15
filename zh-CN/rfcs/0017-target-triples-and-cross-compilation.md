@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 部分前置已落地：C99 backend、native linker metadata 与多平台 release workflow 已有；统一 target 模型未实现 |
+| 实现状态 | 部分实现：canonical `TargetTriple`、host detection、ABI facts、target-tagged C、隔离产物目录、macOS cross-link 与真实 arm64-to-x86_64 CI build 已落地；条件 manifest 与 lockfile 尚未实现 |
 | 关联主题 | target triple、cross compilation、conditional dependency、linker、sysroot |
 | 关联 RFC | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0011](./0011-c-ffi-safety-and-link-boundary.md) |
 
@@ -36,10 +36,20 @@ C 后端便于移植，但“生成 C”不等于可复现交叉编译。若 tar
 
 ## 4. 实现切片
 
-1. target triple parser、canonicalization、host detection 与 ABI table。
-2. manifest predicate、graph filtering 与 lockfile 表示。
-3. C compiler/linker/sysroot 配置及 FFI target metadata。
-4. 至少 Linux/macOS 的 host + cross CI matrix 和 artifact inspection。
+1. **已落地：**共享 `nomo-target` crate 中的 target triple parser、
+   canonicalization、host detection 与 ABI table。
+2. **待实现：**manifest predicate、graph filtering 与 lockfile 表示。
+3. **部分实现：**target context 已贯穿 C emission 与 linking，Apple Clang
+   已有显式 cross-architecture 配置；通用 compiler/linker/sysroot bundle 与
+   target-conditioned FFI metadata 尚未完成。
+4. **部分实现：**arm64 macOS CI 会真实链接 x86-64 executable，检查 Mach-O
+   architecture，并上传 target-scoped 证据；RFC 接受前仍需 Linux host + cross 路径。
+
+显式 `nomo build --target <triple>` 会把工件放在
+`build/<canonical-target>/{c,bin}`。`nomoc build --target` 与
+`nomo build --emit-c --target` 会在生成的 C 中嵌入 canonical target macros。
+非 host native linking 若没有具体 toolchain path 会提前失败；识别 triple
+本身不代表已经支持该目标的链接。
 
 ## 5. 备选方案
 

@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0015 |
 | Title | Source-Defined Standard Library and Controlled Intrinsic Identities |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | First through eighth slices implemented: the intrinsic manifest, validated source contracts, core, extension, network, HTTP, and FFI source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI still comes from the compiler/runtime |
+| Implementation | Implemented: the intrinsic manifest, validated source contracts, core, extension, network, HTTP, and FFI source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI intentionally remains in the compiler/runtime |
 | Topics | standard library, intrinsic, lang item, bootstrap, ABI |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0006](./0006-option-result-lang-items.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -143,13 +143,20 @@ Retain the current compiler-carrier path as a conformance oracle until both impl
 
 ## 8. Acceptance Gate
 
-This RFC may become `Accepted` only after at least `Option`/`Result` are source-defined and intrinsic validation, ABI conformance, doc/LSP navigation, and packaging tests pass.
+The acceptance gate is satisfied: `Option`/`Result` and the rest of the public
+standard-library surface have canonical Nomo source declarations; intrinsic
+identity and ABI contracts are validated; docs and LSP navigation use those
+sources; and compiler/LSP release archives package them.
 
-## 9. Open Questions
+## 9. Resolved Decisions
 
-- Is the manifest pinned by compiler version or a toolchain manifest?
-- Which runtime operations must remain permanent intrinsics?
-- May the standard library ship patch releases independently from the compiler?
+- The intrinsic manifest is part of the coordinated toolchain and is pinned by
+  the compiler/toolchain version.
+- Representation, ownership, ABI, host operations, and behavior that the
+  current language cannot express remain controlled intrinsics. Public
+  signatures and expressible behavior stay in Nomo source.
+- Before the stable compatibility gate, the standard library does not release
+  independently from the compiler.
 
 ## 10. References
 

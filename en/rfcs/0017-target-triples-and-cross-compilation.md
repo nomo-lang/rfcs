@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | Prerequisites are partial: the C99 backend, native linker metadata, and multi-platform release workflow exist; a unified target model does not |
+| Implementation | Partial: canonical `TargetTriple`, host detection, ABI facts, target-tagged C, isolated artifacts, macOS cross-linking, and a real arm64-to-x86_64 CI build are implemented; conditional manifests and lockfiles remain |
 | Topics | target triple, cross compilation, conditional dependency, linker, sysroot |
 | Related RFCs | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0011](./0011-c-ffi-safety-and-link-boundary.md) |
 
@@ -36,10 +36,22 @@ A C backend aids portability, but emitting C is not reproducible cross compilati
 
 ## 4. Implementation Slices
 
-1. Target parser, canonicalization, host detection, and ABI table.
-2. Manifest predicates, graph filtering, and lockfile representation.
-3. C compiler/linker/sysroot configuration and FFI target metadata.
-4. Host plus cross CI on at least Linux and macOS, including artifact inspection.
+1. **Landed:** target parser, canonicalization, host detection, and ABI table in
+   the shared `nomo-target` crate.
+2. **Pending:** manifest predicates, graph filtering, and lockfile
+   representation.
+3. **Partial:** the target context reaches C emission and linking, and Apple
+   Clang has an explicit cross-architecture configuration. General
+   compiler/linker/sysroot bundles and target-conditioned FFI metadata remain.
+4. **Partial:** arm64 macOS CI performs a real x86-64 link, inspects the Mach-O
+   architecture, and uploads target-scoped evidence. A Linux host + cross path
+   remains before RFC acceptance.
+
+Explicit `nomo build --target <triple>` places artifacts under
+`build/<canonical-target>/{c,bin}`. `nomoc build --target` and
+`nomo build --emit-c --target` embed canonical target macros in generated C.
+Non-host native linking fails early unless a concrete toolchain path is
+configured; merely recognizing a triple does not imply link support.
 
 ## 5. Alternatives
 

@@ -282,6 +282,43 @@ dereferenced, inspected, compared, or used in arithmetic. Other extern calls
 support primitive integer, float, bool, and char parameters and return values,
 plus `void` returns.
 
+Accepted typed FFI extends this boundary without exposing raw pointers:
+
+```rust
+extern opaque type FileHandle release file_close
+
+#[repr(C)]
+struct Point {
+    x: i32
+    y: i32
+}
+
+extern "C" {
+    fn file_open() -> Nullable<Owned<FileHandle>>
+    fn file_marker(handle: Borrowed<FileHandle>) -> i32
+    fn file_close(handle: Owned<FileHandle>) -> void
+    fn point_sum(point: Point) -> i32
+    fn apply(value: i32, callback: extern "C" fn(i32) -> i32) -> i32
+}
+```
+
+Opaque handle declarations are nominal, cannot be constructed in Nomo, and
+cannot be mixed with another handle family. `Owned<T>` and `Borrowed<T>` are
+checked FFI ownership metadata; `.borrow()` creates a borrowed view, while a
+declared release function must consume the matching owned handle. This preview
+does not yet enforce full linear move semantics or automatic destruction.
+`Nullable<T>` is restricted to handle types, supports `is_null()` and explicit
+checked `unwrap()`, and never implicitly converts null to a handle.
+
+Callback parameters accept only exact-signature non-capturing top-level
+functions with ABI-safe types. Callback values cannot be stored, returned, or
+otherwise escape. Retained callbacks, capturing/context trampolines, and entry
+from foreign threads are not supported. Panic is fail-fast and never unwinds
+through a C frame. `#[repr(C)]` structs are non-generic fixed-layout records;
+their field offsets, size, and alignment are computed from the selected target
+ABI. Unsupported fields and non-`repr(C)` structs are rejected at extern
+boundaries.
+
 Project manifests can declare native linker metadata:
 
 ```toml
@@ -302,12 +339,29 @@ Project builds and tests aggregate `[ffi]` metadata from the root package and
 source dependencies. Standalone script mode does not read a manifest and
 therefore does not use link metadata.
 
-`Opaque` does not expose arbitrary raw pointer operations. C struct layout
-inference, header binding generation, and multi-statement unsafe blocks are left
-for later slices.
+`Opaque` and nominal handles do not expose arbitrary raw pointer operations.
+The core CLI can generate reviewable bindings and provenance from a controlled
+C-header subset:
+
+```text
+nomo ffi bindgen native/api.h \
+  --package app.bindings \
+  --output src/bindings.nomo \
+  --provenance bindings.provenance.json
+```
+
+The generator supports opaque struct typedefs, fixed-field struct typedefs,
+ordinary function declarations, and restricted function-pointer parameters.
+It rejects unions, bitfields, arrays, flexible arrays, variadics, multiple
+pointer indirection, and unknown scalar spellings. Pointer ownership is inferred
+with documented deterministic release-name heuristics, so generated source must
+still be reviewed. It performs no implicit build-time execution.
 
 Accepted [RFC 0011](./rfcs/0011-c-ffi-safety-and-link-boundary.md) fixes the
 call-site safety, ownership-type, and package linker-metadata boundary.
+Accepted [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md)
+fixes the typed-handle, nullability, restricted-callback, C-layout, and binding
+generation boundary.
 
 ---
 
@@ -429,9 +483,15 @@ v0.1 must validate:
   verifies the archive checksum before unpacking; an existing lockfile may keep
   using a yanked version from a verified cache or vendor directory without a
   metadata request. File registries may optionally expose equivalent
-  `index.json` and per-version `metadata.json` files. v0.1 dependency manifests
-  continue to use exact versions; metadata does not introduce version ranges or
-  latest-version selection. `nomo publish --dry-run` validates a local package
+  `index.json` and per-version `metadata.json` files. Dependency manifests may
+  use an exact version, caret range, tilde range, or bounded comparison range;
+  wildcards, alternatives, implicit `latest`, and `=` exact syntax are rejected.
+  Fresh resolution deterministically selects the highest non-yanked version
+  satisfying every project or workspace constraint, and the lockfile records
+  only that exact version. HTTP package indexes are cached for offline range
+  resolution. `--locked` validates that the exact locked version still satisfies
+  the manifest without solving again, and `nomo deps update --precise` must stay
+  inside the manifest requirement. `nomo publish --dry-run` validates a local package
   and prepares a deterministic package archive; `nomo publish --registry <url>`
   uploads that archive with `PUT /api/v1/packages/<owner>/<package>/<version>`
   to an HTTP or HTTPS registry endpoint. `nomo search <query> --registry <url>`
@@ -469,6 +529,14 @@ v0.1 must validate:
   `nomo deps resolve --workspace`, and `nomo deps tree --workspace` discover the
   workspace root, expand `members` minus `exclude`, and visit each member
   package in stable path order.
+- `nomo build [path] --target <triple>` accepts a canonical
+  `arch-vendor-os-env` target or a standard three-part Apple Darwin alias.
+  Explicit-target artifacts are isolated under
+  `build/<canonical-target>/{c,bin}`. Target-aware C emission defines the
+  canonical triple, architecture, and platform used by `std.os`. The first
+  native cross-link path is macOS `aarch64 <-> x86_64`; other recognized
+  non-host targets currently support `--emit-c` and fail native linking unless
+  a concrete toolchain is configured.
 - `path` sources are resolved by reading the target package's `nomo.toml` and are
   included recursively in `nomo.lock` and `nomo deps tree`.
 - `git` sources use a project-local `.nomo/deps/git/` cache keyed by canonical
@@ -1451,19 +1519,17 @@ The decisions in these RFCs are reflected by this implementation baseline:
 - [RFC 0011](./rfcs/0011-c-ffi-safety-and-link-boundary.md): the C FFI safety, ownership, and link boundary.
 - [RFC 0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md): shared semantic identities and type-checked rename.
 - [RFC 0013](./rfcs/0013-registry-protocol-and-package-integrity.md): registry protocol, authentication, and package integrity.
+- [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md): source-defined standard library and controlled intrinsic identities.
 
 ---
 
-## 12. Proposed Implementation RFCs
+## 12. Proposed or Partially Implemented RFCs
 
 The following RFCs describe capabilities that follow the current direction but
-are not part of this implementation baseline. They remain `Proposed` and enter
-the specification only after their code, tests, documentation, and individual
-acceptance gates land:
+are not yet complete. They remain `Proposed` until their code, tests,
+documentation, and individual acceptance gates land:
 
-- [RFC 0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md): semantic version resolution and conflict explanations.
-- [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md): source-defined standard library and controlled intrinsic identities.
-- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md): incremental semantic graph and persistent cache.
-- [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md): target triples, conditional dependencies, and cross compilation.
+- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md): in-memory query graphs, conservative compiler semantic sessions, LSP edit invalidation, cache observability, and incremental latency budgets are implemented; fine-grained type queries, cancellation, and persistent storage remain.
+- [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md): canonical target triples and the first macOS cross-link path are implemented; conditional dependency graphs, lockfiles, general target bundles, and Linux cross CI remain.
 - [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md): package signing, provenance, and transparency.
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md): typed FFI handles, callbacks, and bindings.

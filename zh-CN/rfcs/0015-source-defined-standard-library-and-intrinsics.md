@@ -8,10 +8,10 @@
 | --- | --- |
 | 编号 | 0015 |
 | 标题 | 标准库源码化与受控 Intrinsic 身份 |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 第一至八切片已落地：intrinsic 清单、经过校验的 source contract、核心、扩展、网络、HTTP 与 FFI 源码 API、源码驱动的 doc/LSP 导航与发行包已存在；表示相关 ABI 仍由编译器/runtime 提供 |
+| 实现状态 | 已实现：intrinsic 清单、经过校验的 source contract、核心、扩展、网络、HTTP 与 FFI 源码 API、源码驱动的 doc/LSP 导航与发行包均已存在；表示相关 ABI 按设计继续由编译器/runtime 提供 |
 | 关联主题 | standard library、intrinsic、lang item、bootstrap、ABI |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0006](./0006-option-result-lang-items.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
 
@@ -130,13 +130,16 @@ lowering、ownership 检查，以及 foreign return 和 pointer operation 的限
 
 ## 8. 接受门槛
 
-至少 `Option`/`Result` 已由 Nomo 源码定义，intrinsic 验证、ABI 对照、doc/LSP 导航及打包测试均通过后，RFC 才能转为 `Accepted`。
+接受门槛已经满足：`Option`/`Result` 及其余标准库公共表面都有 canonical Nomo
+源码声明；intrinsic 身份与 ABI 契约经过校验；doc 与 LSP 导航使用这些源码；compiler
+与 LSP 发行包会携带这些源码。
 
-## 9. 未决问题
+## 9. 已决事项
 
-- 清单由编译器版本固定，还是由 toolchain manifest 固定。
-- 哪些 runtime 操作必须长期保持 intrinsic。
-- 标准库能否独立于编译器发布补丁版本。
+- intrinsic 清单属于协调发布的 toolchain，由 compiler/toolchain 版本固定。
+- 表示、ownership、ABI、host operation 以及当前语言无法表达的行为继续作为受控
+  intrinsic；公共 signature 与可表达行为保留在 Nomo 源码中。
+- 在稳定兼容门槛完成前，标准库不脱离 compiler 独立发布。
 
 ## 10. 参考
 

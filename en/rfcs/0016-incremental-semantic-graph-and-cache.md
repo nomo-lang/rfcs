@@ -11,7 +11,7 @@
 | Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | Not implemented; compiler and LSP share semantic APIs, but workspace queries still use full recomputation as the baseline |
+| Implementation | Partial: compiler-owned query keys, content fingerprints, dependency edges, transitive invalidation, statistics/snapshots, conservative incremental semantic checks/symbols, and LSP session caches with edit benchmarks are implemented; persistent storage and fine-grained type queries remain |
 | Topics | incremental compilation, semantic graph, cache, LSP, invalidation |
 | Related RFCs | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0012](./0012-shared-semantic-identities-and-verified-rename.md) |
 
@@ -36,10 +36,21 @@ Shared semantic facts establish one correctness source but do not remove repeate
 
 ## 4. Implementation Slices
 
-1. Query keys, fingerprints, dependency edges, and invalidation engine.
-2. In-memory incremental parsing, name resolution, and type queries.
-3. LSP overlays, cancellation, concurrent snapshots, and latency benchmarks.
-4. Persistent cache, schema behavior, clean-build equivalence, and fault-injection tests.
+1. **Landed:** schema/toolchain/target-aware query keys, framed SHA-256 content
+   fingerprints, input/query dependency edges, transitive invalidation, cache
+   statistics, and immutable generation snapshots.
+2. **Partial:** `IncrementalSemanticSession` caches complete project check and
+   symbol results from conservative project/external-source fingerprints and
+   has clean-result equivalence tests. Fine-grained parser, name-resolution,
+   and type-query reuse remains.
+3. **Partial:** the LSP caches diagnostics, completion, document symbols, and
+   semantic tokens; open overlays participate in fingerprints, edits invalidate
+   declared dependencies, and diagnostics carry document versions. The release
+   gate now measures cold/warm completion and edit-to-diagnostics latency and
+   requires observable hits/invalidations. Request cancellation and direct use
+   of the new compiler session await the next pinned compiler revision.
+4. **Pending:** persistent values, atomic disk writes, capacity eviction,
+   corruption recovery, and randomized clean/incremental fault-injection tests.
 
 ## 5. Alternatives
 

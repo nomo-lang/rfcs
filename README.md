@@ -9,6 +9,8 @@ This is the bilingual RFC repository for the Nomo programming language. It conta
 - [Nomo v0.1 Whitepaper](WHITEPAPER-v0.1.md)
 - [Nomo Design Constitution](DESIGN-CONSTITUTION.md)
 - [Roadmap](ROADMAP.md)
+- [Preview Stabilization Gate](RELEASE-GATE.md)
+- [Versioning and Release Policy](VERSIONING.md)
 - [Contributing RFCs](CONTRIBUTING-RFCS.md)
 - [中文 v0.1 规格基线](zh-CN/SPEC-v0.1.md)
 - [中文 v0.1 设计实现计划](zh-CN/IMPLEMENTATION-PLAN-v0.1.md)

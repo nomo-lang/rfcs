@@ -11,7 +11,7 @@
 | 状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 未实现；compiler/LSP 已共享语义 API，但 workspace 查询仍以完整重算为基线 |
+| 实现状态 | 部分实现：compiler-owned query key、内容指纹、依赖边、传递失效、统计/snapshot、保守的增量 semantic check/symbol 与带 edit benchmark 的 LSP session cache 已落地；持久化与细粒度 type query 尚未完成 |
 | 关联主题 | incremental compilation、semantic graph、cache、LSP、invalidation |
 | 关联 RFC | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0012](./0012-shared-semantic-identities-and-verified-rename.md) |
 
@@ -36,10 +36,19 @@
 
 ## 4. 实现切片
 
-1. query key、fingerprint、dependency edge 与失效引擎。
-2. parser/name-resolution/type-query 内存增量化。
-3. LSP overlay、取消、并发 snapshot 与延迟基准。
-4. 持久化 cache、schema migration、clean-build 等价性和故障注入测试。
+1. **已落地：**包含 schema/toolchain/target 的 query key、带长度 framing 的
+   SHA-256 内容指纹、input/query 依赖边、传递失效、cache statistics 与不可变
+   generation snapshot。
+2. **部分实现：**`IncrementalSemanticSession` 基于保守的 project/external-source
+   指纹缓存完整 project check 与 symbol 结果，并已有 clean-result 等价性测试；
+   parser、name-resolution 与 type-query 的细粒度复用尚未完成。
+3. **部分实现：**LSP 已缓存 diagnostics、completion、document symbols 与
+   semantic tokens；open overlay 参与 fingerprint，edit 会失效声明依赖，diagnostic
+   携带 document version。release gate 现在测量 cold/warm completion 与
+   edit-to-diagnostics latency，并要求可观测的 hit/invalidation。request cancellation
+   及直接使用新 compiler session 需要等待下一次 pinned compiler revision。
+4. **待实现：**持久化 value、原子 disk write、容量回收、损坏恢复，以及随机化
+   clean/incremental fault-injection tests。
 
 ## 5. 备选方案
 

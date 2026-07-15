@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0014 |
 | Title | Semantic Version Resolution and Conflict Explanations |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | Not implemented; the current resolver, registry, and lockfile accept exact versions only |
+| Implementation | Landed: strict constraints, deterministic project/workspace single-version selection, stable minimal conflicts, registry-index caching, exact lockfile output, range-aware locked validation, constrained precise updates, and locked/offline/yank/prerelease/conflict tests |
 | Topics | semver, resolver, lockfile, registry, diagnostics |
 | Related RFCs | [RFC 0008](./0008-canonical-package-identity-and-aliases.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0013](./0013-registry-protocol-and-package-integrity.md) |
 
@@ -41,13 +41,33 @@ Exact versions are reproducible but push compatible upgrades and coordination on
 3. Resolver/lockfile/CLI integration including precise `update -p`.
 4. Offline, locked, yank, pre-release, and conflict snapshot tests.
 
+### 4.1 Implemented behavior
+
+`nomo-manifest` owns the shared SemVer types so manifests, the resolver, and
+lockfiles use one interpretation. Bare complete versions are exact; caret,
+tilde, and bounded comparison ranges are explicit. Wildcards, alternatives,
+implicit `latest`, and `=` exact syntax are rejected. Timestamped snapshots such
+as `0.0.0-20260713145859` are ordinary explicit prereleases.
+
+`nomo-resolver` loads package indexes in stable order, excludes yanked and
+implicit prerelease candidates, selects one highest version, caches HTTP index
+metadata for offline resolution, and emits a deterministic irreducible
+constraint set with dependency paths on conflict. Project resolution repeats
+the graph pass when a later transitive or workspace-member constraint changes
+an earlier selection, so the complete workspace can converge on a lower
+compatible version instead of using a greedy first-edge result. Lockfiles
+continue to store only the selected exact version, and locked validation checks
+that exact version against the current manifest requirement without solving
+again. `nomo deps update --precise` rejects versions outside the declared
+manifest requirement.
+
 ## 5. Alternatives
 
 | Option | Problem | Direction |
 | --- | --- | --- |
 | Remain exact-only | Continues shifting upgrade cost to users | Reject |
 | Permit multiple versions immediately | Greatly complicates codegen, type identity, and linking | Later RFC |
-| Deterministic single-version solving | Preserves simple canonical identity and graphs | Proposed |
+| Deterministic single-version solving | Preserves simple canonical identity and graphs | Accepted |
 
 ## 6. Drawbacks and Risks
 
@@ -59,7 +79,8 @@ Existing exact manifests and lockfiles remain valid. Ranges affect fresh resolut
 
 ## 8. Acceptance Gate
 
-This RFC may become `Accepted` only after the solver, conflict explanations, lockfile migration, and locked/offline/update end-to-end tests land.
+Accepted after the solver, workspace convergence, conflict explanations,
+lockfile compatibility, and locked/offline/update end-to-end tests landed.
 
 ## 9. Open Questions
 

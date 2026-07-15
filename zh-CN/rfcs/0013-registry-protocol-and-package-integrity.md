@@ -13,13 +13,17 @@
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：file/HTTP/HTTPS registry、TLS 验证、metadata/index、archive checksum、cache、publish/search/yank/login/owner 与 bearer token 测试 |
 | 关联主题 | registry、package archive、metadata、checksum、authentication、yank |
-| 关联 RFC | [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md) |
+| 关联 RFC | [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0014](./0014-semver-resolution-and-conflict-explanations.md) |
 
 ---
 
 ## 1. 摘要
 
-v0.1 registry 使用 exact version、确定性 `.nomo-package` archive 和显式 metadata/checksum。endpoint 可为 `file://`、`http://` 或经证书验证的 `https://`；HTTP(S) 操作通过固定 `/api/v1` 路径完成，并按 endpoint 使用 Bearer token。
+registry protocol 用 exact version 发布、描述并下载确定性 `.nomo-package` archive，
+同时提供显式 metadata/checksum。endpoint 可为 `file://`、`http://` 或经证书验证的
+`https://`；HTTP(S) 操作通过固定 `/api/v1` 路径完成，并按 endpoint 使用 Bearer
+token。RFC 0014 后续接受了 manifest range 及基于 package index 的确定性选择，
+但不改变这些 exact-version artifact path。
 
 ## 2. 动机
 
@@ -28,7 +32,8 @@ v0.1 registry 使用 exact version、确定性 `.nomo-package` archive 和显式
 ## 3. Metadata 与下载
 
 - exact-version metadata 包含 `package`、`version`、archive `checksum`、`yanked`。
-- package index 返回 package id 和 versions array；v0.1 不做 version range 或 latest 选择。
+- package index 返回 package id 和 versions array；RFC 0014 使用该响应做 range 求解，
+  隐式 `latest` 选择仍不支持。
 - fresh resolution 拒绝 yanked version，并在解包前验证 archive checksum。
 - 已有 lockfile 可继续使用已验证 cache/vendor 中的 yanked exact version。
 - 解包后 source checksum另行写入 lockfile，不与 archive checksum混用。
@@ -56,7 +61,7 @@ archive 必须包含 `nomo.toml` 与 `src/`，路径不得逃逸，文件 header
 
 ## 7. 缺点与风险
 
-- 当前协议没有版本范围求解、交互式 OAuth 或 token refresh。
+- 当前协议没有交互式 OAuth、token refresh 或批量 metadata endpoint。
 - credentials 文件是 bearer secret，权限和日志必须避免泄漏。
 - registry server 实现仍需遵守相同 metadata 与错误语义。
 
@@ -68,9 +73,9 @@ archive 必须包含 `nomo.toml` 与 `src/`，路径不得逃逸，文件 header
 
 - 协议版本协商与服务器能力发现。
 - namespace ownership verification、MFA、token scope/rotation。
-- version ranges、签名包与 transparency log。
+- 签名包与 transparency log。
 
 ## 10. 参考
 
 - `nomo-resolver` registry metadata/transport/archive API 与 registry CLI tests。
-- [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)。
+- [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0014](./0014-semver-resolution-and-conflict-explanations.md)。

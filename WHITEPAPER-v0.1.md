@@ -85,7 +85,7 @@ v0.1 从闭环必需能力起步，当前实现已经覆盖：
 
 这些 RFC 不替代规格基线。它们记录原始问题、备选方案、最终决议、实现状态与后续问题；规格基线描述当前对外契约。
 
-下一阶段另有六篇实现 RFC 保持 `Proposed`：[0014](zh-CN/rfcs/0014-semver-resolution-and-conflict-explanations.md) 版本求解、[0015](zh-CN/rfcs/0015-source-defined-standard-library-and-intrinsics.md) 标准库源码化、[0016](zh-CN/rfcs/0016-incremental-semantic-graph-and-cache.md) 增量语义、[0017](zh-CN/rfcs/0017-target-triples-and-cross-compilation.md) 交叉编译、[0018](zh-CN/rfcs/0018-package-signing-provenance-and-transparency.md) 包签名与透明日志，以及 [0019](zh-CN/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) 类型化 FFI。它们描述需要实现的方向，不代表当前代码已经支持。
+后续实现 RFC 中，[0014](zh-CN/rfcs/0014-semver-resolution-and-conflict-explanations.md) 版本求解、[0015](zh-CN/rfcs/0015-source-defined-standard-library-and-intrinsics.md) 标准库源码化和 [0019](zh-CN/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) 类型化 FFI 已达到接受门槛；[0016](zh-CN/rfcs/0016-incremental-semantic-graph-and-cache.md) 增量语义、[0017](zh-CN/rfcs/0017-target-triples-and-cross-compilation.md) 交叉编译和 [0018](zh-CN/rfcs/0018-package-signing-provenance-and-transparency.md) 包签名与透明日志仍保持 `Proposed`，其未完成部分不属于已接受基线。
 
 ### 6. 成立性判断
 
@@ -181,7 +181,7 @@ All thirteen RFCs now record accepted decisions reflected by the implementation 
 
 These RFCs do not replace the specification baseline. They record the original problem, alternatives, final decision, implementation status, and follow-up questions; the specification baseline states the current public contract.
 
-Six implementation RFCs remain `Proposed` for the next stage: [0014](en/rfcs/0014-semver-resolution-and-conflict-explanations.md) version solving, [0015](en/rfcs/0015-source-defined-standard-library-and-intrinsics.md) source-defined standard library, [0016](en/rfcs/0016-incremental-semantic-graph-and-cache.md) incremental semantics, [0017](en/rfcs/0017-target-triples-and-cross-compilation.md) cross compilation, [0018](en/rfcs/0018-package-signing-provenance-and-transparency.md) signing and transparency, and [0019](en/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) typed FFI. They describe work to implement and do not claim current code support.
+Among the follow-up implementation RFCs, [0014](en/rfcs/0014-semver-resolution-and-conflict-explanations.md) version solving, [0015](en/rfcs/0015-source-defined-standard-library-and-intrinsics.md) source-defined standard library, and [0019](en/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) typed FFI have met their acceptance gates. [0016](en/rfcs/0016-incremental-semantic-graph-and-cache.md) incremental semantics, [0017](en/rfcs/0017-target-triples-and-cross-compilation.md) cross compilation, and [0018](en/rfcs/0018-package-signing-provenance-and-transparency.md) signing and transparency remain `Proposed`; their unfinished portions are not part of the accepted baseline.
 
 ### 6. Viability
 

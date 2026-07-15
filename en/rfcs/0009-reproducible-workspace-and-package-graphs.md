@@ -50,7 +50,8 @@ Shared graph utilities provide stable topological order and cycle paths that inc
 
 ## 6. Drawbacks and Risks
 
-- v0.1 rejects multi-source or multi-version conflicts rather than solving them.
+- Multi-source conflicts remain errors. RFC 0014 adds deterministic single-version
+  solving while deliberately continuing to reject multi-version coexistence.
 - A missing source can be displayed as an offline locked entry, but compilation still needs cache or vendor content.
 - Checksum and archive formats are compatibility surfaces and require versioned changes.
 
@@ -64,11 +65,11 @@ Accept typed three-layer graphs, stable dependency-first traversal, a workspace-
 
 ## 9. Follow-up Questions
 
-- Semantic version ranges and multi-version solving.
+- Multi-version coexistence beyond RFC 0014's single-version solver.
 - Target-specific dependencies and lockfile representation.
 - Versioning the lockfile and archive formats.
 
 ## 10. References
 
 - `nomo-graph`, `nomo-lockfile`, workspace/package/module graph APIs, and resolver CLI tests.
-- [RFC 0008](./0008-canonical-package-identity-and-aliases.md), [RFC 0013](./0013-registry-protocol-and-package-integrity.md).
+- [RFC 0008](./0008-canonical-package-identity-and-aliases.md), [RFC 0013](./0013-registry-protocol-and-package-integrity.md), [RFC 0014](./0014-semver-resolution-and-conflict-explanations.md).

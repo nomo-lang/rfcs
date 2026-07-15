@@ -50,7 +50,7 @@ Nomo 使用三层显式图模型：workspace 发现成员，package graph 解析
 
 ## 6. 缺点与风险
 
-- v0.1 冲突策略是拒绝同一 canonical id 的多 source/version，不是完整版本求解。
+- 多 source 冲突仍是错误；RFC 0014 增加确定性单版本求解，但仍明确拒绝多版本共存。
 - missing source 可作为离线锁定条目展示，但真正编译仍需要 cache 或 vendor 内容。
 - checksum 算法与 archive 格式进入兼容面，修改必须版本化。
 
@@ -64,11 +64,11 @@ Nomo 使用三层显式图模型：workspace 发现成员，package graph 解析
 
 ## 9. 后续问题
 
-- 语义化版本范围与多版本求解。
+- RFC 0014 单版本求解之外的多版本共存。
 - 跨平台 target-specific dependency 与 lockfile 表示。
 - lockfile/archive format 的版本升级策略。
 
 ## 10. 参考
 
 - `nomo-graph`、`nomo-lockfile`、workspace/package/module graph API 与 CLI resolver 测试。
-- [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0013](./0013-registry-protocol-and-package-integrity.md)。
+- [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0013](./0013-registry-protocol-and-package-integrity.md)、[RFC 0014](./0014-semver-resolution-and-conflict-explanations.md)。
