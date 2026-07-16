@@ -79,7 +79,7 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0013](./rfcs/0013-registry-protocol-and-package-integrity.md) | Registry 协议、认证与包完整性 | Accepted（已接受） | registry、metadata、checksum、auth | exact-version `/api/v1`、确定性 archive、双层 checksum、yank、Bearer token 与 verified HTTPS。 |
 | [0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md) | 语义化版本求解与冲突解释 | Accepted（已接受） | semver、resolver、lockfile | 已实现项目/工作区确定性单版本求解、精确锁定、离线 index cache 与可追踪最小冲突。 |
 | [0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md) | 标准库源码化与受控 Intrinsic 身份 | Accepted（已接受） | standard library、intrinsic、bootstrap | canonical Nomo 源码定义标准库公共表面，工具链清单约束表示相关 intrinsic。 |
-| [0016](./rfcs/0016-incremental-semantic-graph-and-cache.md) | 增量语义图与持久化缓存 | Proposed（已提案） | incremental compilation、LSP、cache | compiler-owned query graph 为 CLI/LSP 提供可验证失效与持久化缓存。 |
+| [0016](./rfcs/0016-incremental-semantic-graph-and-cache.md) | 增量语义图与持久化缓存 | Accepted（已接受） | incremental compilation、LSP、cache | compiler-owned query graph 与原子、带 checksum、容量受控的 disk value 提供可验证失效及跨进程 check/codegen 复用。 |
 | [0017](./rfcs/0017-target-triples-and-cross-compilation.md) | Target Triple、条件依赖与交叉编译 | Accepted（已接受） | target、cross compilation、linker | canonical target predicate 驱动完整 lockfile、过滤 graph、条件 FFI metadata 与已验证的 macOS/Linux cross-build。 |
 | [0018](./rfcs/0018-package-signing-provenance-and-transparency.md) | 包签名、来源证明与透明日志 | Accepted（已接受） | signing、provenance、registry | 已实现 Ed25519 publisher 授权、provenance、pinned transparency key、inclusion proof、回滚检测与 lockfile evidence。 |
 | [0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) | 类型化 FFI Handle、Callback 与 Binding | Accepted（已接受） | FFI、callback、C ABI | nominal handle、显式 null/ownership、受限 callback、target 校验 C layout 与确定性 binding 已实现。 |

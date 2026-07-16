@@ -85,7 +85,7 @@ v0.1 从闭环必需能力起步，当前实现已经覆盖：
 
 这些 RFC 不替代规格基线。它们记录原始问题、备选方案、最终决议、实现状态与后续问题；规格基线描述当前对外契约。
 
-后续实现 RFC 中，[0014](zh-CN/rfcs/0014-semver-resolution-and-conflict-explanations.md) 版本求解、[0015](zh-CN/rfcs/0015-source-defined-standard-library-and-intrinsics.md) 标准库源码化、[0017](zh-CN/rfcs/0017-target-triples-and-cross-compilation.md) 条件依赖与真实交叉编译、[0018](zh-CN/rfcs/0018-package-signing-provenance-and-transparency.md) 包签名与透明日志验证，以及 [0019](zh-CN/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) 类型化 FFI 已达到接受门槛；[0016](zh-CN/rfcs/0016-incremental-semantic-graph-and-cache.md) 增量语义仍保持 `Proposed`。RFC 0018 的公共日志 key rotation、gossip 与 proof freshness 属于后续生产运营加固。
+后续实现 RFC 中，[0014](zh-CN/rfcs/0014-semver-resolution-and-conflict-explanations.md) 版本求解、[0015](zh-CN/rfcs/0015-source-defined-standard-library-and-intrinsics.md) 标准库源码化、[0016](zh-CN/rfcs/0016-incremental-semantic-graph-and-cache.md) 增量语义与持久化缓存、[0017](zh-CN/rfcs/0017-target-triples-and-cross-compilation.md) 条件依赖与真实交叉编译、[0018](zh-CN/rfcs/0018-package-signing-provenance-and-transparency.md) 包签名与透明日志验证，以及 [0019](zh-CN/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) 类型化 FFI 均已达到接受门槛。RFC 0018 的公共日志 key rotation、gossip 与 proof freshness 属于后续生产运营加固。
 
 ### 6. 成立性判断
 
@@ -181,7 +181,7 @@ All thirteen RFCs now record accepted decisions reflected by the implementation 
 
 These RFCs do not replace the specification baseline. They record the original problem, alternatives, final decision, implementation status, and follow-up questions; the specification baseline states the current public contract.
 
-Among the follow-up implementation RFCs, [0014](en/rfcs/0014-semver-resolution-and-conflict-explanations.md) version solving, [0015](en/rfcs/0015-source-defined-standard-library-and-intrinsics.md) source-defined standard library, [0017](en/rfcs/0017-target-triples-and-cross-compilation.md) conditional dependencies and real cross-builds, [0018](en/rfcs/0018-package-signing-provenance-and-transparency.md) package signing and transparency verification, and [0019](en/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) typed FFI have met their acceptance gates. [0016](en/rfcs/0016-incremental-semantic-graph-and-cache.md) incremental semantics remains `Proposed`. RFC 0018 public-log key rotation, gossip, and proof freshness remain production-operations hardening work.
+Among the follow-up implementation RFCs, [0014](en/rfcs/0014-semver-resolution-and-conflict-explanations.md) version solving, [0015](en/rfcs/0015-source-defined-standard-library-and-intrinsics.md) source-defined standard library, [0016](en/rfcs/0016-incremental-semantic-graph-and-cache.md) incremental semantics and persistent caching, [0017](en/rfcs/0017-target-triples-and-cross-compilation.md) conditional dependencies and real cross-builds, [0018](en/rfcs/0018-package-signing-provenance-and-transparency.md) package signing and transparency verification, and [0019](en/rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) typed FFI have met their acceptance gates. RFC 0018 public-log key rotation, gossip, and proof freshness remain production-operations hardening work.
 
 ### 6. Viability
 

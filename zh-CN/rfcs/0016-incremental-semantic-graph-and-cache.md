@@ -8,10 +8,10 @@
 | --- | --- |
 | 编号 | 0016 |
 | 标题 | 增量语义图与持久化缓存 |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 部分实现：compiler-owned query key、内容指纹、依赖边、传递失效、统计/snapshot、保守的增量 semantic check/symbol 与带 edit benchmark 的 LSP session cache 已落地；持久化与细粒度 type query 尚未完成 |
+| 实现状态 | 已接受基线：compiler-owned query key、内容指纹、依赖边、传递失效、统计/snapshot、保守 semantic/LSP cache、带 schema 版本的持久化 check/C-codegen value、原子写入、容量回收、损坏恢复与随机 clean 等价性测试均已落地 |
 | 关联主题 | incremental compilation、semantic graph、cache、LSP、invalidation |
 | 关联 RFC | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0012](./0012-shared-semantic-identities-and-verified-rename.md) |
 
@@ -39,16 +39,21 @@
 1. **已落地：**包含 schema/toolchain/target 的 query key、带长度 framing 的
    SHA-256 内容指纹、input/query 依赖边、传递失效、cache statistics 与不可变
    generation snapshot。
-2. **部分实现：**`IncrementalSemanticSession` 基于保守的 project/external-source
+2. **已落地：**`IncrementalSemanticSession` 基于保守的 project/external-source
    指纹缓存完整 project check 与 symbol 结果，并已有 clean-result 等价性测试；
-   parser、name-resolution 与 type-query 的细粒度复用尚未完成。
-3. **部分实现：**LSP 已缓存 diagnostics、completion、document symbols 与
+   更细的 parser、name-resolution 与 type-query 复用可在同一正确性契约下继续优化。
+3. **已落地：**LSP 已缓存 diagnostics、completion、document symbols 与
    semantic tokens；open overlay 参与 fingerprint，edit 会失效声明依赖，diagnostic
    携带 document version。release gate 现在测量 cold/warm completion 与
    edit-to-diagnostics latency，并要求可观测的 hit/invalidation。request cancellation
-   及直接使用新 compiler session 需要等待下一次 pinned compiler revision。
-4. **待实现：**持久化 value、原子 disk write、容量回收、损坏恢复，以及随机化
-   clean/incremental fault-injection tests。
+   属于 LSP 调度优化，不再作为 cache 正确性前置条件。
+4. **已落地：**`.nomo/cache/incremental/v1` 跨进程持久化成功的 project check
+   value 与 target-specific generated C。entry 使用带 checksum 的 envelope、已同步
+   temporary file 与 atomic replacement；损坏会作为 miss 自动删除重算。默认容量
+   为 512 MiB，可通过 `NOMO_INCREMENTAL_CACHE_MAX_BYTES` 配置；`nomo cache
+   stats|prune|clean` 提供观测、回收与清理。确定性随机编辑会对比 persistent/clean
+   diagnostics；CLI 测试覆盖 cold/warm process、source invalidation、损坏恢复、
+   codegen 复用与强制 eviction。
 
 ## 5. 备选方案
 
@@ -56,7 +61,7 @@
 | --- | --- | --- |
 | 仅按文件缓存 AST | 跨模块类型依赖仍会全量重算 | 不足 |
 | LSP 自建缓存 | 重新产生两套语义事实 | 拒绝 |
-| compiler-owned query graph | CLI 与编辑器共享正确性和性能模型 | 提议 |
+| compiler-owned query graph | CLI 与编辑器共享正确性和性能模型 | 采用 |
 
 ## 6. 缺点与风险
 
@@ -68,13 +73,17 @@
 
 ## 8. 接受门槛
 
-随机编辑序列下 incremental 与 clean 诊断/生成物一致，跨进程缓存损坏可安全恢复，并达到约定的 LSP 与 rebuild 基准后才能 `Accepted`。
+确定性随机编辑已验证 incremental/clean 等价；跨进程 CLI 测试已验证损坏 entry
+自动恢复、cold/warm 命中可观测，既有 LSP/rebuild latency gate 持续生效。cache
+删除与强制回收也已作为普通 clean miss 覆盖，因此验收门槛已满足。
 
 ## 9. 未决问题
 
-- declaration identity 是否需要跨文件移动保持稳定。
-- 首版是否持久化 codegen 中间层。
-- cache 容量与隐私清理策略由项目还是全局配置控制。
+- accepted baseline 中跨文件移动会使保守 source fingerprint 失效；identity 跨移动
+  稳定性后续再做。
+- 首版持久化成功 check result 与 generated C，不持久化 typed IR 或 linked binary。
+- 容量与隐私清理由 project/workspace 管理，并提供环境默认覆盖与显式
+  `nomo cache prune|clean` 命令。
 
 ## 10. 参考
 
