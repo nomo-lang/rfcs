@@ -1419,15 +1419,7 @@ nomo run examples/hello
 - [RFC 0013](./rfcs/0013-registry-protocol-and-package-integrity.md)：registry 协议、认证与包完整性。
 - [RFC 0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md)：确定性语义版本求解与冲突解释。
 - [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md)：标准库源码化与受控 intrinsic 身份。
+- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md)：compiler-owned query graph、保守失效，以及带容量回收与损坏恢复的原子、带 checksum 持久化 check/codegen value。
 - [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md)：canonical target、条件 dependency/FFI graph、完整 lockfile 与已验证 cross-build。
 - [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md)：publisher 授权、provenance、透明日志 proof 与回滚检测。
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md)：类型化 FFI handle/callback、target-aware layout 与确定性 binding。
-
----
-
-## 12. 部分实现的 RFC
-
-以下 RFC 描述当前方向下尚未完整落地的能力。它们保持 `Proposed`，直到各自
-验收门槛对应的代码、测试与文档全部落地：
-
-- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md)：内存 query graph、保守的 compiler semantic session、LSP edit invalidation、cache 可观测性与增量延迟预算已实现；细粒度 type query、取消与持久化存储尚未完成。

@@ -1521,16 +1521,7 @@ The decisions in these RFCs are reflected by this implementation baseline:
 - [RFC 0013](./rfcs/0013-registry-protocol-and-package-integrity.md): registry protocol, authentication, and package integrity.
 - [RFC 0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md): deterministic semantic-version solving and conflict explanations.
 - [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md): source-defined standard library and controlled intrinsic identities.
+- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md): compiler-owned query graphs, conservative invalidation, and atomic checksummed persistent check/codegen values with bounded eviction and corruption recovery.
 - [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md): canonical targets, conditional dependency/FFI graphs, complete lockfiles, and verified cross-builds.
 - [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md): publisher authorization, provenance, transparency proofs, and rollback detection.
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md): typed FFI handles, callbacks, target-aware layouts, and deterministic bindings.
-
----
-
-## 12. Partially Implemented RFCs
-
-The following RFCs describe capabilities that follow the current direction but
-are not yet complete. They remain `Proposed` until their code, tests,
-documentation, and individual acceptance gates land:
-
-- [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md): in-memory query graphs, conservative compiler semantic sessions, LSP edit invalidation, cache observability, and incremental latency budgets are implemented; fine-grained type queries, cancellation, and persistent storage remain.

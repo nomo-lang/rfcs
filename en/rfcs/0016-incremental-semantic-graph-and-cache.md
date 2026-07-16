@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0016 |
 | Title | Incremental Semantic Graph and Persistent Cache |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | Partial: compiler-owned query keys, content fingerprints, dependency edges, transitive invalidation, statistics/snapshots, conservative incremental semantic checks/symbols, and LSP session caches with edit benchmarks are implemented; persistent storage and fine-grained type queries remain |
+| Implementation | Accepted baseline: compiler-owned query keys, content fingerprints, dependency edges, transitive invalidation, statistics/snapshots, conservative semantic/LSP caches, schema-versioned persistent check and C-codegen values, atomic writes, capacity eviction, corruption recovery, and randomized clean-equivalence tests are implemented |
 | Topics | incremental compilation, semantic graph, cache, LSP, invalidation |
 | Related RFCs | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0012](./0012-shared-semantic-identities-and-verified-rename.md) |
 
@@ -39,18 +39,25 @@ Shared semantic facts establish one correctness source but do not remove repeate
 1. **Landed:** schema/toolchain/target-aware query keys, framed SHA-256 content
    fingerprints, input/query dependency edges, transitive invalidation, cache
    statistics, and immutable generation snapshots.
-2. **Partial:** `IncrementalSemanticSession` caches complete project check and
+2. **Landed:** `IncrementalSemanticSession` caches complete project check and
    symbol results from conservative project/external-source fingerprints and
-   has clean-result equivalence tests. Fine-grained parser, name-resolution,
-   and type-query reuse remains.
-3. **Partial:** the LSP caches diagnostics, completion, document symbols, and
+   has clean-result equivalence tests. Finer parser, name-resolution, and type
+   query reuse remains a performance optimization behind the same contract.
+3. **Landed:** the LSP caches diagnostics, completion, document symbols, and
    semantic tokens; open overlays participate in fingerprints, edits invalidate
    declared dependencies, and diagnostics carry document versions. The release
    gate now measures cold/warm completion and edit-to-diagnostics latency and
-   requires observable hits/invalidations. Request cancellation and direct use
-   of the new compiler session await the next pinned compiler revision.
-4. **Pending:** persistent values, atomic disk writes, capacity eviction,
-   corruption recovery, and randomized clean/incremental fault-injection tests.
+   requires observable hits/invalidations. Request cancellation remains an LSP
+   scheduling improvement rather than a cache-correctness prerequisite.
+4. **Landed:** `.nomo/cache/incremental/v1` persists successful project-check
+   values and target-specific generated C across processes. Entries use
+   checksum-verified envelopes, synced temporary files and atomic replacement;
+   corruption becomes a self-healing miss. A 512 MiB default capacity is
+   configurable through `NOMO_INCREMENTAL_CACHE_MAX_BYTES`, while `nomo cache
+   stats|prune|clean` provides explicit observability, eviction, and cleanup.
+   Deterministic randomized edits compare persistent and clean diagnostics;
+   CLI tests cover cold/warm processes, source invalidation, corruption
+   recovery, codegen reuse, and forced eviction.
 
 ## 5. Alternatives
 
@@ -58,7 +65,7 @@ Shared semantic facts establish one correctness source but do not remove repeate
 | --- | --- | --- |
 | Cache ASTs by file only | Cross-module type dependencies still force broad recomputation | Insufficient |
 | Let the LSP own a separate cache | Recreates two semantic truth systems | Reject |
-| Compiler-owned query graph | CLI and editors share correctness and performance | Proposed |
+| Compiler-owned query graph | CLI and editors share correctness and performance | Selected |
 
 ## 6. Drawbacks and Risks
 
@@ -70,13 +77,19 @@ The cache is neither a build input nor a portable artifact and must always be re
 
 ## 8. Acceptance Gate
 
-This RFC requires incremental/clean equivalence under randomized edits, safe recovery from cross-process cache corruption, and agreed LSP/rebuild benchmarks before becoming `Accepted`.
+This gate is met by deterministic randomized incremental/clean equivalence tests,
+cross-process CLI recovery from corrupted entries, observable cold/warm cache
+tests, and the existing LSP/rebuild latency gates. Cache deletion and forced
+eviction are also exercised as normal clean misses.
 
 ## 9. Open Questions
 
-- Must declaration identities survive cross-file moves?
-- Should the first version persist codegen intermediates?
-- Are cache capacity and privacy cleanup project or global policy?
+- Cross-file declaration identity stability is deferred; a move invalidates the
+  conservative source fingerprint in the accepted baseline.
+- The first version persists successful check results and generated C, but not
+  lower-level typed IR or linked binaries.
+- Capacity and privacy cleanup are project/workspace policy, with an environment
+  default override and explicit `nomo cache prune|clean` commands.
 
 ## 10. References
 

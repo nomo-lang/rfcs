@@ -40,18 +40,16 @@ The concrete, evidence-based checklist is maintained in
 [RELEASE-GATE.md](./RELEASE-GATE.md). Development snapshots and stable releases
 follow [VERSIONING.md](./VERSIONING.md).
 
-## Next Implementation RFCs
+## Implementation RFC Status
 
-These proposals define the next implementation tracks. They are not part of the
-accepted implementation baseline until their individual acceptance gates pass:
-
-- [RFC 0016](./en/rfcs/0016-incremental-semantic-graph-and-cache.md):
-  compiler-owned incremental queries shared by CLI and LSP.
-RFCs 0014, 0015, 0017, 0018, and 0019 are now part of the accepted implementation baseline. RFC
+RFCs 0014 through 0019 are now part of the accepted implementation baseline. RFC
 0014 provides deterministic project/workspace SemVer solving, exact locks,
 offline registry-index caching, and actionable minimal conflicts. RFC 0015
 defines the public standard-library surface in canonical Nomo sources while the
 coordinated toolchain manifest constrains representation-sensitive intrinsics.
+RFC 0016 provides compiler-owned query graphs, conservative invalidation,
+cross-process check and C-codegen reuse, atomic checksummed disk entries,
+capacity controls, and corruption recovery.
 RFC 0019 provides nominal FFI handles, explicit nullability and ownership
 metadata, restricted callbacks, target-aware C layout, and deterministic
 header bindings with provenance.
@@ -59,9 +57,8 @@ RFC 0017 provides canonical target predicates, complete conditional lockfiles,
 target-filtered dependency and FFI graphs, and verified macOS and GNU/Linux
 cross-build paths.
 
-RFC 0016 continues as a partial track: persistent fine-grained semantic caching
-remains. RFC 0018's remaining work is operational: public log-key rotation,
-gossip, and proof freshness policy.
+The remaining scheduled work is RFC 0018 production operations: public log-key
+rotation, gossip, and proof freshness policy.
 
 ## v1.0: Stability Promise
 
