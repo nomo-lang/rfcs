@@ -1417,16 +1417,17 @@ nomo run examples/hello
 - [RFC 0011](./rfcs/0011-c-ffi-safety-and-link-boundary.md)：C FFI 的安全、所有权与链接边界。
 - [RFC 0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md)：共享语义身份与类型检查后的 rename。
 - [RFC 0013](./rfcs/0013-registry-protocol-and-package-integrity.md)：registry 协议、认证与包完整性。
+- [RFC 0014](./rfcs/0014-semver-resolution-and-conflict-explanations.md)：确定性语义版本求解与冲突解释。
 - [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md)：标准库源码化与受控 intrinsic 身份。
+- [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md)：canonical target、条件 dependency/FFI graph、完整 lockfile 与已验证 cross-build。
+- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md)：publisher 授权、provenance、透明日志 proof 与回滚检测。
+- [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md)：类型化 FFI handle/callback、target-aware layout 与确定性 binding。
 
 ---
 
-## 12. 提案中或部分实现的 RFC
+## 12. 部分实现的 RFC
 
 以下 RFC 描述当前方向下尚未完整落地的能力。它们保持 `Proposed`，直到各自
 验收门槛对应的代码、测试与文档全部落地：
 
 - [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md)：内存 query graph、保守的 compiler semantic session、LSP edit invalidation、cache 可观测性与增量延迟预算已实现；细粒度 type query、取消与持久化存储尚未完成。
-- [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md)：canonical target triple 与首条 macOS cross-link 已实现；条件依赖图、条件 lockfile、通用 target bundle 与 Linux cross CI 尚未完成。
-- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md)：包签名、来源证明与透明日志。
-- [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md)：类型化 FFI handle、callback 与 binding。

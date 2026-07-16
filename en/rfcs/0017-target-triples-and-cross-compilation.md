@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0017 |
 | Title | Target Triples, Conditional Dependencies, and Cross Compilation |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
-| Implementation | Partial: canonical `TargetTriple`, host detection, ABI facts, target-tagged C, isolated artifacts, macOS cross-linking, and a real arm64-to-x86_64 CI build are implemented; conditional manifests and lockfiles remain |
+| Implementation | Complete: canonical targets, restricted manifest predicates, complete conditional lockfiles, target-filtered workspace/package/module/FFI graphs, isolated artifacts, and real macOS and GNU/Linux cross-build CI paths are implemented |
 | Topics | target triple, cross compilation, conditional dependency, linker, sysroot |
 | Related RFCs | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0011](./0011-c-ffi-safety-and-link-boundary.md) |
 
@@ -38,14 +38,17 @@ A C backend aids portability, but emitting C is not reproducible cross compilati
 
 1. **Landed:** target parser, canonicalization, host detection, and ABI table in
    the shared `nomo-target` crate.
-2. **Pending:** manifest predicates, graph filtering, and lockfile
-   representation.
-3. **Partial:** the target context reaches C emission and linking, and Apple
-   Clang has an explicit cross-architecture configuration. General
-   compiler/linker/sysroot bundles and target-conditioned FFI metadata remain.
-4. **Partial:** arm64 macOS CI performs a real x86-64 link, inspects the Mach-O
-   architecture, and uploads target-scoped evidence. A Linux host + cross path
-   remains before RFC acceptance.
+2. **Landed:** dependency entries accept restricted `arch`, `os`, and `env`
+   equality/set predicates. Resolution retains the complete known graph,
+   conditional lockfile edges preserve canonical predicates, and workspace,
+   package, module, and CLI tree views filter with one target context.
+3. **Landed:** the target context reaches C emission, dependency selection,
+   conditional C sources/libraries/search paths/flags, ABI validation, and
+   native linking. Apple Clang and target-prefixed GNU compilers provide the
+   first explicit compiler/linker/sysroot bundles.
+4. **Landed:** arm64 macOS CI links and inspects a real x86-64 Mach-O. x86-64
+   Linux CI links an AArch64 ELF, inspects it with `readelf`/`file`, executes it
+   with QEMU against the target sysroot, and uploads target-scoped evidence.
 
 Explicit `nomo build --target <triple>` places artifacts under
 `build/<canonical-target>/{c,bin}`. `nomoc build --target` and
@@ -71,13 +74,17 @@ Projects without target configuration retain host-build behavior. Existing globa
 
 ## 8. Acceptance Gate
 
-This RFC requires verified host/target graph consistency, conditional lockfiles, FFI linking, cache isolation, and at least one real cross-build CI path before becoming `Accepted`.
+The acceptance gate is satisfied by canonical target unit tests, manifest and
+lockfile round trips, target-filtered locked-build integration tests,
+target-scoped artifacts and FFI metadata, and real macOS and GNU/Linux
+cross-build jobs.
 
-## 9. Open Questions
+## 9. Future Extensions
 
-- What support tiers and release promises apply to official targets?
-- May users define custom JSON targets?
-- May target-specific sources replace a module with the same name?
+- Formal support tiers and release promises for every recognized target.
+- User-defined JSON targets and custom compiler/linker/sysroot bundles.
+- Target-specific module replacement beyond conditional dependency and native
+  metadata edges.
 
 ## 10. References
 

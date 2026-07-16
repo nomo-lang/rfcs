@@ -8,10 +8,10 @@
 | --- | --- |
 | 编号 | 0017 |
 | 标题 | Target Triple、条件依赖与交叉编译 |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
-| 实现状态 | 部分实现：canonical `TargetTriple`、host detection、ABI facts、target-tagged C、隔离产物目录、macOS cross-link 与真实 arm64-to-x86_64 CI build 已落地；条件 manifest 与 lockfile 尚未实现 |
+| 实现状态 | 已完整实现：canonical target、受限 manifest predicate、完整条件 lockfile、按 target 过滤的 workspace/package/module/FFI graph、隔离产物目录，以及真实 macOS 与 GNU/Linux cross-build CI 路径均已落地 |
 | 关联主题 | target triple、cross compilation、conditional dependency、linker、sysroot |
 | 关联 RFC | [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0011](./0011-c-ffi-safety-and-link-boundary.md) |
 
@@ -38,12 +38,17 @@ C 后端便于移植，但“生成 C”不等于可复现交叉编译。若 tar
 
 1. **已落地：**共享 `nomo-target` crate 中的 target triple parser、
    canonicalization、host detection 与 ABI table。
-2. **待实现：**manifest predicate、graph filtering 与 lockfile 表示。
-3. **部分实现：**target context 已贯穿 C emission 与 linking，Apple Clang
-   已有显式 cross-architecture 配置；通用 compiler/linker/sysroot bundle 与
-   target-conditioned FFI metadata 尚未完成。
-4. **部分实现：**arm64 macOS CI 会真实链接 x86-64 executable，检查 Mach-O
-   architecture，并上传 target-scoped 证据；RFC 接受前仍需 Linux host + cross 路径。
+2. **已落地：**dependency entry 支持受限 `arch`、`os`、`env` 等值/集合
+   predicate。resolver 保留完整已知图，条件 lockfile edge 保存 canonical
+   predicate，workspace、package、module 与 CLI tree 使用同一 target context
+   过滤。
+3. **已落地：**target context 已贯穿 C emission、依赖选择、条件 C
+   source/library/search path/flag、ABI validation 与 native linking。Apple
+   Clang 和 target-prefixed GNU compiler 提供首批显式
+   compiler/linker/sysroot bundle。
+4. **已落地：**arm64 macOS CI 会链接并检查真实 x86-64 Mach-O；x86-64
+   Linux CI 会链接 AArch64 ELF，以 `readelf`/`file` 检查，并通过 QEMU 配合
+   target sysroot 实际执行，随后上传 target-scoped 证据。
 
 显式 `nomo build --target <triple>` 会把工件放在
 `build/<canonical-target>/{c,bin}`。`nomoc build --target` 与
@@ -69,13 +74,15 @@ C 后端便于移植，但“生成 C”不等于可复现交叉编译。若 tar
 
 ## 8. 接受门槛
 
-host/target 图一致性、条件 lockfile、FFI 链接、cache 隔离及至少一条真实 cross-build CI 路径全部验证后才能 `Accepted`。
+验收门槛已由 canonical target unit tests、manifest/lockfile round trip、按
+target 过滤的 locked-build integration test、target-scoped artifact/FFI
+metadata，以及真实 macOS 与 GNU/Linux cross-build job 满足。
 
-## 9. 未决问题
+## 9. 后续扩展
 
-- 官方支持 target 的等级和发布承诺。
-- 是否允许用户定义 custom JSON target。
-- target-specific source 是否允许覆盖同名模块。
+- 为每个 recognized target 定义正式支持等级与发布承诺。
+- 用户自定义 JSON target 与 custom compiler/linker/sysroot bundle。
+- 在条件 dependency/native metadata 之外支持 target-specific module 替换。
 
 ## 10. 参考
 

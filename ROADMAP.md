@@ -47,9 +47,7 @@ accepted implementation baseline until their individual acceptance gates pass:
 
 - [RFC 0016](./en/rfcs/0016-incremental-semantic-graph-and-cache.md):
   compiler-owned incremental queries shared by CLI and LSP.
-- [RFC 0017](./en/rfcs/0017-target-triples-and-cross-compilation.md):
-  one target model for resolution, ABI, compilation, and linking.
-RFCs 0014, 0015, 0018, and 0019 are now part of the accepted implementation baseline. RFC
+RFCs 0014, 0015, 0017, 0018, and 0019 are now part of the accepted implementation baseline. RFC
 0014 provides deterministic project/workspace SemVer solving, exact locks,
 offline registry-index caching, and actionable minimal conflicts. RFC 0015
 defines the public standard-library surface in canonical Nomo sources while the
@@ -57,11 +55,13 @@ coordinated toolchain manifest constrains representation-sensitive intrinsics.
 RFC 0019 provides nominal FFI handles, explicit nullability and ownership
 metadata, restricted callbacks, target-aware C layout, and deterministic
 header bindings with provenance.
+RFC 0017 provides canonical target predicates, complete conditional lockfiles,
+target-filtered dependency and FFI graphs, and verified macOS and GNU/Linux
+cross-build paths.
 
-RFC 0016 and RFC 0017 continue as partial tracks: persistent fine-grained
-semantic caching and target-conditioned dependency graphs remain. RFC 0018's
-remaining work is operational: public log-key rotation, gossip, and proof
-freshness policy.
+RFC 0016 continues as a partial track: persistent fine-grained semantic caching
+remains. RFC 0018's remaining work is operational: public log-key rotation,
+gossip, and proof freshness policy.
 
 ## v1.0: Stability Promise
 
