@@ -56,9 +56,13 @@ header bindings with provenance.
 RFC 0017 provides canonical target predicates, complete conditional lockfiles,
 target-filtered dependency and FFI graphs, and verified macOS and GNU/Linux
 cross-build paths.
+RFC 0018 provides publisher signing and provenance, dual-signed public log-key
+rotation rooted in manifest pins, signed-head gossip, rollback/equivocation
+detection, and separate online/offline proof-freshness policy.
 
-The remaining scheduled work is RFC 0018 production operations: public log-key
-rotation, gossip, and proof freshness policy.
+The scheduled implementation and production-operations work for RFCs 0014
+through 0019 is complete. Further work is ongoing stabilization, ecosystem
+interoperability, and any separately accepted follow-up RFCs.
 
 ## v1.0: Stability Promise
 

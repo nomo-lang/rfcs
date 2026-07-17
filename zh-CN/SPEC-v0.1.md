@@ -1421,5 +1421,5 @@ nomo run examples/hello
 - [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md)：标准库源码化与受控 intrinsic 身份。
 - [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md)：compiler-owned query graph、保守失效，以及带容量回收与损坏恢复的原子、带 checksum 持久化 check/codegen value。
 - [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md)：canonical target、条件 dependency/FFI graph、完整 lockfile 与已验证 cross-build。
-- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md)：publisher 授权、provenance、透明日志 proof 与回滚检测。
+- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md)：publisher 授权、provenance、透明日志 proof、双签名日志 key rotation、signed-head gossip、回滚/equivocation 检测与在线/离线 proof freshness。
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md)：类型化 FFI handle/callback、target-aware layout 与确定性 binding。

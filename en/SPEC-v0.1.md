@@ -1523,5 +1523,5 @@ The decisions in these RFCs are reflected by this implementation baseline:
 - [RFC 0015](./rfcs/0015-source-defined-standard-library-and-intrinsics.md): source-defined standard library and controlled intrinsic identities.
 - [RFC 0016](./rfcs/0016-incremental-semantic-graph-and-cache.md): compiler-owned query graphs, conservative invalidation, and atomic checksummed persistent check/codegen values with bounded eviction and corruption recovery.
 - [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md): canonical targets, conditional dependency/FFI graphs, complete lockfiles, and verified cross-builds.
-- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md): publisher authorization, provenance, transparency proofs, and rollback detection.
+- [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md): publisher authorization, provenance, transparency proofs, dual-signed log-key rotation, signed-head gossip, rollback/equivocation detection, and online/offline proof freshness.
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md): typed FFI handles, callbacks, target-aware layouts, and deterministic bindings.
