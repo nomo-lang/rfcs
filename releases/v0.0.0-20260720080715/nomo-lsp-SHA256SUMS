@@ -1,0 +1,8 @@
+e9234a753db6c86f2228899ace32bdfefd42e8f3bf657fee5285ab01dbd1aa9f  nomo-lsp-aarch64-apple-darwin-release-gate.json
+b25988c4517a5221ab6770cb8746281e71da89c9de7459aec887f31747a2af88  nomo-lsp-v0.0.0-20260720080715-aarch64-apple-darwin.tar.gz
+a4f346383d8e5eb4c56bf9d1ae4037ec5ea7848dd9f937747a129435662ce21e  nomo-lsp-v0.0.0-20260720080715-x86_64-apple-darwin.tar.gz
+218650a06c17d7edfdca21df5571383065e4635a84fc7e8f1272ab6b89aacd94  nomo-lsp-v0.0.0-20260720080715-x86_64-pc-windows-msvc.zip
+bf02c8aecb504bb890a6cced9abdfaef82993777781dca53402b248c0c42a8b8  nomo-lsp-v0.0.0-20260720080715-x86_64-unknown-linux-gnu.tar.gz
+12c46980b9db919294a36909430aeb470a6286f966e68017de32df4467866faf  nomo-lsp-x86_64-apple-darwin-release-gate.json
+e16fd90915a22f4d6486f5ad78a6b02e6ca0d20d3af3324a2dabb14e4e8f6eec  nomo-lsp-x86_64-pc-windows-msvc-release-gate.json
+3b62e84cfab3ebf9ccc7b5b71d9f65c061cc45903b7b8b2acc7606c553b2b8d7  nomo-lsp-x86_64-unknown-linux-gnu-release-gate.json

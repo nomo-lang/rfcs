@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "version": "0.0.0-20260720080715",
+  "kind": "snapshot",
+  "components": {
+    "nomo": {
+      "repository": "nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "nomo-std-manifest": {
+      "repository": "nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "nomo-lock": {
+      "repository": "nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "nomo-lsp": {
+      "repository": "nomo-lsp",
+      "version": "0.0.0-20260720080715"
+    },
+    "nomo-lsp-lock": {
+      "repository": "nomo-lsp",
+      "version": "0.0.0-20260720080715"
+    },
+    "setup-nomo": {
+      "repository": "setup-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "setup-nomo-lock": {
+      "repository": "setup-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "tree-sitter-nomo": {
+      "repository": "tree-sitter-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "tree-sitter-metadata": {
+      "repository": "tree-sitter-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "tree-sitter-lock": {
+      "repository": "tree-sitter-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "vscode-nomo": {
+      "repository": "vscode-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "vscode-nomo-lock": {
+      "repository": "vscode-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "zed-nomo-crate": {
+      "repository": "zed-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "zed-nomo-extension": {
+      "repository": "zed-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "zed-nomo-lock": {
+      "repository": "zed-nomo",
+      "version": "0.0.0-20260720080715"
+    },
+    "intellij-nomo": {
+      "repository": "intellij-nomo",
+      "version": "0.0.0-20260720080715"
+    }
+  },
+  "repositories": {
+    "intellij-nomo": {
+      "revision": "410cadf41efe667ac2afae14c9db4e24897c4388",
+      "clean": true,
+      "changed_paths": 0
+    },
+    "nomo": {
+      "revision": "6c064e68ed3da437ffe16ba39ae7317b768b0fd3",
+      "clean": true,
+      "changed_paths": 0
+    },
+    "nomo-lsp": {
+      "revision": "7933b1073210997f62048f3bdf63925154969f95",
+      "clean": true,
+      "changed_paths": 0
+    },
+    "setup-nomo": {
+      "revision": "64abc90ac74a8ad1253d7088e40b78511c59d559",
+      "clean": true,
+      "changed_paths": 0
+    },
+    "tree-sitter-nomo": {
+      "revision": "42a861683e838ffa6b2f290d02e465a0df37fecb",
+      "clean": true,
+      "changed_paths": 0
+    },
+    "vscode-nomo": {
+      "revision": "fe7d0972164195b0e54ee62bc66955cdac5885e8",
+      "clean": true,
+      "changed_paths": 0
+    },
+    "zed-nomo": {
+      "revision": "88be6c33864092fd4e362a047f70d34cfcb296aa",
+      "clean": true,
+      "changed_paths": 0
+    }
+  }
+}

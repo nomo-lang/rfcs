@@ -11,6 +11,7 @@ This is the bilingual RFC repository for the Nomo programming language. It conta
 - [Roadmap](ROADMAP.md)
 - [Preview Stabilization Gate](RELEASE-GATE.md)
 - [Versioning and Release Policy](VERSIONING.md)
+- [Preview Snapshot v0.0.0-20260720080715](releases/v0.0.0-20260720080715/RELEASE.md)
 - [Contributing RFCs](CONTRIBUTING-RFCS.md)
 - [中文 v0.1 规格基线](zh-CN/SPEC-v0.1.md)
 - [中文 v0.1 设计实现计划](zh-CN/IMPLEMENTATION-PLAN-v0.1.md)
