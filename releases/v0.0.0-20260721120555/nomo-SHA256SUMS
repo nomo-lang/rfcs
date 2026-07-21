@@ -1,0 +1,8 @@
+05ff4d204ddf320819fb8f86bee50ad653ca5bac0cc6ef02f111913a646d9ddb  nomo-aarch64-apple-darwin-release-gate.json
+13000e400c11d45977795d74daafc3a1673793ce74c29fab7365ed62a68e00a1  nomo-v0.0.0-20260721120555-aarch64-apple-darwin.tar.gz
+3318c0c01caad6c40e0d3469adfdc37c17d1e4f0d75879114759f6cfd27942df  nomo-v0.0.0-20260721120555-x86_64-apple-darwin.tar.gz
+5e43acf2d64e16dccf441b3158ac98033e533da85fcfcabdb44125a3ca40ea71  nomo-v0.0.0-20260721120555-x86_64-pc-windows-msvc.zip
+053ce64d8eba153d6f6357c7ccd3bf97b889ef9d16605dd1d20c36786fff1661  nomo-v0.0.0-20260721120555-x86_64-unknown-linux-gnu.tar.gz
+73b150c3aadd854aa2c8525bcd3578c9f4154cf4cd61eaa531309b3114d063ac  nomo-x86_64-apple-darwin-release-gate.json
+f034d8ec4b3ebc02b65533912610524ec57754e9f1d9432c2f6f425e16469ffd  nomo-x86_64-pc-windows-msvc-release-gate.json
+7f907bd1b299d719c41fc82254b2cffdbde03bb797b6aff45d6c56d8d4fc0d9e  nomo-x86_64-unknown-linux-gnu-release-gate.json
