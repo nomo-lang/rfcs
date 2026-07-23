@@ -114,8 +114,11 @@ built from verified commit
 - an independent Node.js 22 consumer installed the exact public version and
   parsed representative Nomo source successfully.
 
-The `snapshot` distribution tag now resolves to the replacement. The older
-bootstrap remains the current `latest` tag until an authenticated maintainer
-can deprecate it and remove or retarget `latest`; npm trusted publishing only
-authorizes the publish operation, not distribution-tag or deprecation
-management.
+The older bootstrap version is now deprecated with an explicit pointer to the
+replacement. Both the `snapshot` and `latest` distribution tags resolve to
+`0.0.0-20260723110700`; npm rejected removing `latest` entirely, so it was
+retargeted to the verified replacement instead. The cleanup used npm's
+Security Key flow without relaxing the package's publishing policy, which
+continues to require two-factor authentication or the configured OIDC trusted
+publisher and disallows access-token publication. All temporary access and
+CLI-session tokens used for the correction were revoked after verification.
