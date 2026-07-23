@@ -74,3 +74,48 @@ so their publication steps were skipped. setup-nomo is a signed source-only
 release and has no binary artifact to attest. Its private-repository branch
 protection limitation remains tracked in
 [setup-nomo#2](https://github.com/nomo-lang/setup-nomo/issues/2).
+
+## Post-release addendum — 2026-07-23
+
+The statement above that npm publication was skipped remains an accurate record
+of the coordinated release workflow. A later manual bootstrap published
+`tree-sitter-nomo@0.0.0-20260721120555` from commit
+`588f87886b11cf06ebff36f1e174ad9ac1fc52d2`, while the immutable release tag
+points to `d30bce91e5c5770a86967db809750a7e1bac1952`. That registry version therefore
+is not the artifact recorded by this release set and has no npm trusted-publish
+provenance.
+
+The correction preserved the original version and tag, then moved npm
+publication into the release workflow so GitHub Releases and npm consume the
+same package-job tarball. The first correction tag,
+`v0.0.0-20260723104029`, produced an attested GitHub prerelease but npm rejected
+an ambiguous tarball path. It remains as immutable evidence and was not
+published to npm.
+
+The final replacement is
+[`tree-sitter-nomo@0.0.0-20260723110700`](https://www.npmjs.com/package/tree-sitter-nomo/v/0.0.0-20260723110700),
+built from verified commit
+`802dc8e8c89077a50cb8bddfc7e535dff570b2c6` and signed tag
+`v0.0.0-20260723110700`:
+
+- workflow fixes:
+  [tree-sitter-nomo#6](https://github.com/nomo-lang/tree-sitter-nomo/pull/6)
+  and
+  [tree-sitter-nomo#7](https://github.com/nomo-lang/tree-sitter-nomo/pull/7);
+- successful trusted-publish workflow:
+  [run 30003042956](https://github.com/nomo-lang/tree-sitter-nomo/actions/runs/30003042956);
+- canonical GitHub artifact:
+  [release v0.0.0-20260723110700](https://github.com/nomo-lang/tree-sitter-nomo/releases/tag/v0.0.0-20260723110700);
+- npm and GitHub tarballs are byte-identical with SHA-256
+  `de7dead32a94db7b971bd622c2a33c8f96d02a16044fcf82e3ff17352ce8ffa1`;
+- npm SLSA provenance records `release.yml`, the signed tag, commit
+  `802dc8e8c89077a50cb8bddfc7e535dff570b2c6`, and workflow run
+  `30003042956`; its SHA-512 subject matches the public registry tarball;
+- an independent Node.js 22 consumer installed the exact public version and
+  parsed representative Nomo source successfully.
+
+The `snapshot` distribution tag now resolves to the replacement. The older
+bootstrap remains the current `latest` tag until an authenticated maintainer
+can deprecate it and remove or retarget `latest`; npm trusted publishing only
+authorizes the publish operation, not distribution-tag or deprecation
+management.
