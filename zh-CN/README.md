@@ -85,5 +85,6 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md) | 类型化 FFI Handle、Callback 与 Binding | Accepted（已接受） | FFI、callback、C ABI | nominal handle、显式 null/ownership、受限 callback、target 校验 C layout 与确定性 binding 已实现。 |
 | [0020](./rfcs/0020-manifest-v2-workspace-and-project-configuration.md) | Manifest v2、Workspace 成员资格与项目配置 | Accepted（已接受） | manifest、workspace、migration、trust | 显式 schema v2、经过验证的继承、严格 package identity、项目本地运营 policy 与确定 migration。 |
 | [0021](./rfcs/0021-manifest-derived-module-roots.md) | 由 Manifest 派生模块根并映射依赖别名 | Proposed（已提案） | package declaration、module identity、dependency alias、migration | 源码根由自身 package name 派生；消费方 alias 只做 import 映射，内部身份继续使用 canonical package id。 |
+| [0022](./rfcs/0022-structured-http-client-and-host-runtime.md) | 结构化 HTTP Client 与工具链托管 Host Runtime | Proposed（已提案） | HTTP、HTTPS、TLS、标准库、host runtime | 增加受限的结构化 HTTPS client，并把 native FFI 保留在工具链 runtime 内。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
