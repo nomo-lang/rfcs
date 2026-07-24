@@ -1033,16 +1033,77 @@ pub struct ProcessOutput {
     pub stdout: string
     pub stderr: string
 }
+
+pub struct ProcessEnv {
+    pub name: string
+    pub value: string
+}
+
+pub struct ProcessCommand {
+    pub program: string
+    pub args: Array<string>
+    pub cwd: Option<string>
+    pub env: Array<ProcessEnv>
+    pub inherit_env: bool
+}
+
+pub struct ProcessExit {
+    pub code: i32
+    pub signal: i32
+}
+
+pub enum ProcessEvent {
+    StdinFlushed
+    Stdout(string)
+    Stderr(string)
+    Exited(ProcessExit)
+}
+
+pub struct ProcessControlError {
+    pub code: string
+    pub message: string
+}
 ```
 
-`std.process` provides synchronous process helpers. `process.spawn` starts a
-shell command, waits for it to finish, and returns its exit code without
-capturing stdout or stderr. `process.status` has the same exit-code behavior
-and remains as the descriptive helper name for callers that only need the final
-status. `process.exec` captures stdout and returns `Err` for spawn, read,
-close, or non-zero-exit failures. `process.output` captures stdout and stderr
-separately and returns `Ok(ProcessOutput)` even when the command exits non-zero;
-callers inspect `status`. v0.1 does not expose asynchronous process handles.
+`process.spawn`, `process.status`, `process.exec`, and `process.output` remain
+legacy blocking shell helpers. `spawn` and `status` wait and return the exit
+code. `exec` captures stdout and returns `Err` for spawn, read, close, or
+non-zero-exit failures. `output` captures both streams and returns
+`Ok(ProcessOutput)` even for a non-zero exit.
+
+The controlled API launches `ProcessCommand.program` directly without a shell.
+Each `args` item is one argument. A program containing a path separator is
+resolved directly, relative to `cwd` when needed; a bare name is searched in
+the final child `PATH`. `cwd = None` inherits the current directory.
+`inherit_env = true` starts from the parent environment and applies explicit
+overrides. `false` passes only explicit entries plus platform-required
+variables. Environment names are non-empty, contain neither `=` nor NUL, and
+are unique; comparison is case-insensitive on Windows.
+
+`ProcessChild` is an opaque copied registry handle. `write_stdin` queues one
+non-empty UTF-8 payload of at most 1 MiB. A second pending payload returns
+`busy`; `StdinFlushed` reports complete delivery. A timeout preserves pending
+data. `close_stdin` is idempotent after flushing and returns `busy` while data
+remains pending.
+
+`next_event` accepts a chunk bound from 4 bytes through 1 MiB and a positive
+timeout through 15 minutes. It multiplexes stdin progress, stdout, stderr, and
+exit, preserves per-stream ordering, does not split a UTF-8 scalar, and emits
+`Exited` only after both output streams reach EOF. Invalid UTF-8 or NUL returns
+`protocol` and destroys the child entry. A timeout leaves the child usable.
+
+`try_wait` observes exit without consuming the final event. `terminate` is a
+forced, direct-child termination request and is idempotent after exit.
+`close_child` is idempotent and forcibly terminates and reaps a running child.
+After `Exited`, another `next_event` returns `invalid_request`, while
+`try_wait`, `terminate`, and `close_child` remain safe until close.
+
+`ProcessControlError.code` is one of `invalid_request`, `busy`, `spawn`, `io`,
+`timeout`, `protocol`, or `runtime_unavailable`. Errors and default diagnostics
+never include the program, argv, environment, cwd, stdin, stdout, or stderr.
+Native Unix-like and Windows adapters are toolchain-owned; application code
+declares no C FFI. Browser WASM rejects the controlled API before argument
+evaluation.
 
 ```rust
 process.exit(code: i64) -> void
@@ -1050,6 +1111,13 @@ process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
 process.output(command: string) -> Result<ProcessOutput, ProcessError>
+process.start(command: ProcessCommand) -> Result<ProcessChild, ProcessControlError>
+process.write_stdin(child: ProcessChild, data: string) -> Result<void, ProcessControlError>
+process.close_stdin(child: ProcessChild) -> Result<void, ProcessControlError>
+process.next_event(child: ProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
+process.try_wait(child: ProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
+process.terminate(child: ProcessChild) -> Result<void, ProcessControlError>
+process.close_child(child: ProcessChild) -> void
 ```
 
 ### 6.12 `std.path`

@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0024 |
 | Title | Controlled child processes and multiplexed standard I/O |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
-| Implementation | Not yet accepted; `std.process` only has blocking shell-command helpers |
+| Implementation | Implemented by [nomo PR #13](https://github.com/nomo-lang/nomo/pull/13); acceptance gates passed on 2026-07-24 |
 | Topics | process, child process, stdin, stdout, stderr, timeout, termination, MCP, C backend |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md), [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0023](./0023-pull-based-http-streaming-and-sse.md) |
 
@@ -323,7 +323,7 @@ Structured JSON remains independently gated.
 
 ## 8. Acceptance Gate
 
-This RFC remains `Proposed` until all gates pass:
+All acceptance gates passed on 2026-07-24:
 
 1. Canonical `std.process` source, compiler lowering, generated C ABI, docs,
    and both v0.1 specifications expose the same API and semantics.
@@ -345,11 +345,14 @@ This RFC remains `Proposed` until all gates pass:
    appear in errors, diagnostics, or default logs.
 9. Browser WASM rejects every new process entry point before argument
    evaluation.
-10. Formatting, Clippy, unit/CLI integration tests, Linux and macOS real
-    cross-builds, and native Windows compile/run tests pass.
-11. The implementation lands through signed commits, a child branch, PR
-    review, required CI, and a green post-merge main run. Only then may this
-    RFC change to `Accepted`.
+10. Formatting, Clippy, unit/CLI integration tests, and native Windows
+    compile/run tests passed in
+    [PR smoke run 30104105032](https://github.com/nomo-lang/nomo/actions/runs/30104105032).
+    Linux x86_64-to-arm64 execution and macOS arm64-to-x86_64 linking passed in
+    [post-merge main CI run 30104404704](https://github.com/nomo-lang/nomo/actions/runs/30104404704).
+11. The implementation landed through SSH-signed commits on a child branch and
+    merged [nomo PR #13](https://github.com/nomo-lang/nomo/pull/13) after its
+    required checks passed. The post-merge main run above is green.
 
 ## 9. Deferred Follow-Ups
 

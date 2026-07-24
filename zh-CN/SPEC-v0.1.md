@@ -949,14 +949,70 @@ pub struct ProcessOutput {
     pub stdout: string
     pub stderr: string
 }
+
+pub struct ProcessEnv {
+    pub name: string
+    pub value: string
+}
+
+pub struct ProcessCommand {
+    pub program: string
+    pub args: Array<string>
+    pub cwd: Option<string>
+    pub env: Array<ProcessEnv>
+    pub inherit_env: bool
+}
+
+pub struct ProcessExit {
+    pub code: i32
+    pub signal: i32
+}
+
+pub enum ProcessEvent {
+    StdinFlushed
+    Stdout(string)
+    Stderr(string)
+    Exited(ProcessExit)
+}
+
+pub struct ProcessControlError {
+    pub code: string
+    pub message: string
+}
 ```
 
-`std.process` 提供同步进程 helper。`process.spawn` 启动 shell 命令并等待
-结束，不捕获 stdout/stderr，返回命令退出码。`process.status` 具有相同的
-退出码行为，保留为只关心最终状态时的描述性 helper。`process.exec` 捕获
-stdout，并在启动、读取、关闭或非零退出状态时返回 `Err`。`process.output`
-分别捕获 stdout/stderr；即使命令以非零状态退出，也返回
-`Ok(ProcessOutput)`，调用者读取 `status`。v0.1 不暴露异步 process handle。
+`process.spawn`、`process.status`、`process.exec` 与 `process.output` 保留为
+legacy blocking shell helper。`spawn` 与 `status` 等待命令完成并返回退出码；
+`exec` 捕获 stdout，并在启动、读取、关闭或非零退出状态时返回 `Err`；
+`output` 捕获两个 stream，即使命令非零退出也返回 `Ok(ProcessOutput)`。
+
+受控 API 直接启动 `ProcessCommand.program`，不调用 shell；每个 `args` item
+对应一个 argument。含路径分隔符的 program 直接解析，必要时相对于 `cwd`；
+bare name 在最终 child `PATH` 中搜索。`cwd = None` 继承当前目录。
+`inherit_env = true` 从 parent environment 开始并应用显式 override；为 `false`
+时只传递显式 entry 与平台必需变量。Environment name 非空，不含 `=` 或 NUL，
+且不可重复；Windows 上按大小写不敏感比较。
+
+`ProcessChild` 是可复制的 opaque registry handle。`write_stdin` queue 一个非空、
+最大 1 MiB 的 UTF-8 payload；已有 pending payload 时返回 `busy`，
+`StdinFlushed` 表示完整送达。Timeout 保留 pending data。Flush 后
+`close_stdin` 幂等；仍有 pending data 时返回 `busy`。
+
+`next_event` 的 chunk bound 为 4 byte 到 1 MiB，timeout 为正且不超过 15 分钟。
+它多路复用 stdin progress、stdout、stderr 与 exit，保持每个 stream 内部顺序，
+不拆分 UTF-8 scalar，并仅在两个 output stream 都 EOF 后发出 `Exited`。
+非法 UTF-8 或 NUL 返回 `protocol` 并销毁 child entry；timeout 后 child 仍可用。
+
+`try_wait` 在不消费最终 event 的情况下观察退出。`terminate` 强制终止直接
+child，并在 child 已退出时保持幂等。`close_child` 幂等，且会强制终止并 reap
+仍在运行的 child。发出 `Exited` 后，再调用 `next_event` 返回
+`invalid_request`；在 close 前，`try_wait`、`terminate` 与 `close_child` 仍安全。
+
+`ProcessControlError.code` 为 `invalid_request`、`busy`、`spawn`、`io`、
+`timeout`、`protocol` 或 `runtime_unavailable`。Error 与默认 diagnostic 绝不
+包含 program、argv、environment、cwd、stdin、stdout 或 stderr。Unix-like 与
+Windows native adapter 由 toolchain 持有，应用代码不声明 C FFI。Browser WASM
+在参数求值前拒绝受控 API。
 
 ```rust
 process.exit(code: i64) -> void
@@ -964,6 +1020,13 @@ process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
 process.output(command: string) -> Result<ProcessOutput, ProcessError>
+process.start(command: ProcessCommand) -> Result<ProcessChild, ProcessControlError>
+process.write_stdin(child: ProcessChild, data: string) -> Result<void, ProcessControlError>
+process.close_stdin(child: ProcessChild) -> Result<void, ProcessControlError>
+process.next_event(child: ProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
+process.try_wait(child: ProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
+process.terminate(child: ProcessChild) -> Result<void, ProcessControlError>
+process.close_child(child: ProcessChild) -> void
 ```
 
 ### 6.12 `std.path`
