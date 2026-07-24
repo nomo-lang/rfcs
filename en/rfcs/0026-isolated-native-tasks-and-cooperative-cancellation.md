@@ -8,7 +8,7 @@
 | --- | --- |
 | Number | 0026 |
 | Title | Isolated native tasks and cooperative cancellation |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | concurrency, tasks, isolation, cancellation, C99 backend, Agent |
@@ -386,7 +386,7 @@ yet parallelize streaming model responses or long-lived child-process tools.
 
 ## 9. Acceptance Gate
 
-This RFC remains `Proposed` until all gates pass:
+This RFC is `Accepted`. The following gates passed before acceptance:
 
 1. Parser, formatter, semantic model, docs, and both v0.1 specifications define
    the restricted `task fn` type consistently.
@@ -423,6 +423,25 @@ This RFC remains `Proposed` until all gates pass:
     Acceptance evidence and links are recorded here before the status changes
     to `Accepted`.
 
+### 9.1 Acceptance Evidence
+
+- The implementation landed through
+  [nomo PR #15](https://github.com/nomo-lang/nomo/pull/15) as merge commit
+  [`8e48862`](https://github.com/nomo-lang/nomo/commit/8e4886217069b9ebc3617f70f6b971a80f869f44).
+- GitHub verified the signed implementation commit
+  [`41725d3`](https://github.com/nomo-lang/nomo/commit/41725d3265fdf5cec99c7fc9c68cad2dc7e005e8).
+- The final PR smoke
+  [run 30123246200](https://github.com/nomo-lang/nomo/actions/runs/30123246200)
+  passed Linux compiler/runtime checks and native task conformance on Windows
+  and macOS.
+- The signed-branch full CI
+  [run 30120803744](https://github.com/nomo-lang/nomo/actions/runs/30120803744)
+  passed workspace tests, release/WASM/performance gates, concurrent local TLS
+  requests, and real macOS and Linux cross-builds.
+- The post-merge `main` CI
+  [run 30123392692](https://github.com/nomo-lang/nomo/actions/runs/30123392692)
+  repeated the complete gate successfully.
+
 ## 10. Deferred Follow-up
 
 - A bounded worker pool and scheduling policy.
@@ -436,11 +455,11 @@ This RFC remains `Proposed` until all gates pass:
 
 ## 11. References
 
-- `std/src/task.nomo` (proposed)
+- `std/src/task.nomo`
 - `crates/nomo_syntax/src/parser.rs`
 - `crates/nomo_compiler/src/expressions/expression_helpers.rs`
 - `crates/nomo_codegen_c/src/runtime/host_http_client.c`
-- `crates/nomo_codegen_c/src/runtime/host_task.c` (proposed)
+- `crates/nomo_codegen_c/src/runtime/host_task.c`
 - `crates/nomo_wasm/src/interpreter.rs`
 - [POSIX Threads](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/pthread.h.html)
 - [Windows threading and synchronization](https://learn.microsoft.com/windows/win32/sync/synchronization)

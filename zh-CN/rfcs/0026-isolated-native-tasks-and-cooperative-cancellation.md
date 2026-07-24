@@ -8,7 +8,7 @@
 | --- | --- |
 | 编号 | 0026 |
 | 标题 | 隔离式 native task 与协作取消 |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | concurrency、task、isolation、cancellation、C99 backend、Agent |
@@ -354,7 +354,7 @@ managed-value ABI 均不变。
 
 ## 9. Acceptance Gate
 
-在全部 gate 通过前，本 RFC 保持 `Proposed`：
+本 RFC 状态为 `Accepted`。以下 gate 均已在接受前通过：
 
 1. Parser、formatter、semantic model、文档与两份 v0.1 specification 一致定义
    restricted `task fn` type。
@@ -387,6 +387,25 @@ managed-value ABI 均不变。
 14. 实现从签名 child branch 经 reviewed PR 合入；status 改为 `Accepted` 前记录
     acceptance evidence 与 link。
 
+### 9.1 验收证据
+
+- 实现通过
+  [nomo PR #15](https://github.com/nomo-lang/nomo/pull/15) 合入，merge commit 为
+  [`8e48862`](https://github.com/nomo-lang/nomo/commit/8e4886217069b9ebc3617f70f6b971a80f869f44)。
+- GitHub 验证了签名实现提交
+  [`41725d3`](https://github.com/nomo-lang/nomo/commit/41725d3265fdf5cec99c7fc9c68cad2dc7e005e8)。
+- 最终 PR smoke
+  [run 30123246200](https://github.com/nomo-lang/nomo/actions/runs/30123246200)
+  通过 Linux compiler/runtime 检查，以及 Windows 与 macOS native task
+  conformance。
+- 签名分支完整 CI
+  [run 30120803744](https://github.com/nomo-lang/nomo/actions/runs/30120803744)
+  通过 workspace test、release/WASM/performance gate、本地 TLS 并发请求，以及
+  真实 macOS 与 Linux cross-build。
+- Merge 后 `main` CI
+  [run 30123392692](https://github.com/nomo-lang/nomo/actions/runs/30123392692)
+  再次完整通过上述 gate。
+
 ## 10. 推迟的后续工作
 
 - 受限 worker pool 与 scheduling policy。
@@ -400,11 +419,11 @@ managed-value ABI 均不变。
 
 ## 11. 参考
 
-- `std/src/task.nomo`（提案）
+- `std/src/task.nomo`
 - `crates/nomo_syntax/src/parser.rs`
 - `crates/nomo_compiler/src/expressions/expression_helpers.rs`
 - `crates/nomo_codegen_c/src/runtime/host_http_client.c`
-- `crates/nomo_codegen_c/src/runtime/host_task.c`（提案）
+- `crates/nomo_codegen_c/src/runtime/host_task.c`
 - `crates/nomo_wasm/src/interpreter.rs`
 - [POSIX Threads](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/pthread.h.html)
 - [Windows threading and synchronization](https://learn.microsoft.com/windows/win32/sync/synchronization)
