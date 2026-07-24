@@ -1147,16 +1147,32 @@ header。调用方指定的 body limit 必须大于零且不超过 128 MiB；res
 上，`NOMO_HTTP_CA_BUNDLE` 可以为受控本地测试添加 PEM trust root，但不会关闭
 host-name verification；Windows 使用 current-user 与 machine certificate store。
 
+`http.open_stream` 发送同一类结构化 `GET` 或 `POST` request，并在 response
+head 可用后返回 opaque `HttpStream`。`HttpRequest.timeout_millis` 限制 connect、
+TLS、request send 与 response-head receipt；`idle_timeout_millis` 限制后续每次
+没有进展的消费 pull。`max_response_bytes` 继续作为累计 body limit。
+`http.read_text` 返回受限 UTF-8 chunk，且 `max_chunk_bytes` 必须在 4 bytes 到
+1 MiB 之间，确保不会拆分 Unicode scalar。`http.next_sse` 接受大于零且不超过
+1 MiB 的 `max_event_bytes`，并解析 CR/LF 变体、BOM、comment、multi-line
+`data`、`event`、`id`、`retry` 与 EOF dispatch。`[DONE]` 继续属于应用数据。
+
+第一次 `read_text` 或 `next_sse` 调用会选择唯一消费模式。混用模式，或读取已
+close/cancel 的 handle，都会返回 `invalid_request`。`close_stream` 与
+cooperative `cancel_stream` 对复制出的 stale handle 也保持幂等；调用方应在 open
+后立即注册 `defer http.close_stream(stream)`。Secret-safe error 也不会包含已接收
+chunk 或 SSE data。
+
 Client adapter 由工具链 runtime 托管：原生 Unix-like target 使用兼容 libcurl
 runtime，Windows 使用 WinHTTP；Nomo 应用无需声明 C FFI 或 linker metadata。
-Browser WASM sandbox 在 v0.1 不授予网络能力，并会在求值或记录 request secret
-前报告 `NOMO-WASM-003`。
+Browser WASM sandbox 在 v0.1 不授予网络能力，并会在求值或记录 request/stream
+参数与 secret 前报告 `NOMO-WASM-003`。
 
 `http.listen` 创建阻塞 server socket，`http.accept` 接受一个 request
 exchange，`http.respond_string` 写入 string response。程序应使用
 `defer http.close_exchange(exchange)` 和 `defer http.close_server(server)` 关闭
-handle，使正常返回与 `?` 早退都会清理资源。Streaming body 与 SSE、取消、
-redirect、routing 与并发 server helper 留给后续 `std.http` 切片。
+handle，使正常返回与 `?` 早退都会清理资源。Streaming request body、binary
+response chunk、redirect、routing 与并发 server helper 留给后续 `std.http`
+切片。
 
 ```rust
 pub struct HttpHeader {
@@ -1184,6 +1200,24 @@ pub struct HttpResponse {
     pub body: string
 }
 
+pub struct HttpStream {
+    handle: u64
+    pub status: i64
+    pub headers: Array<HttpHeader>
+}
+
+pub struct HttpStreamChunk {
+    pub data: string
+    pub done: bool
+}
+
+pub struct SseEvent {
+    pub event: string
+    pub data: string
+    pub id: string
+    pub retry_millis: Option<u64>
+}
+
 pub struct HttpServer {
 }
 
@@ -1196,6 +1230,11 @@ pub struct HttpExchange {
 http.send(request: HttpRequest) -> Result<HttpResponse, HttpError>
 http.get(url: string) -> Result<HttpResponse, HttpError>
 http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
+http.open_stream(request: HttpRequest, idle_timeout_millis: u64) -> Result<HttpStream, HttpError>
+http.read_text(stream: HttpStream, max_chunk_bytes: u64) -> Result<HttpStreamChunk, HttpError>
+http.next_sse(stream: HttpStream, max_event_bytes: u64) -> Result<Option<SseEvent>, HttpError>
+http.cancel_stream(stream: HttpStream) -> void
+http.close_stream(stream: HttpStream) -> void
 http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
 http.accept(server: HttpServer) -> Result<HttpExchange, HttpError>
 http.respond_string(exchange: HttpExchange, status: i64, body: string) -> Result<void, HttpError>
@@ -1459,3 +1498,6 @@ nomo run examples/hello
 - [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md)：canonical target、条件 dependency/FFI graph、完整 lockfile 与已验证 cross-build。
 - [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md)：publisher 授权、provenance、透明日志 proof、双签名日志 key rotation、signed-head gossip、回滚/equivocation 检测与在线/离线 proof freshness。
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md)：类型化 FFI handle/callback、target-aware layout 与确定性 binding。
+- [RFC 0020](./rfcs/0020-manifest-v2-workspace-and-project-configuration.md)：manifest schema v2、workspace membership、package identity、项目配置与 migration。
+- [RFC 0022](./rfcs/0022-structured-http-client-and-host-runtime.md)：通过工具链托管 native runtime 提供受限结构化 HTTP/HTTPS request。
+- [RFC 0023](./rfcs/0023-pull-based-http-streaming-and-sse.md)：受限 pull-based UTF-8 response streaming、SSE decoding、idle timeout 与 cooperative cancellation。

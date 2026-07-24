@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0023 |
 | Title | Pull-based HTTP text streaming and SSE |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
-| Implementation | Not yet accepted; `std.http` buffers the complete response body |
+| Implementation | Implemented by [nomo PR #12](https://github.com/nomo-lang/nomo/pull/12); acceptance gates passed on 2026-07-24 |
 | Topics | HTTP, HTTPS, streaming, SSE, cancellation, timeout, secrets, C backend |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md), [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0022](./0022-structured-http-client-and-host-runtime.md) |
 
@@ -19,7 +19,7 @@
 
 ## 1. Summary
 
-Nomo v0.1 should extend the accepted structured HTTP client with bounded,
+Nomo v0.1 extends the accepted structured HTTP client with bounded,
 pull-based UTF-8 response streaming and Server-Sent Events (SSE). A caller
 opens one response, reads the response head, and then explicitly pulls either
 text chunks or parsed SSE events. Every stream has a header deadline, an idle
@@ -51,17 +51,20 @@ cross-thread ownership contract. Therefore the first streaming API must be
 synchronous and pull-based rather than hiding a worker thread or introducing a
 large syntax/runtime expansion.
 
-## 3. Current Evidence and Gaps
+## 3. Implementation Evidence and Remaining Gaps
 
-| Surface | Current evidence | P1 gap |
+The accepted implementation landed through
+[nomo PR #12](https://github.com/nomo-lang/nomo/pull/12) on 2026-07-24.
+
+| Surface | Accepted evidence | Remaining gap |
 | --- | --- | --- |
-| Public API | `http.send(HttpRequest)` returns one buffered `HttpResponse` | No response handle, incremental read, SSE event, or early stop |
-| Timeout | `HttpRequest.timeout_millis` is a total non-streaming deadline | A long-lived stream also needs a per-read idle timeout |
-| Limits | `max_response_bytes` caps a buffered body | Streaming needs a cumulative cap, per-chunk cap, and per-event cap |
-| Native runtime | Unix-like targets use libcurl easy; Windows uses WinHTTP | Runtime state is destroyed before control returns to Nomo |
-| Cancellation | No stream handle exists | Application cannot deliberately stop an in-progress response |
-| Browser WASM | Network access is rejected with `NOMO-WASM-003` | New streaming entry points must preserve the same sandbox boundary |
-| Tests | RFC 0022 covers local TLS and non-streaming failure paths | No delayed chunks, event framing, idle timeout, early close, or streamed secret tests |
+| Public API | `std.http` exposes an opaque `HttpStream`, bounded text pulls, parsed SSE events, and explicit cancel/close while preserving RFC 0022 APIs | Binary chunks and streaming request bodies remain deferred |
+| Timeout | `HttpRequest.timeout_millis` bounds response-head acquisition and `idle_timeout_millis` bounds each later pull | Cross-task interruption awaits a task model |
+| Limits | The native registry enforces cumulative response, per-chunk, per-event, and response-header caps | Configurable connection-pool and compression policy remain deferred |
+| Native runtime | Unix-like targets use a paused/resumed libcurl multi handle; Windows retains a WinHTTP request and normalizes late reads | Browser networking requires a separate host-capability design |
+| Cancellation | Close/cancel and stale copied handles are idempotent; early cancel closes the connection | Cancellation remains cooperative between blocking pulls |
+| Browser WASM | Every streaming network entry point rejects with `NOMO-WASM-003` before argument evaluation | `fetch`/`ReadableStream` is not granted in v0.1 |
+| Tests and example | Split UTF-8/SSE fixtures cover framing, limits, timeout, cancellation, secret redaction, Windows execution, and an OpenAI-compatible `[DONE]` loop | Structured JSON construction remains the next independent P1 slice |
 
 ## 4. Detailed Design
 
@@ -120,11 +123,12 @@ may wait without receiving response progress. Both values must be positive and
 no greater than 15 minutes.
 
 `request.max_response_bytes` is the cumulative decoded body limit across all
-reads. It retains RFC 0022's 128 MiB hard ceiling. `max_chunk_bytes` must be
-positive and no greater than 1 MiB. `read_text` waits until decoded text is
-available, the stream ends, or an error/idle timeout occurs. End of stream is
-reported as `{ data: "", done: true }`; a non-final result always contains
-non-empty `data`.
+reads. It retains RFC 0022's 128 MiB hard ceiling. `max_chunk_bytes` must be at
+least 4 bytes and no greater than 1 MiB, so one UTF-8 scalar always fits.
+`read_text` waits until decoded text is available, the stream ends, or an
+error/idle timeout occurs. End of stream is reported as
+`{ data: "", done: true }`; a non-final result always contains non-empty
+`data`.
 
 The returned chunks are valid UTF-8 text and never split a UTF-8 scalar.
 Embedded NUL and invalid UTF-8 produce `protocol`. Binary-body streaming needs
@@ -214,7 +218,7 @@ The browser WASM interpreter rejects all new network entry points with
 
 | Option | Advantages | Disadvantages | Direction |
 | --- | --- | --- | --- |
-| Synchronous pull handle | Natural backpressure, bounded blocking, fits C99 and current ownership | No cross-thread interrupt while blocked | Proposed for v0.1 |
+| Synchronous pull handle | Natural backpressure, bounded blocking, fits C99 and current ownership | No cross-thread interrupt while blocked | Accepted for v0.1 |
 | Callback per chunk/event | Familiar streaming shape | Requires callback lifetime, reentrancy, and captured-value ownership rules not yet present | Rejected for v0.1 |
 | Background worker plus queue | Can interrupt and receive concurrently | Requires threads, atomics, synchronization, and thread-safe managed values | Defer to task-model RFC |
 | Add `async`/`await` first | General language solution | Expands parser, type system, lowering, runtime, and cancellation semantics before the Agent loop is proven | Rejected as P1 scope |
@@ -243,10 +247,11 @@ public APIs are fixed.
 
 ## 8. Acceptance Gate
 
-This RFC remains `Proposed` until all gates pass:
+All acceptance gates passed on 2026-07-24:
 
 1. Canonical `std.http` source, compiler lowering, generated C ABI, docs, and
-   both v0.1 specifications expose the same streaming API and semantics.
+   both v0.1 specifications expose the same streaming API and semantics in
+   this accepted change set.
 2. Existing RFC 0022 buffered HTTP/HTTPS behavior remains source-compatible and
    all prior tests continue to pass.
 3. A localhost generated-certificate TLS fixture sends headers and SSE fields
@@ -263,10 +268,15 @@ This RFC remains `Proposed` until all gates pass:
 7. A Nomo OpenAI-compatible streaming example consumes fixture events
    incrementally and stops on `[DONE]`.
 8. Formatting, Clippy, unit/CLI integration tests, browser-WASM capability
-   behavior, macOS and Linux cross-builds, and Windows native compile/run tests
-   pass.
-9. The implementation lands through signed commits, a child branch, PR review,
-   and required CI. Only then may the RFC change to `Accepted`.
+   behavior, macOS arm64-to-x86_64 cross-build, and Linux
+   x86_64-to-arm64 cross-build passed in
+   [full CI run 30098333656](https://github.com/nomo-lang/nomo/actions/runs/30098333656);
+   native Windows buffered and streaming compile/run paths passed in
+   [PR smoke run 30098027086](https://github.com/nomo-lang/nomo/actions/runs/30098027086).
+9. The implementation landed through signed commits on a child branch and
+   merged PR #12. The post-merge
+   [main CI run 30098552254](https://github.com/nomo-lang/nomo/actions/runs/30098552254)
+   also passed.
 
 ## 9. Deferred Follow-Ups
 
@@ -281,7 +291,12 @@ This RFC remains `Proposed` until all gates pass:
 - `std/src/http.nomo`
 - `crates/nomo_compiler/src/builtins/builtins_http.rs`
 - `crates/nomo_codegen_c/src/runtime/host_http_client.c`
-- `crates/nomo_wasm/src/interpreter.rs`
+- `crates/nomo_codegen_c/src/runtime/host_http_stream.c`
+- `crates/nomo/tests/cli_project.rs`
+- `crates/nomo/tests/examples.rs`
+- `crates/nomo_wasm/src/lib.rs`
+- `examples/openai_streaming`
+- [nomo PR #12](https://github.com/nomo-lang/nomo/pull/12)
 - [RFC 0003](./0003-arc-cow-runtime-cost.md)
 - [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)
 - [RFC 0017](./0017-target-triples-and-cross-compilation.md)
