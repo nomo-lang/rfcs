@@ -87,5 +87,6 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0021](./rfcs/0021-manifest-derived-module-roots.md) | 由 Manifest 派生模块根并映射依赖别名 | Proposed（已提案） | package declaration、module identity、dependency alias、migration | 源码根由自身 package name 派生；消费方 alias 只做 import 映射，内部身份继续使用 canonical package id。 |
 | [0022](./rfcs/0022-structured-http-client-and-host-runtime.md) | 结构化 HTTP Client 与工具链托管 Host Runtime | Accepted（已接受） | HTTP、HTTPS、TLS、标准库、host runtime | 受限的结构化 HTTPS client 已实现，native FFI 被封装在工具链 runtime 内。 |
 | [0023](./rfcs/0023-pull-based-http-streaming-and-sse.md) | Pull-Based HTTP 文本 Streaming 与 SSE | Accepted（已接受） | HTTP、HTTPS、streaming、SSE、取消、timeout | 已在不引入 async 语法的前提下实现受限同步文本/SSE 拉取、idle timeout 与 cooperative cancellation。 |
+| [0024](./rfcs/0024-controlled-child-processes-and-stdio.md) | 受控子进程与多路复用标准 I/O | Proposed（已提案） | process、stdin、stdout、stderr、timeout、termination、MCP | 增加 shell-free 长生命周期 child handle、受限 queued stdin 与多路复用 output/exit event。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
