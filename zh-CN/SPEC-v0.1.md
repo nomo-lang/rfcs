@@ -1130,23 +1130,57 @@ impl UdpSocket {
 
 ### 6.19 `std.http`
 
-`std.http` 在当前切片提供阻塞 plain-HTTP client helper 与基础 server
-helper。`http.get` 请求 `http://` URL。`http.post` 向 `http://` URL 发送
-string body。响应暴露数字 HTTP status 与 response body。`http.listen` 创建
-阻塞 server socket，`http.accept` 接受一个 request exchange，
-`http.respond_string` 写入 string response。程序应使用
+`std.http` 提供受限的阻塞式 HTTP/HTTPS client 与基础 plain-HTTP server
+helper。`http.send` 接受结构化 request，其中包含总 deadline、自定义应用 header
+与 response-body 上限。v0.1 接受 `GET` 与 `POST`；`http.get` 和 `http.post`
+继续作为兼容 helper，使用 30 秒 deadline 与 8 MiB response-body 上限。HTTP
+status（包括 4xx 与 5xx）返回 `Ok(HttpResponse)`。
+
+HTTPS 通过平台 trust 校验 peer certificate 与 host name，并禁用 redirect。
+Request header name/value 在 I/O 前校验；调用方可以设置 `Authorization` 与
+`Content-Type`，但不能覆盖 `Host`、`Connection` 或 `Content-Length` 等 framing
+header。调用方指定的 body limit 必须大于零且不超过 128 MiB；response header
+另有 64 KiB 上限。`HttpError.code` 为 `invalid_request`、
+`runtime_unavailable`、`dns`、`connect`、`tls`、`timeout`、
+`response_too_large`、`protocol` 或 `transport`。Error 与默认 diagnostic 不会
+包含 request-header value、request body 或 URL query text。在 Unix-like target
+上，`NOMO_HTTP_CA_BUNDLE` 可以为受控本地测试添加 PEM trust root，但不会关闭
+host-name verification；Windows 使用 current-user 与 machine certificate store。
+
+Client adapter 由工具链 runtime 托管：原生 Unix-like target 使用兼容 libcurl
+runtime，Windows 使用 WinHTTP；Nomo 应用无需声明 C FFI 或 linker metadata。
+Browser WASM sandbox 在 v0.1 不授予网络能力，并会在求值或记录 request secret
+前报告 `NOMO-WASM-003`。
+
+`http.listen` 创建阻塞 server socket，`http.accept` 接受一个 request
+exchange，`http.respond_string` 写入 string response。程序应使用
 `defer http.close_exchange(exchange)` 和 `defer http.close_server(server)` 关闭
-handle，使正常返回与 `?` 早退都会清理资源。TLS、自定义 header、redirect、
-chunked transfer 解码、streaming body、routing 与并发 server helper 留给后续
-`std.http` 切片。
+handle，使正常返回与 `?` 早退都会清理资源。Streaming body 与 SSE、取消、
+redirect、routing 与并发 server helper 留给后续 `std.http` 切片。
 
 ```rust
+pub struct HttpHeader {
+    pub name: string
+    pub value: string
+}
+
+pub struct HttpRequest {
+    pub method: string
+    pub url: string
+    pub headers: Array<HttpHeader>
+    pub body: string
+    pub timeout_millis: u64
+    pub max_response_bytes: u64
+}
+
 pub struct HttpError {
+    pub code: string
     pub message: string
 }
 
 pub struct HttpResponse {
     pub status: i64
+    pub headers: Array<HttpHeader>
     pub body: string
 }
 
@@ -1159,6 +1193,7 @@ pub struct HttpExchange {
     pub body: string
 }
 
+http.send(request: HttpRequest) -> Result<HttpResponse, HttpError>
 http.get(url: string) -> Result<HttpResponse, HttpError>
 http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
 http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>

@@ -1221,24 +1221,62 @@ impl UdpSocket {
 
 ### 6.19 `std.http`
 
-`std.http` provides blocking plain-HTTP client and basic server helpers in the
-current slice. `http.get` requests an `http://` URL. `http.post` sends a string
-body to an `http://` URL. Responses expose the numeric HTTP status and response
-body. `http.listen` creates a blocking server socket, `http.accept` accepts one
+`std.http` provides a bounded blocking HTTP/HTTPS client and basic plain-HTTP
+server helpers. `http.send` accepts a structured request with a total deadline,
+custom application headers, and a response-body limit. v0.1 accepts `GET` and
+`POST`; `http.get` and `http.post` remain compatibility helpers with a
+30-second deadline and an 8 MiB response-body limit. HTTP statuses, including
+4xx and 5xx, return `Ok(HttpResponse)`.
+
+HTTPS verifies the peer certificate and host name through platform trust.
+Redirects are disabled. Request header names and values are validated before
+I/O; callers may set `Authorization` and `Content-Type`, but cannot override
+framing headers such as `Host`, `Connection`, or `Content-Length`. The caller's
+body limit must be positive and no greater than 128 MiB; response headers have
+a separate 64 KiB limit. `HttpError.code` is one of `invalid_request`,
+`runtime_unavailable`, `dns`, `connect`, `tls`, `timeout`,
+`response_too_large`, `protocol`, or `transport`. Errors and default
+diagnostics do not include request-header values, request bodies, or URL query
+text. On Unix-like targets, `NOMO_HTTP_CA_BUNDLE` can add a PEM trust root for
+controlled local testing without disabling host-name verification; Windows
+uses its current-user and machine certificate stores.
+
+The client adapter is owned by the toolchain runtime: native Unix-like targets
+use a compatible libcurl runtime and Windows uses WinHTTP, while Nomo
+applications declare no C FFI or linker metadata. The browser WASM sandbox
+does not grant network access in v0.1 and reports `NOMO-WASM-003` before
+evaluating or logging request secrets.
+
+`http.listen` creates a blocking server socket, `http.accept` accepts one
 request exchange, and `http.respond_string` writes a string response. Programs
 should close handles with `defer http.close_exchange(exchange)` and
 `defer http.close_server(server)` so cleanup runs on both normal returns and `?`
-early returns. TLS, custom headers, redirects, chunked transfer decoding,
-streaming bodies, routing, and concurrent server helpers remain later
-`std.http` slices.
+early returns. Streaming bodies and SSE, cancellation, redirects, routing, and
+concurrent server helpers remain later `std.http` slices.
 
 ```rust
+pub struct HttpHeader {
+    pub name: string
+    pub value: string
+}
+
+pub struct HttpRequest {
+    pub method: string
+    pub url: string
+    pub headers: Array<HttpHeader>
+    pub body: string
+    pub timeout_millis: u64
+    pub max_response_bytes: u64
+}
+
 pub struct HttpError {
+    pub code: string
     pub message: string
 }
 
 pub struct HttpResponse {
     pub status: i64
+    pub headers: Array<HttpHeader>
     pub body: string
 }
 
@@ -1251,6 +1289,7 @@ pub struct HttpExchange {
     pub body: string
 }
 
+http.send(request: HttpRequest) -> Result<HttpResponse, HttpError>
 http.get(url: string) -> Result<HttpResponse, HttpError>
 http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
 http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
