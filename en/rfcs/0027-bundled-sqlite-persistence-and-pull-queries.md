@@ -8,7 +8,7 @@
 | --- | --- |
 | Number | 0027 |
 | Title | Bundled SQLite persistence and pull-based queries |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | SQLite, persistence, database, standard library, C99 backend, Agent |
@@ -517,7 +517,7 @@ product.
 
 ## 9. Acceptance Gate
 
-This RFC remains `Proposed` until all gates pass:
+This RFC is `Accepted`. The following gates passed before acceptance:
 
 1. Both v0.1 specifications, standard-library docs, and this RFC define the
    exact API, limits, lifecycle, error, task-safety, and browser contracts.
@@ -567,6 +567,28 @@ This RFC remains `Proposed` until all gates pass:
     Acceptance evidence and links are recorded here before the status changes
     to `Accepted`.
 
+### 9.1 Acceptance Evidence
+
+- The implementation landed through
+  [nomo PR #16](https://github.com/nomo-lang/nomo/pull/16) as merge commit
+  [`a6405a5`](https://github.com/nomo-lang/nomo/commit/a6405a55e9a98434ec95b536fc1585b8e381ebb4).
+- GitHub verified all five child-branch commits, including the pinned upstream
+  amalgamation, the runtime/compiler implementation, Windows line-ending
+  integrity, cross-platform output assertions, and portable documentation
+  source paths.
+- The final PR smoke
+  [run 30128914455](https://github.com/nomo-lang/nomo/actions/runs/30128914455)
+  passed Linux compiler/runtime checks and complete SQLite conformance on
+  Windows and macOS.
+- The final signed-branch full CI
+  [run 30128918597](https://github.com/nomo-lang/nomo/actions/runs/30128918597)
+  passed formatting, Clippy, all workspace tests, release/WASM/performance
+  gates, the two-process Agent checkpoint, macOS arm64-to-x86_64 linking, and
+  Linux x86_64-to-arm64 linking and execution.
+- The post-merge `main` CI
+  [run 30129166251](https://github.com/nomo-lang/nomo/actions/runs/30129166251)
+  repeated the complete gate successfully.
+
 ## 10. Deferred Follow-up
 
 - A compact `bytes` type and zero-copy bounded BLOB reads.
@@ -581,9 +603,9 @@ This RFC remains `Proposed` until all gates pass:
 
 ## 11. References
 
-- `std/src/sqlite.nomo` (proposed)
-- `crates/nomo_compiler/src/builtins/builtins_sqlite.rs` (proposed)
-- `crates/nomo_codegen_c/src/runtime/host_sqlite.c` (proposed)
+- `std/src/sqlite.nomo`
+- `crates/nomo_compiler/src/builtins/builtins_sqlite.rs`
+- `crates/nomo_codegen_c/src/runtime/host_sqlite.c`
 - `crates/nomo/src/project/build.rs`
 - [SQLite 3.53.3 download and amalgamation digest](https://www.sqlite.org/download.html)
 - [SQLite amalgamation](https://www.sqlite.org/amalgamation.html)
