@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.net`, `std.http`, `std.regex`, `std.collections` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 | Browser runtime | Restricted WebAssembly execution and browser sandbox validation | Wasm build and sandbox check pass |
 
@@ -829,6 +829,7 @@ std.num
 std.hash
 std.crypto
 std.json
+std.sqlite
 std.regex
 std.collections
 ```
@@ -1547,6 +1548,101 @@ log.warn(message: string) -> void
 log.error(message: string) -> void
 log.enabled(level: string) -> bool
 ```
+
+### 6.25 `std.sqlite`
+
+`std.sqlite` provides durable native SQLite state without application-side C
+FFI, a host SQLite package, a database subprocess, or a separate service. The
+toolchain pins and verifies the official SQLite 3.53.3 amalgamation and
+compiles it as a separate translation unit only when typed IR uses this module.
+The same source and compile options are used by build, run, test, emitted C,
+and target cross-build paths.
+
+```rust
+pub struct SqliteDatabase {
+    handle: u64
+}
+
+pub struct SqliteQuery {
+    handle: u64
+}
+
+pub struct SqliteError {
+    pub code: string
+    pub message: string
+    pub native_code: i64
+}
+
+pub enum SqliteOpenMode {
+    ReadOnly
+    ReadWrite
+    ReadWriteCreate
+}
+
+pub enum SqliteValue {
+    Null
+    Integer(i64)
+    Real(f64)
+    Text(string)
+    Blob(Array<u32>)
+}
+
+pub struct SqliteColumn {
+    pub name: string
+    pub value: SqliteValue
+}
+
+pub struct SqliteRow {
+    pub columns: Array<SqliteColumn>
+}
+
+pub struct SqliteExecuteResult {
+    pub changes: u64
+    pub last_insert_rowid: i64
+}
+
+sqlite.open(path: string, mode: SqliteOpenMode, busy_timeout_millis: u64)
+    -> Result<SqliteDatabase, SqliteError>
+sqlite.open_memory(busy_timeout_millis: u64)
+    -> Result<SqliteDatabase, SqliteError>
+sqlite.execute(database: SqliteDatabase, sql: string, params: Array<SqliteValue>)
+    -> Result<SqliteExecuteResult, SqliteError>
+sqlite.query(database: SqliteDatabase, sql: string, params: Array<SqliteValue>)
+    -> Result<SqliteQuery, SqliteError>
+sqlite.next(query_value: SqliteQuery, max_row_bytes: u64)
+    -> Result<Option<SqliteRow>, SqliteError>
+sqlite.reset(query_value: SqliteQuery, params: Array<SqliteValue>)
+    -> Result<void, SqliteError>
+sqlite.close_query(query_value: SqliteQuery) -> Result<void, SqliteError>
+sqlite.close(database: SqliteDatabase) -> Result<void, SqliteError>
+```
+
+Database and query handles are opaque runtime capabilities. User code cannot
+construct them or read/write their fields. `execute` and `query` accept exactly
+one SQL statement and require an exact positional binding count. Text and BLOB
+bindings are copied. BLOB elements must be in `0..=255`. `execute` rejects a
+row-producing statement; `query` plus `next` copies at most one complete,
+bounded row per pull. Result column order and duplicate names are preserved.
+Repeated pulls after completion return `None`; `reset` clears and replaces all
+bindings. Transactions are explicit SQL.
+
+The v0.1 limits are 32 live databases, 256 live queries, 4096 path bytes,
+1 MiB SQL, 1024 parameters, 8 MiB per text/BLOB parameter or result,
+16 MiB total parameter bytes, 256 columns, `max_row_bytes` in `1..=16 MiB`,
+and busy timeout in `0..=300_000` milliseconds. `close` returns `busy_handle`
+while the database owns a live query. Closed/copied stale handles return
+`closed`; process-exit cleanup reports handle counts only.
+
+`SqliteError.code` is `invalid_request`, `limit`, `open`, `prepare`, `bind`,
+`step`, `busy`, `constraint`, `read_only`, `corrupt`, `full`, `encoding`,
+`unexpected_row`, `busy_handle`, `closed`, `runtime_unavailable`, or
+`internal`. Error messages and lifecycle warnings never copy paths, SQL,
+schema identifiers, bound values, BLOBs, or rows.
+
+SQLite handles are thread-confined and `std.sqlite` is rejected from
+`std.task` workers with `E0821`. Browser WASM type-checks the API but
+`open`/`open_memory` return `runtime_unavailable`; no filesystem, OPFS,
+IndexedDB, SQLite WASM, or host import is added.
 
 ---
 
