@@ -8,7 +8,7 @@
 | --- | --- |
 | Number | 0025 |
 | Title | Structured JSON values, access, and construction |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
 | Topics | JSON, standard library, Agent, Unicode, limits, C backend, browser WASM |
@@ -342,7 +342,7 @@ JSON parsing, mutable in-place JSON trees, or JSON-RPC protocol semantics.
 
 ## 8. Acceptance Gate
 
-This RFC remains `Proposed` until all gates pass:
+This RFC was accepted after all of these gates passed:
 
 1. Canonical `std.json` source, standard-module registry, compiler lowering,
    typed IR, generated C ABI, browser WASM, docs, and both v0.1 specifications
@@ -378,7 +378,29 @@ This RFC remains `Proposed` until all gates pass:
     Acceptance evidence and links are recorded here before the status changes
     to `Accepted`.
 
-## 9. Deferred Follow-up
+## 9. Acceptance Evidence
+
+- The implementation landed through signed commits
+  [`7f3d2c9`](https://github.com/nomo-lang/nomo/commit/7f3d2c905d5a66ea18660a28e9888a68066b83cf)
+  and [`c47af0e`](https://github.com/nomo-lang/nomo/commit/c47af0e6018e97187a08e09ac5e5ec7dda2d2b3d)
+  on reviewed [nomo PR #14](https://github.com/nomo-lang/nomo/pull/14),
+  merged as [`fde7016`](https://github.com/nomo-lang/nomo/commit/fde701629fbb6d0d4eebf879c96083fd7cebff94).
+- The final [PR smoke run](https://github.com/nomo-lang/nomo/actions/runs/30112910817)
+  passed Linux smoke with AddressSanitizer/LeakSanitizer, Windows native host
+  runtime checks, and the macOS structured JSON runtime.
+- The post-merge [`main` CI run](https://github.com/nomo-lang/nomo/actions/runs/30113047313)
+  passed formatting, Clippy, the complete workspace test suite, release and
+  browser WASM builds, sandbox verification, compiler latency gates, examples,
+  workspace checks, and real Linux x86_64-to-arm64 and macOS
+  arm64-to-x86_64 cross-builds.
+- Native and browser runtimes run the shared
+  `tests/fixtures/structured_json_conformance.nomo` corpus. Boundary,
+  invalid-UTF-8, lifecycle, secret-safety, and OpenAI-compatible example tests
+  cover gates 2 through 11.
+- This acceptance update synchronizes both v0.1 specifications and the RFC
+  indexes with the shipped API and recorded CI evidence.
+
+## 10. Deferred Follow-up
 
 - Deterministic `from_f64` conversion.
 - Incremental/streaming parser and a byte-buffer input type.
@@ -388,7 +410,7 @@ This RFC remains `Proposed` until all gates pass:
 - JSON Pointer, JSON Patch, JSONPath, and mutable update operations.
 - JSON-RPC and MCP message framing, which build on this value API.
 
-## 10. References
+## 11. References
 
 - [RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format](https://www.rfc-editor.org/rfc/rfc8259)
 - `std/src/json.nomo`
