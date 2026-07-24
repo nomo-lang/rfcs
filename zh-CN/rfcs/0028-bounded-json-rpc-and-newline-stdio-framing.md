@@ -8,7 +8,7 @@
 | --- | --- |
 | 编号 | 0028 |
 | 标题 | 受限 JSON-RPC 与换行分帧标准 I/O |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 主题 | JSON-RPC、MCP、stdio、framing、process、JSON、Agent |

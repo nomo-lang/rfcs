@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.jsonrpc`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 | Browser runtime | Restricted WebAssembly execution and browser sandbox validation | Wasm build and sandbox check pass |
 
@@ -829,6 +829,7 @@ std.num
 std.hash
 std.crypto
 std.json
+std.jsonrpc
 std.sqlite
 std.regex
 std.collections
@@ -1279,7 +1280,66 @@ secrets. Escaped U+0000 is rejected until Nomo strings gain a length-carrying
 representation. Native C99 and browser WASM runtimes implement the same
 observable contract.
 
-### 6.18 `std.net`
+### 6.18 `std.jsonrpc`
+
+`std.jsonrpc` provides the bounded JSON-RPC 2.0 envelope and incremental
+newline-framing API accepted by
+[RFC 0028](./rfcs/0028-bounded-json-rpc-and-newline-stdio-framing.md).
+`JsonRpcMessage` and `JsonRpcDecoder` are opaque values. A decoder consumes
+one arbitrary UTF-8 chunk and returns a replacement decoder plus every
+complete validated message, so it can consume fragmented or coalesced
+`std.process` stdout events without a native resource registry.
+
+```rust
+pub enum JsonRpcMessageKind {
+    Request
+    Notification
+    Success
+    Error
+}
+
+pub struct JsonRpcProtocolError {
+    pub code: string
+    pub message: string
+}
+
+pub struct JsonRpcMessage {
+    raw: string
+}
+
+pub struct JsonRpcDecoder {
+    pending: string
+    max_message_bytes: u64
+}
+
+pub struct JsonRpcDecodeBatch {
+    pub decoder: JsonRpcDecoder
+    pub messages: Array<JsonRpcMessage>
+}
+
+jsonrpc.decoder(max_message_bytes: u64) -> Result<JsonRpcDecoder, JsonRpcProtocolError>
+jsonrpc.feed(decoder_value: JsonRpcDecoder, chunk: string) -> Result<JsonRpcDecodeBatch, JsonRpcProtocolError>
+jsonrpc.finish(decoder_value: JsonRpcDecoder) -> Result<void, JsonRpcProtocolError>
+jsonrpc.parse(value: JsonValue, max_message_bytes: u64) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.encode(message: JsonRpcMessage, max_message_bytes: u64) -> Result<string, JsonRpcProtocolError>
+jsonrpc.value(message: JsonRpcMessage) -> JsonValue
+jsonrpc.kind(message: JsonRpcMessage) -> JsonRpcMessageKind
+jsonrpc.request(id: JsonValue, method: string, params: Option<JsonValue>) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.notification(method: string, params: Option<JsonValue>) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.success(id: JsonValue, result: JsonValue) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.failure(id: JsonValue, code: i64, message: string, data: Option<JsonValue>) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+```
+
+The codec accepts request, notification, success-response, and error-response
+envelopes; rejects JSON-RPC batch arrays and invalid or duplicate reserved
+fields; accepts LF and CRLF delimiters; and emits exactly one trailing LF.
+One message is limited to 1,048,575 bytes, one input chunk to 1 MiB, one feed
+to 4,096 messages, and pending plus input to 2,097,151 bytes. Errors use stable
+categories and never reproduce rejected payloads, method names, error data,
+tokens, or stderr content. Native C99 and browser WASM runtimes expose the same
+observable behavior.
+
+### 6.19 `std.net`
 
 `std.net` provides blocking TCP and UDP helpers in the current slice.
 `net.connect` opens a TCP connection to a host and port. `net.listen` binds a
@@ -1332,7 +1392,7 @@ impl UdpSocket {
 }
 ```
 
-### 6.19 `std.http`
+### 6.20 `std.http`
 
 `std.http` provides a bounded blocking HTTP/HTTPS client and basic plain-HTTP
 server helpers. `http.send` accepts a structured request with a total deadline,
@@ -1453,7 +1513,7 @@ http.close_server(server: HttpServer) -> void
 http.close_exchange(exchange: HttpExchange) -> void
 ```
 
-### 6.20 `std.regex`
+### 6.21 `std.regex`
 
 `std.regex` provides v0.1 regular expression helpers. `Regex` stores the
 source pattern after compile-time validation by `regex.compile`. Compile
@@ -1475,7 +1535,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.21 `std.collections`
+### 6.22 `std.collections`
 
 `std.collections` provides v0.1 string-specialized collections. `StringMap`
 stores string keys and string values. `StringSet` stores unique strings. Update
@@ -1506,7 +1566,7 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.22 `std.testing`
+### 6.23 `std.testing`
 
 `std.testing` provides assertion helpers intended for `#[test]` functions. A
 failed assertion panics, which makes the current test fail under `nomo test`.
@@ -1520,7 +1580,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.23 `std.debug`
+### 6.24 `std.debug`
 
 `std.debug` provides lightweight debugging helpers. Print helpers write to
 stderr. `debug.panic` uses the same panic path as the language builtin.
@@ -1534,7 +1594,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.24 `std.log`
+### 6.25 `std.log`
 
 `std.log` provides lightweight leveled logging helpers. Log messages are
 written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
@@ -1549,7 +1609,7 @@ log.error(message: string) -> void
 log.enabled(level: string) -> bool
 ```
 
-### 6.25 `std.sqlite`
+### 6.26 `std.sqlite`
 
 `std.sqlite` provides durable native SQLite state without application-side C
 FFI, a host SQLite package, a database subprocess, or a separate service. The

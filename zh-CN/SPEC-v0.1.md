@@ -37,7 +37,7 @@ v0.1 不追求功能面最大化，而追求规格、实现、测试和 RFC 决�
 | 类型检查 | 基础类型、函数、结构体、枚举、泛型、`Result`、`Option` | 类型检查测试通过 |
 | 可变性检查 | `let mut`、调用处 `mut`、可变借用唯一性 | Mutability tests 覆盖 |
 | C99 后端 | HIR/C IR 到可读 C99 | 生成 C 可由 `clang` 或 `gcc` 编译 |
-| 最小标准库 | `std.io`、`std.fs`、`std.env`、`std.result`、`std.option`、`std.array`、`std.string`、`std.char`、`std.os`、`std.time`、`std.process`、`std.testing`、`std.debug`、`std.log`、`std.path`、`std.math`、`std.num`、`std.hash`、`std.crypto`、`std.json`、`std.net`、`std.http`、`std.sqlite`、`std.regex`、`std.collections` | 示例程序可用 |
+| 最小标准库 | `std.io`、`std.fs`、`std.env`、`std.result`、`std.option`、`std.array`、`std.string`、`std.char`、`std.os`、`std.time`、`std.process`、`std.testing`、`std.debug`、`std.log`、`std.path`、`std.math`、`std.num`、`std.hash`、`std.crypto`、`std.json`、`std.jsonrpc`、`std.net`、`std.http`、`std.sqlite`、`std.regex`、`std.collections` | 示例程序可用 |
 | JSON 诊断 | 稳定机器可读错误结构 | 快照测试覆盖 |
 | 浏览器运行时 | 受限 WebAssembly 执行与浏览器沙箱验证 | Wasm 构建与沙箱检查通过 |
 
@@ -751,6 +751,7 @@ std.num
 std.hash
 std.crypto
 std.json
+std.jsonrpc
 std.sqlite
 std.regex
 std.collections
@@ -1181,7 +1182,65 @@ code，在适用时报告从零开始的 UTF-8 byte offset，且不得回显 sou
 或 secret。在 Nomo string 具备 length-carrying representation 前，escaped
 U+0000 被拒绝。Native C99 与 browser WASM runtime 实现相同的可观察 contract。
 
-### 6.18 `std.net`
+### 6.18 `std.jsonrpc`
+
+`std.jsonrpc` 提供
+[RFC 0028](./rfcs/0028-bounded-json-rpc-and-newline-stdio-framing.md)
+接受的受限 JSON-RPC 2.0 envelope 与增量换行 framing API。
+`JsonRpcMessage` 和 `JsonRpcDecoder` 是 opaque value。Decoder 消费任意一个
+UTF-8 chunk，并返回 replacement decoder 与全部完整、已验证的 message，因此
+无需 native resource registry 即可处理 `std.process` stdout 的 fragmented 或
+coalesced event。
+
+```rust
+pub enum JsonRpcMessageKind {
+    Request
+    Notification
+    Success
+    Error
+}
+
+pub struct JsonRpcProtocolError {
+    pub code: string
+    pub message: string
+}
+
+pub struct JsonRpcMessage {
+    raw: string
+}
+
+pub struct JsonRpcDecoder {
+    pending: string
+    max_message_bytes: u64
+}
+
+pub struct JsonRpcDecodeBatch {
+    pub decoder: JsonRpcDecoder
+    pub messages: Array<JsonRpcMessage>
+}
+
+jsonrpc.decoder(max_message_bytes: u64) -> Result<JsonRpcDecoder, JsonRpcProtocolError>
+jsonrpc.feed(decoder_value: JsonRpcDecoder, chunk: string) -> Result<JsonRpcDecodeBatch, JsonRpcProtocolError>
+jsonrpc.finish(decoder_value: JsonRpcDecoder) -> Result<void, JsonRpcProtocolError>
+jsonrpc.parse(value: JsonValue, max_message_bytes: u64) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.encode(message: JsonRpcMessage, max_message_bytes: u64) -> Result<string, JsonRpcProtocolError>
+jsonrpc.value(message: JsonRpcMessage) -> JsonValue
+jsonrpc.kind(message: JsonRpcMessage) -> JsonRpcMessageKind
+jsonrpc.request(id: JsonValue, method: string, params: Option<JsonValue>) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.notification(method: string, params: Option<JsonValue>) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.success(id: JsonValue, result: JsonValue) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+jsonrpc.failure(id: JsonValue, code: i64, message: string, data: Option<JsonValue>) -> Result<JsonRpcMessage, JsonRpcProtocolError>
+```
+
+Codec 接受 request、notification、success response 与 error response
+envelope；拒绝 JSON-RPC batch array 以及非法或重复的 reserved field；接受 LF 与
+CRLF delimiter，并始终输出一个尾部 LF。单条 message 上限为 1,048,575 byte，
+单个输入 chunk 上限为 1 MiB，单次 feed 上限为 4,096 条 message，pending 加输入
+的上限为 2,097,151 byte。Error 使用稳定 category，且绝不回显被拒绝的 payload、
+method name、error data、token 或 stderr content。Native C99 与 browser WASM
+runtime 暴露相同的可观察行为。
+
+### 6.19 `std.net`
 
 `std.net` 在当前切片提供阻塞 TCP 与 UDP helper。`net.connect` 连接 host
 和 port。`net.listen` 绑定阻塞 `TcpListener`；`TcpListener.accept` 返回下一条
@@ -1232,7 +1291,7 @@ impl UdpSocket {
 }
 ```
 
-### 6.19 `std.http`
+### 6.20 `std.http`
 
 `std.http` 提供受限的阻塞式 HTTP/HTTPS client 与基础 plain-HTTP server
 helper。`http.send` 接受结构化 request，其中包含总 deadline、自定义应用 header
@@ -1346,7 +1405,7 @@ http.close_server(server: HttpServer) -> void
 http.close_exchange(exchange: HttpExchange) -> void
 ```
 
-### 6.20 `std.regex`
+### 6.21 `std.regex`
 
 `std.regex` 提供 v0.1 正则表达式 helper。`Regex` 保存经过
 `regex.compile` 校验后的源 pattern。编译失败通过
@@ -1368,7 +1427,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.21 `std.collections`
+### 6.22 `std.collections`
 
 `std.collections` 提供 v0.1 字符串专用集合。`StringMap` 存储 string key
 和 string value；`StringSet` 存储去重 string。更新 helper 返回更新后的集合
@@ -1398,7 +1457,7 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.22 `std.testing`
+### 6.23 `std.testing`
 
 `std.testing` 提供面向 `#[test]` 函数的 assertion helper。断言失败时会
 panic，因此当前测试会在 `nomo test` 下失败。`testing.assert_equal` 支持
@@ -1411,7 +1470,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.23 `std.debug`
+### 6.24 `std.debug`
 
 `std.debug` 提供轻量调试 helper。print helper 写入 stderr。`debug.panic`
 复用语言内建 `panic` 的执行路径。`debug.backtrace` 在 v0.1 返回稳定占位
@@ -1424,7 +1483,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.24 `std.log`
+### 6.25 `std.log`
 
 `std.log` 提供轻量分级日志 helper。日志消息以 `[level] message` 行写入
 stderr。`NOMO_LOG` 控制最低启用级别；可接受值为 `debug`、`info`、`warn`、
@@ -1438,7 +1497,7 @@ log.error(message: string) -> void
 log.enabled(level: string) -> bool
 ```
 
-### 6.25 `std.sqlite`
+### 6.26 `std.sqlite`
 
 `std.sqlite` 提供原生持久化 SQLite 状态，应用侧不需要声明 C FFI、安装
 host SQLite package、启动数据库子进程或依赖独立服务。工具链固定并校验官方
