@@ -8,10 +8,10 @@
 | --- | --- |
 | 编号 | 0023 |
 | 标题 | Pull-based HTTP 文本 streaming 与 SSE |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-24 |
-| 实现状态 | 尚未接受；`std.http` 当前会缓冲完整 response body |
+| 实现状态 | 由 [nomo PR #12](https://github.com/nomo-lang/nomo/pull/12) 实现；acceptance gate 于 2026-07-24 全部通过 |
 | 关联主题 | HTTP、HTTPS、streaming、SSE、取消、timeout、secret、C backend |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)、[RFC 0017](./0017-target-triples-and-cross-compilation.md)、[RFC 0022](./0022-structured-http-client-and-host-runtime.md) |
 
@@ -19,7 +19,7 @@
 
 ## 1. 摘要
 
-Nomo v0.1 应在已接受的结构化 HTTP client 上增加受限、pull-based 的 UTF-8
+Nomo v0.1 在已接受的结构化 HTTP client 上增加受限、pull-based 的 UTF-8
 response streaming 与 Server-Sent Events（SSE）。调用方打开一个 response，读取
 response head，然后显式拉取文本 chunk 或解析后的 SSE event。每个 stream 都具有
 header deadline、idle read timeout、累计 response 上限、显式 close/cancel 操作与
@@ -46,17 +46,20 @@ Nomo 尚无 task model、原子 managed value 或安全的跨线程 ownership co
 因此第一个 streaming API 必须同步且 pull-based，不能暗中引入 worker thread 或
 一次扩张大量语法/runtime。
 
-## 3. 当前证据与 Gap
+## 3. 实现证据与剩余 Gap
 
-| 表面 | 当前证据 | P1 缺口 |
+已接受的实现于 2026-07-24 通过
+[nomo PR #12](https://github.com/nomo-lang/nomo/pull/12) 合入。
+
+| 表面 | 已接受证据 | 剩余 Gap |
 | --- | --- | --- |
-| 公共 API | `http.send(HttpRequest)` 返回一次性缓冲的 `HttpResponse` | 没有 response handle、增量 read、SSE event 或提前停止 |
-| Timeout | `HttpRequest.timeout_millis` 是非流式请求的总 deadline | 长生命周期 stream 还需要 per-read idle timeout |
-| 上限 | `max_response_bytes` 限制缓冲 body | Streaming 需要累计 cap、per-chunk cap 与 per-event cap |
-| Native runtime | Unix-like target 使用 libcurl easy，Windows 使用 WinHTTP | 控制返回 Nomo 前 runtime state 已被销毁 |
-| 取消 | 不存在 stream handle | 应用不能主动停止进行中的 response |
-| Browser WASM | 网络访问以 `NOMO-WASM-003` 拒绝 | 新 streaming entry point 必须维持相同 sandbox boundary |
-| 测试 | RFC 0022 覆盖本地 TLS 与非流式 failure path | 没有 delayed chunk、event framing、idle timeout、early close 或 streamed secret 测试 |
+| 公共 API | `std.http` 暴露 opaque `HttpStream`、受限文本 pull、解析后的 SSE event 与显式 cancel/close，并保持 RFC 0022 API 兼容 | Binary chunk 与 streaming request body 继续推迟 |
+| Timeout | `HttpRequest.timeout_millis` 限制 response-head 获取，`idle_timeout_millis` 限制后续每次 pull | Cross-task interrupt 等待 task model |
+| 上限 | Native registry 强制执行累计 response、per-chunk、per-event 与 response-header cap | 可配置 connection-pool 与 compression policy 继续推迟 |
+| Native runtime | Unix-like target 使用 pause/resume 的 libcurl multi handle；Windows 保留 WinHTTP request 并归一化迟到 read | Browser 网络需要独立 host-capability 设计 |
+| 取消 | Close/cancel 与 stale copy handle 均幂等；early cancel 会关闭连接 | Blocking pull 之间仍采用 cooperative cancellation |
+| Browser WASM | 所有 streaming 网络 entry point 都会在参数求值前返回 `NOMO-WASM-003` | v0.1 不授予 `fetch`/`ReadableStream` |
+| 测试与示例 | 拆分 UTF-8/SSE fixture 覆盖 framing、limit、timeout、cancel、secret redaction、Windows execution 与 OpenAI-compatible `[DONE]` loop | 结构化 JSON 构造是下一个独立 P1 切片 |
 
 ## 4. 详细设计
 
@@ -112,9 +115,10 @@ response header 可用后返回。HTTP 4xx 与 5xx 继续属于成功 transport 
 response progress 时允许等待的最长时间。两者必须大于零且不超过 15 分钟。
 
 `request.max_response_bytes` 是所有 read 的累计 decoded body 上限，并保留 RFC
-0022 的 128 MiB hard ceiling。`max_chunk_bytes` 必须大于零且不超过 1 MiB。
-`read_text` 会等待 decoded text、stream 结束、error 或 idle timeout。Stream 结束
-报告为 `{ data: "", done: true }`；非最终结果的 `data` 必须非空。
+0022 的 128 MiB hard ceiling。`max_chunk_bytes` 必须至少为 4 bytes 且不超过
+1 MiB，确保一个 UTF-8 scalar 总能完整容纳。`read_text` 会等待 decoded text、
+stream 结束、error 或 idle timeout。Stream 结束报告为
+`{ data: "", done: true }`；非最终结果的 `data` 必须非空。
 
 返回 chunk 是合法 UTF-8 文本，且不会切断 UTF-8 scalar。嵌入 NUL 或非法 UTF-8
 返回 `protocol`。Binary body streaming 需要未来的 byte-buffer type，不属于本
@@ -194,7 +198,7 @@ Browser WASM interpreter 对全部新网络 entry point 都应在求值 request/
 
 | 方案 | 优点 | 缺点 | 倾向 |
 | --- | --- | --- | --- |
-| 同步 pull handle | 自然 backpressure、受限阻塞、适配 C99 与当前 ownership | 阻塞期间无法跨线程 interrupt | v0.1 提案 |
+| 同步 pull handle | 自然 backpressure、受限阻塞、适配 C99 与当前 ownership | 阻塞期间无法跨线程 interrupt | v0.1 已接受 |
 | 每个 chunk/event 回调 | Streaming shape 常见 | 需要尚不存在的 callback lifetime、reentrancy 与 captured-value ownership rule | v0.1 拒绝 |
 | 后台 worker + queue | 可并发接收和 interrupt | 需要 thread、atomic、同步与 thread-safe managed value | 推迟到 task-model RFC |
 | 先增加 `async`/`await` | 通用语言方案 | 在 Agent loop 被证明前扩张 parser、type system、lowering、runtime 与取消语义 | P1 范围拒绝 |
@@ -221,10 +225,10 @@ model；其公共 API 固化前需要各自 RFC。
 
 ## 8. Acceptance Gate
 
-以下 gate 全部通过前，本 RFC 保持 `Proposed`：
+以下 acceptance gate 已于 2026-07-24 全部通过：
 
 1. Canonical `std.http` source、compiler lowering、生成 C ABI、文档与中英文 v0.1
-   规格暴露完全一致的 streaming API 与语义。
+   规格在本次 accepted change set 中暴露完全一致的 streaming API 与语义。
 2. 现有 RFC 0022 缓冲式 HTTP/HTTPS 行为保持源码兼容，既有测试全部通过。
 3. 使用生成证书的 localhost TLS fixture 在刻意拆分的 write 中发送 header 与 SSE
    field，证明无需公网或真实 API key 即可增量交付。
@@ -238,9 +242,15 @@ model；其公共 API 固化前需要各自 RFC。
 7. Nomo OpenAI-compatible streaming 示例增量消费 fixture event，并在 `[DONE]`
    停止。
 8. Formatting、Clippy、unit/CLI integration test、browser-WASM capability
-   behavior、macOS/Linux cross-build 与 Windows native compile/run test 全部通过。
-9. 实现必须通过签名提交、子分支、PR review 与 required CI 合入；之后 RFC 才能转
-   `Accepted`。
+   behavior、macOS arm64-to-x86_64 cross-build 与 Linux
+   x86_64-to-arm64 cross-build 已在
+   [完整 CI run 30098333656](https://github.com/nomo-lang/nomo/actions/runs/30098333656)
+   中通过；Windows 原有缓冲式与 streaming native compile/run path 已在
+   [PR smoke run 30098027086](https://github.com/nomo-lang/nomo/actions/runs/30098027086)
+   中通过。
+9. 实现通过签名提交与子分支合入 PR #12；合并后的
+   [main CI run 30098552254](https://github.com/nomo-lang/nomo/actions/runs/30098552254)
+   也已通过。
 
 ## 9. 推迟的后续工作
 
@@ -255,7 +265,12 @@ model；其公共 API 固化前需要各自 RFC。
 - `std/src/http.nomo`
 - `crates/nomo_compiler/src/builtins/builtins_http.rs`
 - `crates/nomo_codegen_c/src/runtime/host_http_client.c`
-- `crates/nomo_wasm/src/interpreter.rs`
+- `crates/nomo_codegen_c/src/runtime/host_http_stream.c`
+- `crates/nomo/tests/cli_project.rs`
+- `crates/nomo/tests/examples.rs`
+- `crates/nomo_wasm/src/lib.rs`
+- `examples/openai_streaming`
+- [nomo PR #12](https://github.com/nomo-lang/nomo/pull/12)
 - [RFC 0003](./0003-arc-cow-runtime-cost.md)
 - [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)
 - [RFC 0017](./0017-target-triples-and-cross-compilation.md)

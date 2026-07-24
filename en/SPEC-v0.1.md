@@ -1241,18 +1241,36 @@ text. On Unix-like targets, `NOMO_HTTP_CA_BUNDLE` can add a PEM trust root for
 controlled local testing without disabling host-name verification; Windows
 uses its current-user and machine certificate stores.
 
+`http.open_stream` sends the same structured `GET` or `POST` request and
+returns an opaque `HttpStream` after the response head is available.
+`HttpRequest.timeout_millis` bounds connect, TLS, request send, and
+response-head receipt; `idle_timeout_millis` bounds each later consuming pull
+that makes no progress. `max_response_bytes` remains a cumulative body limit.
+`http.read_text` returns bounded UTF-8 chunks and requires
+`max_chunk_bytes` from 4 bytes through 1 MiB so it never splits a Unicode
+scalar. `http.next_sse` accepts a positive `max_event_bytes` through 1 MiB and
+parses CR/LF variants, BOM, comments, multi-line `data`, `event`, `id`,
+`retry`, and EOF dispatch. `[DONE]` remains application data.
+
+The first `read_text` or `next_sse` call selects one consumption mode. Mixing
+modes or reading a closed/canceled handle returns `invalid_request`.
+`close_stream` and cooperative `cancel_stream` are idempotent, including for
+copied stale handles; callers should register
+`defer http.close_stream(stream)` immediately after open. Secret-safe errors
+also exclude received chunks and SSE data.
+
 The client adapter is owned by the toolchain runtime: native Unix-like targets
 use a compatible libcurl runtime and Windows uses WinHTTP, while Nomo
 applications declare no C FFI or linker metadata. The browser WASM sandbox
 does not grant network access in v0.1 and reports `NOMO-WASM-003` before
-evaluating or logging request secrets.
+evaluating or logging request/stream arguments and secrets.
 
 `http.listen` creates a blocking server socket, `http.accept` accepts one
 request exchange, and `http.respond_string` writes a string response. Programs
 should close handles with `defer http.close_exchange(exchange)` and
 `defer http.close_server(server)` so cleanup runs on both normal returns and `?`
-early returns. Streaming bodies and SSE, cancellation, redirects, routing, and
-concurrent server helpers remain later `std.http` slices.
+early returns. Streaming request bodies, binary response chunks, redirects,
+routing, and concurrent server helpers remain later `std.http` slices.
 
 ```rust
 pub struct HttpHeader {
@@ -1280,6 +1298,24 @@ pub struct HttpResponse {
     pub body: string
 }
 
+pub struct HttpStream {
+    handle: u64
+    pub status: i64
+    pub headers: Array<HttpHeader>
+}
+
+pub struct HttpStreamChunk {
+    pub data: string
+    pub done: bool
+}
+
+pub struct SseEvent {
+    pub event: string
+    pub data: string
+    pub id: string
+    pub retry_millis: Option<u64>
+}
+
 pub struct HttpServer {
 }
 
@@ -1292,6 +1328,11 @@ pub struct HttpExchange {
 http.send(request: HttpRequest) -> Result<HttpResponse, HttpError>
 http.get(url: string) -> Result<HttpResponse, HttpError>
 http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
+http.open_stream(request: HttpRequest, idle_timeout_millis: u64) -> Result<HttpStream, HttpError>
+http.read_text(stream: HttpStream, max_chunk_bytes: u64) -> Result<HttpStreamChunk, HttpError>
+http.next_sse(stream: HttpStream, max_event_bytes: u64) -> Result<Option<SseEvent>, HttpError>
+http.cancel_stream(stream: HttpStream) -> void
+http.close_stream(stream: HttpStream) -> void
 http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
 http.accept(server: HttpServer) -> Result<HttpExchange, HttpError>
 http.respond_string(exchange: HttpExchange, status: i64, body: string) -> Result<void, HttpError>
@@ -1565,3 +1606,6 @@ The decisions in these RFCs are reflected by this implementation baseline:
 - [RFC 0017](./rfcs/0017-target-triples-and-cross-compilation.md): canonical targets, conditional dependency/FFI graphs, complete lockfiles, and verified cross-builds.
 - [RFC 0018](./rfcs/0018-package-signing-provenance-and-transparency.md): publisher authorization, provenance, transparency proofs, dual-signed log-key rotation, signed-head gossip, rollback/equivocation detection, and online/offline proof freshness.
 - [RFC 0019](./rfcs/0019-typed-ffi-handles-callbacks-and-bindings.md): typed FFI handles, callbacks, target-aware layouts, and deterministic bindings.
+- [RFC 0020](./rfcs/0020-manifest-v2-workspace-and-project-configuration.md): manifest schema v2, workspace membership, package identity, project configuration, and migration.
+- [RFC 0022](./rfcs/0022-structured-http-client-and-host-runtime.md): bounded structured HTTP/HTTPS requests through a toolchain-owned native runtime.
+- [RFC 0023](./rfcs/0023-pull-based-http-streaming-and-sse.md): bounded pull-based UTF-8 response streaming, SSE decoding, idle timeouts, and cooperative cancellation.
