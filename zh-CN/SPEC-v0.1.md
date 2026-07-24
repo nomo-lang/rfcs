@@ -37,7 +37,7 @@ v0.1 不追求功能面最大化，而追求规格、实现、测试和 RFC 决�
 | 类型检查 | 基础类型、函数、结构体、枚举、泛型、`Result`、`Option` | 类型检查测试通过 |
 | 可变性检查 | `let mut`、调用处 `mut`、可变借用唯一性 | Mutability tests 覆盖 |
 | C99 后端 | HIR/C IR 到可读 C99 | 生成 C 可由 `clang` 或 `gcc` 编译 |
-| 最小标准库 | `std.io`、`std.fs`、`std.env`、`std.result`、`std.option`、`std.array`、`std.string`、`std.char`、`std.os`、`std.time`、`std.process`、`std.testing`、`std.debug`、`std.log`、`std.path`、`std.math`、`std.num`、`std.hash`、`std.crypto`、`std.json`、`std.net`、`std.http`、`std.regex`、`std.collections` | 示例程序可用 |
+| 最小标准库 | `std.io`、`std.fs`、`std.env`、`std.result`、`std.option`、`std.array`、`std.string`、`std.char`、`std.os`、`std.time`、`std.process`、`std.testing`、`std.debug`、`std.log`、`std.path`、`std.math`、`std.num`、`std.hash`、`std.crypto`、`std.json`、`std.net`、`std.http`、`std.sqlite`、`std.regex`、`std.collections` | 示例程序可用 |
 | JSON 诊断 | 稳定机器可读错误结构 | 快照测试覆盖 |
 | 浏览器运行时 | 受限 WebAssembly 执行与浏览器沙箱验证 | Wasm 构建与沙箱检查通过 |
 
@@ -751,6 +751,7 @@ std.num
 std.hash
 std.crypto
 std.json
+std.sqlite
 std.regex
 std.collections
 ```
@@ -1436,6 +1437,99 @@ log.warn(message: string) -> void
 log.error(message: string) -> void
 log.enabled(level: string) -> bool
 ```
+
+### 6.25 `std.sqlite`
+
+`std.sqlite` 提供原生持久化 SQLite 状态，应用侧不需要声明 C FFI、安装
+host SQLite package、启动数据库子进程或依赖独立服务。工具链固定并校验官方
+SQLite 3.53.3 amalgamation；只有 typed IR 使用本 module 时，才将其作为独立
+translation unit 编译。build、run、test、emit C 与 target cross-build 路径使用
+相同源码和编译选项。
+
+```rust
+pub struct SqliteDatabase {
+    handle: u64
+}
+
+pub struct SqliteQuery {
+    handle: u64
+}
+
+pub struct SqliteError {
+    pub code: string
+    pub message: string
+    pub native_code: i64
+}
+
+pub enum SqliteOpenMode {
+    ReadOnly
+    ReadWrite
+    ReadWriteCreate
+}
+
+pub enum SqliteValue {
+    Null
+    Integer(i64)
+    Real(f64)
+    Text(string)
+    Blob(Array<u32>)
+}
+
+pub struct SqliteColumn {
+    pub name: string
+    pub value: SqliteValue
+}
+
+pub struct SqliteRow {
+    pub columns: Array<SqliteColumn>
+}
+
+pub struct SqliteExecuteResult {
+    pub changes: u64
+    pub last_insert_rowid: i64
+}
+
+sqlite.open(path: string, mode: SqliteOpenMode, busy_timeout_millis: u64)
+    -> Result<SqliteDatabase, SqliteError>
+sqlite.open_memory(busy_timeout_millis: u64)
+    -> Result<SqliteDatabase, SqliteError>
+sqlite.execute(database: SqliteDatabase, sql: string, params: Array<SqliteValue>)
+    -> Result<SqliteExecuteResult, SqliteError>
+sqlite.query(database: SqliteDatabase, sql: string, params: Array<SqliteValue>)
+    -> Result<SqliteQuery, SqliteError>
+sqlite.next(query_value: SqliteQuery, max_row_bytes: u64)
+    -> Result<Option<SqliteRow>, SqliteError>
+sqlite.reset(query_value: SqliteQuery, params: Array<SqliteValue>)
+    -> Result<void, SqliteError>
+sqlite.close_query(query_value: SqliteQuery) -> Result<void, SqliteError>
+sqlite.close(database: SqliteDatabase) -> Result<void, SqliteError>
+```
+
+database 与 query handle 是 opaque runtime capability；用户代码不能构造，也不能
+读写其 field。`execute` 和 `query` 只接受一条 SQL，且 parameter 数量必须与
+positional binding 完全一致。text 与 BLOB binding 会被复制；BLOB element 必须
+位于 `0..=255`。`execute` 拒绝产生 row 的 statement；`query` 配合 `next`
+每次最多复制一个通过完整 bound 检查的 row。column 顺序与重复名称会保留。
+完成后重复 pull 返回 `None`；`reset` 清除并替换全部 binding。transaction 由应用
+通过显式 SQL 控制。
+
+v0.1 上限为：32 个 live database、256 个 live query、4096 path byte、1 MiB
+SQL、1024 个 parameter、每个 text/BLOB parameter 或 result 8 MiB、parameter
+总编码大小 16 MiB、256 个 column、`max_row_bytes` 位于 `1..=16 MiB`，以及
+`busy_timeout_millis` 位于 `0..=300_000`。database 尚有 live query 时，
+`close` 返回 `busy_handle`。已关闭或复制的 stale handle 返回 `closed`；
+进程退出清理只报告 handle 数量。
+
+`SqliteError.code` 为 `invalid_request`、`limit`、`open`、`prepare`、`bind`、
+`step`、`busy`、`constraint`、`read_only`、`corrupt`、`full`、`encoding`、
+`unexpected_row`、`busy_handle`、`closed`、`runtime_unavailable` 或
+`internal`。error message 与 lifecycle warning 不复制 path、SQL、schema
+identifier、bound value、BLOB 或 row。
+
+SQLite handle 是 thread-confined capability；compiler 以 `E0821` 拒绝在
+`std.task` worker 中使用 `std.sqlite`。browser WASM 仍会 type-check 同一 API，
+但 `open`/`open_memory` 返回 `runtime_unavailable`；不会增加 filesystem、
+OPFS、IndexedDB、SQLite WASM 或 host import。
 
 ---
 
