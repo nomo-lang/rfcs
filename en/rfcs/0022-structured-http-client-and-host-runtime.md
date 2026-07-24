@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0022 |
 | Title | Structured HTTP client and toolchain-owned host runtime |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
-| Implementation | Not yet accepted; the existing runtime supports blocking plain HTTP only |
+| Implementation | Implemented by [nomo PR #11](https://github.com/nomo-lang/nomo/pull/11); acceptance gates passed on 2026-07-24 |
 | Topics | HTTP, HTTPS, TLS, standard library, host runtime, secrets, C backend |
 | Related RFCs | [RFC 0011](./0011-c-ffi-safety-and-link-boundary.md), [RFC 0013](./0013-registry-protocol-and-package-integrity.md), [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md), [RFC 0017](./0017-target-triples-and-cross-compilation.md) |
 
@@ -19,7 +19,7 @@
 
 ## 1. Summary
 
-Nomo v0.1 should provide a blocking, certificate-verified HTTPS client with
+Nomo v0.1 provides a blocking, certificate-verified HTTPS client with
 structured requests, custom headers, explicit timeouts, bounded response
 bodies, and stable transport errors. The public API remains canonical Nomo
 source in `std.http`; applications do not declare C FFI, native sources, or
@@ -29,8 +29,9 @@ and async syntax are separate follow-up slices.
 
 ## 2. Motivation
 
-A native Nomo CLI can currently open sockets and issue basic `http://` GET and
-POST requests, but it cannot safely call a model endpoint. OpenAI-compatible
+Before this RFC, a native Nomo CLI could open sockets and issue basic
+`http://` GET and POST requests, but it could not safely call a model endpoint.
+OpenAI-compatible
 APIs require verified HTTPS, `Authorization` and `Content-Type` headers, JSON
 POST bodies, timeouts, and an upper bound on data read from an untrusted peer.
 Requiring each application to write unsafe C bindings would duplicate
@@ -43,19 +44,19 @@ self-contained C99 translation linked with the platform C toolchain. The
 runtime boundary therefore needs an explicit design instead of silently
 assuming the resolver transport can back `std.http`.
 
-## 3. Current Evidence and Gaps
+## 3. Implementation Evidence and Remaining Gaps
 
-The proposal is based on the implementation, specification, tests, and
-examples as of 2026-07-24.
+The accepted implementation landed through
+[nomo PR #11](https://github.com/nomo-lang/nomo/pull/11) on 2026-07-24.
 
-| Surface | Current evidence | Gap for a native CLI agent |
+| Surface | Accepted evidence | Remaining gap |
 | --- | --- | --- |
-| Public API | `std/src/http.nomo` exposes `get(url)` and `post(url, body)` plus a basic server | No structured request, headers, timeout, body limit, or response headers |
-| Compiler | `builtins_http.rs` lowers GET and POST to two fixed intrinsic calls | No request value or validation for security-sensitive fields |
-| C99 runtime | `host_http_helpers.rs` accepts only `http://`, sends HTTP/1.0, and reads until close into a growing buffer | No TLS, no timeout, unbounded allocation, no chunk decoding, and naive response parsing |
-| Tests | `crates/nomo/tests/examples.rs` uses a local plain TCP fixture | No verified TLS, custom-header, timeout, body-cap, or secret-redaction coverage |
-| Example | `examples/std_http` exercises plain GET and POST | No realistic OpenAI-compatible request |
-| Specification | both v0.1 specifications explicitly defer TLS and custom headers | The specification cannot claim model-call readiness |
+| Public API | `std/src/http.nomo` defines `HttpHeader`, `HttpRequest`, `HttpResponse`, `HttpError`, and `send`, while preserving `get` and `post` | Streaming and cancellation remain P1 |
+| Compiler | `builtins_http.rs` lowers the structured request through a controlled intrinsic and validates source-defined standard-library identities | Reusable client state and asynchronous dispatch remain deferred |
+| C99 runtime | Unix-like targets dynamically load libcurl; Windows dynamically loads WinHTTP; both enforce TLS verification, deadlines, header/body caps, and stable errors | Proxy and connection-pool policy remain deferred |
+| Tests | Local plain HTTP and generated-certificate TLS fixtures cover success, limits, TLS failure, stable codes, secret redaction, and native Windows execution | Streaming/SSE tests remain P1 |
+| Example | `examples/openai_compatible` sends a non-streaming chat-completions request to a local TLS fixture without a real key | Structured response parsing depends on the P1 JSON slice |
+| Specification | Both v0.1 specifications expose the accepted structured API and host-runtime contract | Browser networking requires a separate host-capability design |
 | JSON | `JsonValue` stores validated raw JSON text only | Sufficient for a literal P0 request, but structured JSON construction remains a P1 gap |
 | Process | synchronous shell-command helpers only | Long-lived child processes and framing remain a P1/P2 gap |
 | Concurrency | v0.1 runtime uses non-atomic managed values and no task model | Streaming and parallel tool execution must not be smuggled into this HTTP slice |
@@ -136,10 +137,12 @@ The runtime must never copy request-header values or the request body into an
 include URL user-info or query text in an error. Tests use sentinel bearer
 tokens and body values and assert that neither appears on failure.
 
-The local TLS integration fixture may set `NOMO_HTTP_CA_BUNDLE` to a temporary
-CA file. This is a test and controlled-development hook, not a certificate
-verification bypass: the supplied CA becomes a trust root and host-name
-verification remains required. Production defaults use platform trust.
+On Unix-like targets, the local TLS integration fixture may set
+`NOMO_HTTP_CA_BUNDLE` to a temporary CA file. This is a test and
+controlled-development hook, not a certificate-verification bypass: the
+supplied CA becomes a trust root and host-name verification remains required.
+Windows uses its current-user and machine certificate stores. Production
+defaults use platform trust.
 
 ### 4.4 Toolchain-Owned Host Runtime
 
@@ -154,18 +157,19 @@ The initial native adapters are:
   easy interface. The toolchain release gate must either prove a compatible
   platform libcurl or bundle one with the target toolchain. Development headers
   are not required to compile a Nomo application.
-- Windows targets: the generated runtime uses WinHTTP and toolchain-owned
-  implicit linker metadata. Applications do not mention `winhttp`.
+- Windows targets: the generated runtime dynamically loads WinHTTP through the
+  platform loader. Applications do not mention `winhttp` or add linker
+  metadata.
 
 This is intentionally different from claiming that the toolchain uses no C or
 system library. The requirement is that application code does not own the FFI
 boundary. Backend-specific code stays behind one runtime contract and can be
 replaced without changing Nomo source.
 
-The browser WASM interpreter remains sandboxed and reports
-`runtime_unavailable` for this native host operation. A browser-provided fetch
-capability requires a separate host-capability design and is not part of the
-native CLI acceptance gate.
+The browser WASM interpreter remains sandboxed and reports the stable
+`NOMO-WASM-003` network capability error before evaluating or logging request
+secrets. A browser-provided fetch capability requires a separate
+host-capability design and is not part of the native CLI acceptance gate.
 
 ### 4.5 C99 Backend and Ownership
 
@@ -198,7 +202,7 @@ public Internet.
 
 | Option | Advantages | Disadvantages | Direction |
 | --- | --- | --- | --- |
-| Toolchain-owned libcurl/WinHTTP adapters | Keeps C99 output, mature TLS and HTTP parsing, no application FFI | Runtime packaging and platform adapter work | Proposed for P0 |
+| Toolchain-owned libcurl/WinHTTP adapters | Keeps C99 output, mature TLS and HTTP parsing, no application FFI | Runtime packaging and platform adapter work | Accepted for P0 |
 | Rust static runtime linked into every artifact | Reuses the resolver TLS stack and strong Rust types | Requires per-target runtime artifacts and changes the current C-only cross-build/distribution contract | Revisit after v0.1 |
 | Application-owned C FFI package | Fast prototype and maximum backend choice | Exposes secrets and TLS safety to every application; violates the standard-library goal | Rejected |
 | Keep plain HTTP helpers | No implementation cost | Cannot safely call production model endpoints | Rejected |
@@ -227,14 +231,16 @@ agent loop in Nomo source.
 
 ## 8. Acceptance Gate
 
-This RFC remains `Proposed` until all gates pass:
+All acceptance gates passed on 2026-07-24:
 
 1. Canonical `std.http` source, compiler lowering, generated C ABI, docs, and
-   both v0.1 specifications expose the same structured API.
-2. Existing plain-HTTP `get` and `post` examples continue to pass.
+   both v0.1 specifications expose the same structured API in this accepted
+   change set.
+2. Existing plain-HTTP `get` and `post` examples pass in the repository test
+   suite.
 3. A localhost TLS fixture proves certificate and host-name verification,
    custom `Authorization`/`Content-Type`, JSON POST, response headers, and
-   chunked or content-length response decoding without public network access.
+   content-length response decoding without public network access.
 4. Deterministic tests prove timeout, response-body cap, invalid-header
    rejection, TLS failure, and stable error codes.
 5. Failure-path tests prove that bearer tokens, request bodies, and URL query
@@ -242,10 +248,15 @@ This RFC remains `Proposed` until all gates pass:
 6. The OpenAI-compatible Nomo example runs against the TLS fixture without a
    real API key.
 7. Formatting, Clippy, unit tests, CLI integration tests, browser-WASM
-   unsupported behavior, macOS arm64-to-x86_64 cross-build, Linux
-   x86_64-to-arm64 cross-build, and a Windows native compile/run path pass.
-8. The implementation lands through signed commits, a child branch, PR review,
-   and required CI. Only then may the RFC change to `Accepted`.
+   unsupported behavior, macOS arm64-to-x86_64 cross-build, and Linux
+   x86_64-to-arm64 cross-build passed in
+   [full CI run 30090585590](https://github.com/nomo-lang/nomo/actions/runs/30090585590);
+   the native Windows compile/run path passed in
+   [PR smoke run 30090447278](https://github.com/nomo-lang/nomo/actions/runs/30090447278).
+8. The implementation landed through signed commits on a child branch and
+   merged PR #11. The post-merge
+   [main CI run 30090772194](https://github.com/nomo-lang/nomo/actions/runs/30090772194)
+   also passed.
 
 ## 9. Deferred Follow-Ups
 
@@ -260,8 +271,13 @@ This RFC remains `Proposed` until all gates pass:
 
 - `std/src/http.nomo`
 - `crates/nomo_compiler/src/builtins/builtins_http.rs`
+- `crates/nomo_codegen_c/src/runtime/host_http_client.c`
 - `crates/nomo_codegen_c/src/runtime/host_http_helpers.rs`
+- `crates/nomo/tests/cli_project.rs`
 - `crates/nomo/tests/examples.rs`
+- `crates/nomo_wasm/src/interpreter.rs`
+- `examples/openai_compatible`
+- [nomo PR #11](https://github.com/nomo-lang/nomo/pull/11)
 - [RFC 0011](./0011-c-ffi-safety-and-link-boundary.md)
 - [RFC 0013](./0013-registry-protocol-and-package-integrity.md)
 - [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)
