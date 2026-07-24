@@ -1122,23 +1122,63 @@ crypto.random_bytes(count: u64) -> Array<u32>
 
 ### 6.17 `std.json`
 
-`std.json` 提供 v0.1 JSON 校验与序列化边界。`JsonValue` 保存已经通过
-语法校验的原始 JSON 文本。`json.parse` 校验 JSON 语法并返回
-`Result<JsonValue, JsonError>`；`json.stringify` 返回保存的 JSON 文本。
-结构化字段/索引访问留给后续切片。
+`std.json` 提供 [RFC 0025](./rfcs/0025-structured-json-values-and-construction.md)
+接受的有界结构化 JSON API。`JsonValue` 是 opaque type，代表已验证 JSON text。
+解析后 `stringify` 保留原始 byte；accessor 在不做类型 coercion 的情况下检查全部
+六种 JSON kind；object traversal 保留 source order 与 duplicate，`get` 对解码后的
+name 比较并采用确定性的 last-member-wins。Constructor 生成 compact JSON 并正确
+escape string，应用不需要拼接 JSON string 或编写 C FFI。
 
 ```rust
+pub enum JsonKind {
+    Null
+    Boolean
+    Number
+    String
+    Array
+    Object
+}
+
 pub struct JsonValue {
-    pub raw: string
+    raw: string
+}
+
+pub struct JsonMember {
+    pub key: string
+    pub value: JsonValue
 }
 
 pub struct JsonError {
+    pub code: string
     pub message: string
+    pub offset: u64
 }
 
 json.parse(value: string) -> Result<JsonValue, JsonError>
 json.stringify(value: JsonValue) -> string
+json.kind(value: JsonValue) -> JsonKind
+json.is_null(value: JsonValue) -> bool
+json.as_bool(value: JsonValue) -> Option<bool>
+json.number_text(value: JsonValue) -> Option<string>
+json.as_string(value: JsonValue) -> Option<string>
+json.array_items(value: JsonValue) -> Option<Array<JsonValue>>
+json.object_members(value: JsonValue) -> Option<Array<JsonMember>>
+json.get(value: JsonValue, key: string) -> Option<JsonValue>
+json.from_null() -> JsonValue
+json.from_bool(value: bool) -> JsonValue
+json.from_number_text(value: string) -> Result<JsonValue, JsonError>
+json.from_i64(value: i64) -> JsonValue
+json.from_u64(value: u64) -> JsonValue
+json.from_string(value: string) -> Result<JsonValue, JsonError>
+json.from_array(values: Array<JsonValue>) -> Result<JsonValue, JsonError>
+json.from_object(members: Array<JsonMember>) -> Result<JsonValue, JsonError>
 ```
+
+每个 value 最多包含 8 MiB UTF-8 JSON text、128 层 nesting 与 262,144 个 value。
+Error 使用稳定的 `syntax`、`limit`、`unsupported_string` 或 `invalid_number`
+code，在适用时报告从零开始的 UTF-8 byte offset，且不得回显 source fragment
+或 secret。在 Nomo string 具备 length-carrying representation 前，escaped
+U+0000 被拒绝。Native C99 与 browser WASM runtime 实现相同的可观察 contract。
 
 ### 6.18 `std.net`
 
@@ -1564,3 +1604,5 @@ nomo run examples/hello
 - [RFC 0020](./rfcs/0020-manifest-v2-workspace-and-project-configuration.md)：manifest schema v2、workspace membership、package identity、项目配置与 migration。
 - [RFC 0022](./rfcs/0022-structured-http-client-and-host-runtime.md)：通过工具链托管 native runtime 提供受限结构化 HTTP/HTTPS request。
 - [RFC 0023](./rfcs/0023-pull-based-http-streaming-and-sse.md)：受限 pull-based UTF-8 response streaming、SSE decoding、idle timeout 与 cooperative cancellation。
+- [RFC 0024](./rfcs/0024-controlled-child-processes-and-stdio.md)：shell-free 受控子进程、受限标准 I/O、多路复用 event、timeout 与 termination。
+- [RFC 0025](./rfcs/0025-structured-json-values-and-construction.md)：受限 opaque 结构化 JSON value、遍历、构造与 native/browser parity。

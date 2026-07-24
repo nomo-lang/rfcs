@@ -8,7 +8,7 @@
 | --- | --- |
 | 编号 | 0025 |
 | 标题 | 结构化 JSON Value、访问与构造 |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-24 |
 | 关联主题 | JSON、标准库、Agent、Unicode、limit、C backend、browser WASM |
@@ -311,7 +311,7 @@ in-place JSON tree 或 JSON-RPC protocol semantic。
 
 ## 8. Acceptance Gate
 
-在全部 gate 通过前，本 RFC 保持 `Proposed`：
+本 RFC 在以下全部 gate 通过后被接受：
 
 1. Canonical `std.json` source、standard-module registry、compiler lowering、
    typed IR、生成 C ABI、browser WASM、文档与两份 v0.1 specification 暴露一致
@@ -342,7 +342,29 @@ in-place JSON tree 或 JSON-RPC protocol semantic。
 13. 实现从签名 child branch 经 reviewed PR 合入；status 改为 `Accepted` 前，把
     acceptance evidence 与 link 记录到本 RFC。
 
-## 9. 推迟的后续工作
+## 9. 验收证据
+
+- 实现通过已签名提交
+  [`7f3d2c9`](https://github.com/nomo-lang/nomo/commit/7f3d2c905d5a66ea18660a28e9888a68066b83cf)
+  和 [`c47af0e`](https://github.com/nomo-lang/nomo/commit/c47af0e6018e97187a08e09ac5e5ec7dda2d2b3d)
+  在经 review 的 [nomo PR #14](https://github.com/nomo-lang/nomo/pull/14)
+  合入，merge commit 为
+  [`fde7016`](https://github.com/nomo-lang/nomo/commit/fde701629fbb6d0d4eebf879c96083fd7cebff94)。
+- 最终 [PR smoke run](https://github.com/nomo-lang/nomo/actions/runs/30112910817)
+  通过 Linux smoke 与 AddressSanitizer/LeakSanitizer、Windows native host
+  runtime check 及 macOS structured JSON runtime。
+- 合并后的 [`main` CI run](https://github.com/nomo-lang/nomo/actions/runs/30113047313)
+  通过 formatting、Clippy、完整 workspace test suite、release 与 browser WASM
+  build、sandbox verification、compiler latency gate、example、workspace check，
+  以及真实 Linux x86_64→arm64 和 macOS arm64→x86_64 cross-build。
+- Native 与 browser runtime 运行共享的
+  `tests/fixtures/structured_json_conformance.nomo` corpus；boundary、
+  invalid-UTF-8、lifecycle、secret-safety 与 OpenAI-compatible example test
+  覆盖 gate 2 到 11。
+- 本次接受更新把两份 v0.1 specification 与 RFC index 同步到已交付 API 和
+  已记录的 CI 证据。
+
+## 10. 推迟的后续工作
 
 - Deterministic `from_f64` conversion。
 - Incremental/streaming parser 与 byte-buffer input type。
@@ -352,7 +374,7 @@ in-place JSON tree 或 JSON-RPC protocol semantic。
 - JSON Pointer、JSON Patch、JSONPath 与 mutable update operation。
 - 建立在本 value API 上的 JSON-RPC 与 MCP message framing。
 
-## 10. 参考
+## 11. 参考
 
 - [RFC 8259：JavaScript Object Notation (JSON) Data Interchange Format](https://www.rfc-editor.org/rfc/rfc8259)
 - `std/src/json.nomo`

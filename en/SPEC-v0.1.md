@@ -1216,23 +1216,67 @@ crypto.random_bytes(count: u64) -> Array<u32>
 
 ### 6.17 `std.json`
 
-`std.json` provides a v0.1 JSON validation and serialization boundary.
-`JsonValue` stores validated raw JSON text. `json.parse` validates JSON syntax
-and returns `Result<JsonValue, JsonError>`; `json.stringify` returns the stored
-JSON text. Structured field/index access remains a later slice.
+`std.json` provides the bounded structured JSON surface accepted by
+[RFC 0025](./rfcs/0025-structured-json-values-and-construction.md).
+`JsonValue` is opaque and represents validated JSON text. Parsing preserves the
+original bytes for `stringify`; accessors inspect all six JSON kinds without
+coercion, object traversal preserves source order and duplicates, and `get`
+uses decoded-name comparison with deterministic last-member-wins lookup.
+Constructors emit compact JSON and escape strings rather than requiring
+application-side string concatenation or C FFI.
 
 ```rust
+pub enum JsonKind {
+    Null
+    Boolean
+    Number
+    String
+    Array
+    Object
+}
+
 pub struct JsonValue {
-    pub raw: string
+    raw: string
+}
+
+pub struct JsonMember {
+    pub key: string
+    pub value: JsonValue
 }
 
 pub struct JsonError {
+    pub code: string
     pub message: string
+    pub offset: u64
 }
 
 json.parse(value: string) -> Result<JsonValue, JsonError>
 json.stringify(value: JsonValue) -> string
+json.kind(value: JsonValue) -> JsonKind
+json.is_null(value: JsonValue) -> bool
+json.as_bool(value: JsonValue) -> Option<bool>
+json.number_text(value: JsonValue) -> Option<string>
+json.as_string(value: JsonValue) -> Option<string>
+json.array_items(value: JsonValue) -> Option<Array<JsonValue>>
+json.object_members(value: JsonValue) -> Option<Array<JsonMember>>
+json.get(value: JsonValue, key: string) -> Option<JsonValue>
+json.from_null() -> JsonValue
+json.from_bool(value: bool) -> JsonValue
+json.from_number_text(value: string) -> Result<JsonValue, JsonError>
+json.from_i64(value: i64) -> JsonValue
+json.from_u64(value: u64) -> JsonValue
+json.from_string(value: string) -> Result<JsonValue, JsonError>
+json.from_array(values: Array<JsonValue>) -> Result<JsonValue, JsonError>
+json.from_object(members: Array<JsonMember>) -> Result<JsonValue, JsonError>
 ```
+
+Every value is limited to 8 MiB of UTF-8 JSON text, nesting depth 128, and
+262,144 total values. Errors use stable `syntax`, `limit`,
+`unsupported_string`, or `invalid_number` codes, report a zero-based UTF-8
+byte offset where applicable, and must not reproduce source fragments or
+secrets. Escaped U+0000 is rejected until Nomo strings gain a length-carrying
+representation. Native C99 and browser WASM runtimes implement the same
+observable contract.
 
 ### 6.18 `std.net`
 
@@ -1677,3 +1721,5 @@ The decisions in these RFCs are reflected by this implementation baseline:
 - [RFC 0020](./rfcs/0020-manifest-v2-workspace-and-project-configuration.md): manifest schema v2, workspace membership, package identity, project configuration, and migration.
 - [RFC 0022](./rfcs/0022-structured-http-client-and-host-runtime.md): bounded structured HTTP/HTTPS requests through a toolchain-owned native runtime.
 - [RFC 0023](./rfcs/0023-pull-based-http-streaming-and-sse.md): bounded pull-based UTF-8 response streaming, SSE decoding, idle timeouts, and cooperative cancellation.
+- [RFC 0024](./rfcs/0024-controlled-child-processes-and-stdio.md): shell-free controlled child processes with bounded standard I/O, multiplexed events, timeout, and termination.
+- [RFC 0025](./rfcs/0025-structured-json-values-and-construction.md): bounded opaque structured JSON values, traversal, construction, and native/browser parity.
