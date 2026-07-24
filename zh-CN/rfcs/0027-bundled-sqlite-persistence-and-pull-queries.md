@@ -8,7 +8,7 @@
 | --- | --- |
 | 编号 | 0027 |
 | 标题 | 内置 SQLite 持久化与 Pull-Based Query |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 主题 | SQLite、持久化、database、标准库、C99 backend、Agent |
@@ -465,7 +465,7 @@ SQLite 更新不会改变 Nomo value ABI。
 
 ## 9. Acceptance Gate
 
-本 RFC 在以下 gate 全部通过前保持 `Proposed`：
+本 RFC 状态为 `Accepted`。以下 gate 均已在接受前通过：
 
 1. 两份 v0.1 specification、标准库文档与本 RFC 一致定义精确 API、limit、
    lifecycle、error、task-safety 与 browser contract。
@@ -504,6 +504,26 @@ SQLite 更新不会改变 Nomo value ABI。
 17. Implementation 从签名 child branch 经 reviewed PR 合入；状态改为 `Accepted`
     前在此记录 acceptance evidence 与链接。
 
+### 9.1 验收证据
+
+- 实现通过
+  [nomo PR #16](https://github.com/nomo-lang/nomo/pull/16) 合入，merge commit 为
+  [`a6405a5`](https://github.com/nomo-lang/nomo/commit/a6405a55e9a98434ec95b536fc1585b8e381ebb4)。
+- GitHub 验证了 child branch 上的全部五个签名提交，包括固定上游 amalgamation、
+  runtime/compiler 实现、Windows 换行完整性、跨平台输出断言与 portable 文档源码路径。
+- 最终 PR smoke
+  [run 30128914455](https://github.com/nomo-lang/nomo/actions/runs/30128914455)
+  通过 Linux compiler/runtime 检查，以及 Windows 与 macOS 上的完整 SQLite
+  conformance。
+- 最终签名分支完整 CI
+  [run 30128918597](https://github.com/nomo-lang/nomo/actions/runs/30128918597)
+  通过 formatting、Clippy、全部 workspace test、release/WASM/performance gate、
+  两进程 Agent checkpoint、macOS arm64-to-x86_64 链接，以及 Linux
+  x86_64-to-arm64 链接与执行。
+- Merge 后 `main` CI
+  [run 30129166251](https://github.com/nomo-lang/nomo/actions/runs/30129166251)
+  再次完整通过上述 gate。
+
 ## 10. 延后工作
 
 - 紧凑 `bytes` type 与 zero-copy bounded BLOB read；
@@ -518,9 +538,9 @@ SQLite 更新不会改变 Nomo value ABI。
 
 ## 11. 参考
 
-- `std/src/sqlite.nomo`（proposed）
-- `crates/nomo_compiler/src/builtins/builtins_sqlite.rs`（proposed）
-- `crates/nomo_codegen_c/src/runtime/host_sqlite.c`（proposed）
+- `std/src/sqlite.nomo`
+- `crates/nomo_compiler/src/builtins/builtins_sqlite.rs`
+- `crates/nomo_codegen_c/src/runtime/host_sqlite.c`
 - `crates/nomo/src/project/build.rs`
 - [SQLite 3.53.3 下载与 amalgamation digest](https://www.sqlite.org/download.html)
 - [SQLite amalgamation](https://www.sqlite.org/amalgamation.html)
