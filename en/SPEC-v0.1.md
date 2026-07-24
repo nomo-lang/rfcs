@@ -39,12 +39,13 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
 | Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.net`, `std.http`, `std.regex`, `std.collections` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
+| Browser runtime | Restricted WebAssembly execution and browser sandbox validation | Wasm build and sandbox check pass |
 
 ### 1.2 Explicitly Out of Scope for v0.1
 
 - `go` coroutines, `chan<T>`, implicit Context.
 - GPU kernels, PTX, SPIR-V.
-- WebAssembly, bare metal, GUI.
+- Bare metal, GUI.
 - Full Tensor, BigDecimal, package-publishing ecosystem.
 - Self-hosting compiler.
 - LLVM / Cranelift native backends.
