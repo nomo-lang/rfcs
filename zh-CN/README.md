@@ -93,6 +93,10 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0027](./rfcs/0027-bundled-sqlite-persistence-and-pull-queries.md) | 内置 SQLite 持久化与 Pull-Based Query | Accepted（已接受） | SQLite、持久化、database、标准库、C99 backend、Agent | 在工具链内固定并按需编译 SQLite，提供受限参数化执行与 pull-based row，应用侧无需 FFI。 |
 | [0028](./rfcs/0028-bounded-json-rpc-and-newline-stdio-framing.md) | 受限 JSON-RPC 与换行分帧标准 I/O | Accepted（已接受） | JSON-RPC、MCP、stdio、framing、process、JSON、Agent | 验证受限 JSON-RPC 2.0 envelope，并以 opaque value state 增量解码换行分帧 stdio。 |
 | [0029](./rfcs/0029-bounded-utc-cron-schedule-calculation.md) | 受限 UTC Cron Schedule 计算 | Accepted（已接受） | cron、scheduling、time、Agent、bounds、browser WASM | 解析受限五字段 UTC schedule，并在不引入 process-global scheduler 的情况下确定性计算匹配分钟。 |
-| [0030](./rfcs/0030-collection-literals-indexing-and-ordered-map.md) | 集合字面量、索引与有序 Map | Proposed（提案） | 数组、索引、COW、泛型、Map、确定性、Agent | 增加数组字面量、检查式 COW 安全索引和唯一的插入有序通用 Map，不重复提供 HashMap。 |
+| [0030](./rfcs/0030-collection-literals-indexing-and-ordered-map.md) | 集合字面量、索引与有序 Map | Accepted（已接受） | 数组、索引、COW、泛型、Map、确定性、Agent | 增加数组字面量、检查式 COW 安全索引和唯一的插入有序通用 Map，不重复提供 HashMap。 |
+| [0031](./rfcs/0031-direct-style-suspend-functions-and-structured-concurrency.md) | 直写式挂起函数与结构化并发 | Proposed（已提案） | suspend 函数、effect、stackless coroutine、取消、C99 | 使用显式 `suspend fn`、直写调用、词法 task scope 与 exactly-once stackless-frame cleanup。 |
+| [0032](./rfcs/0032-sharded-executor-reactor-and-blocking-pool.md) | 分片 Executor、Reactor 与 Blocking Pool | Proposed（已提案） | executor、reactor、epoll、kqueue、IOCP、WASM、affinity | 从 current-thread reactor 起步，通过 owner-affine shard 扩展，并把阻塞工作隔离到 bounded lazy pool。 |
+| [0033](./rfcs/0033-task-ownership-transfer-and-concurrent-values.md) | 任务所有权转移与并发值 | Proposed（已提案） | Send、Sync、Local、Freeze、channel、lock、collection | 普通 ARC/COW 保持 task-local；跨 task 使用 consuming move/detach 或显式 frozen/shared/concurrent storage。 |
+| [0034](./rfcs/0034-async-runtime-acceptance-and-benchmark-gates.md) | 异步 Runtime 验收与基准门禁 | Proposed（已提案） | 性能、内存、Go 对比、低配设备、跨平台 | 强制验证 unused/ready-path 成本、正确性/泄漏、平台矩阵与公平可复现 Agent benchmark。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
