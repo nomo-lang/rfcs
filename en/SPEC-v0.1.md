@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.jsonrpc`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.cron`, `std.task`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.jsonrpc`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections`, `std.fmt`, `std.ffi` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 | Browser runtime | Restricted WebAssembly execution and browser sandbox validation | Wasm build and sandbox check pass |
 
@@ -830,9 +830,15 @@ std.hash
 std.crypto
 std.json
 std.jsonrpc
+std.cron
+std.net
+std.http
 std.sqlite
 std.regex
 std.collections
+std.task
+std.fmt
+std.ffi
 ```
 
 ### 6.1 `std.io`
@@ -1339,7 +1345,54 @@ categories and never reproduce rejected payloads, method names, error data,
 tokens, or stderr content. Native C99 and browser WASM runtimes expose the same
 observable behavior.
 
-### 6.19 `std.net`
+### 6.19 `std.cron`
+
+`std.cron` implements the bounded UTC schedule-calculation contract accepted by
+[RFC 0029](./rfcs/0029-bounded-utc-cron-schedule-calculation.md). It parses
+exactly five fields—minute, hour, day of month, month, and day of week—and
+supports wildcards, unsigned values, inclusive ranges, lists, and
+wildcard/range steps. Expressions are limited to 256 UTF-8 bytes and accepted
+syntax is ASCII.
+
+```rust
+pub struct CronSchedule {
+    expression: string
+}
+
+pub struct CronError {
+    pub code: string
+    pub message: string
+    pub field: u64
+}
+
+cron.parse(expression: string) -> Result<CronSchedule, CronError>
+cron.matches(schedule: CronSchedule, unix_millis: i64) -> Result<bool, CronError>
+cron.next_after(schedule: CronSchedule, unix_millis: i64) -> Result<i64, CronError>
+```
+
+`CronSchedule` is opaque and can be created only by `cron.parse`.
+`CronError.field` is zero through four for the five fields and five for a
+whole-expression or timestamp error. Stable codes are `syntax`, `range`,
+`limit`, `timestamp_range`, and `no_match`; errors do not reproduce rejected
+expressions.
+
+Calculation uses the proleptic Gregorian calendar in UTC from
+`1970-01-01T00:00:00.000Z` through `9999-12-31T23:59:59.999Z`. `matches`
+ignores seconds and milliseconds within the supplied minute. `next_after`
+returns a minute boundary strictly later than the input and examines at most
+4,208,400 consecutive minute boundaries, returning `no_match` when no later
+occurrence exists within that search or timestamp range.
+
+Minute, hour, and month must match. A day field is unrestricted when its
+selected set covers its complete legal range. If one day field is restricted,
+it must match; if both are restricted, either one matching is sufficient.
+
+The module performs calculation only: applications own waiting, persistence,
+overlap, and missed-run policy by composing `std.time`, `std.task`, and
+optionally `std.sqlite`. Native C99 and browser WASM expose identical
+calculation behavior, and the pure operations are task-safe.
+
+### 6.20 `std.net`
 
 `std.net` provides blocking TCP and UDP helpers in the current slice.
 `net.connect` opens a TCP connection to a host and port. `net.listen` binds a
@@ -1392,7 +1445,7 @@ impl UdpSocket {
 }
 ```
 
-### 6.20 `std.http`
+### 6.21 `std.http`
 
 `std.http` provides a bounded blocking HTTP/HTTPS client and basic plain-HTTP
 server helpers. `http.send` accepts a structured request with a total deadline,
@@ -1513,7 +1566,7 @@ http.close_server(server: HttpServer) -> void
 http.close_exchange(exchange: HttpExchange) -> void
 ```
 
-### 6.21 `std.regex`
+### 6.22 `std.regex`
 
 `std.regex` provides v0.1 regular expression helpers. `Regex` stores the
 source pattern after compile-time validation by `regex.compile`. Compile
@@ -1535,7 +1588,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.22 `std.collections`
+### 6.23 `std.collections`
 
 `std.collections` provides v0.1 string-specialized collections. `StringMap`
 stores string keys and string values. `StringSet` stores unique strings. Update
@@ -1566,7 +1619,7 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.23 `std.testing`
+### 6.24 `std.testing`
 
 `std.testing` provides assertion helpers intended for `#[test]` functions. A
 failed assertion panics, which makes the current test fail under `nomo test`.
@@ -1580,7 +1633,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.24 `std.debug`
+### 6.25 `std.debug`
 
 `std.debug` provides lightweight debugging helpers. Print helpers write to
 stderr. `debug.panic` uses the same panic path as the language builtin.
@@ -1594,7 +1647,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.25 `std.log`
+### 6.26 `std.log`
 
 `std.log` provides lightweight leveled logging helpers. Log messages are
 written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
@@ -1609,7 +1662,7 @@ log.error(message: string) -> void
 log.enabled(level: string) -> bool
 ```
 
-### 6.26 `std.sqlite`
+### 6.27 `std.sqlite`
 
 `std.sqlite` provides durable native SQLite state without application-side C
 FFI, a host SQLite package, a database subprocess, or a separate service. The
@@ -1703,6 +1756,56 @@ SQLite handles are thread-confined and `std.sqlite` is rejected from
 `std.task` workers with `E0821`. Browser WASM type-checks the API but
 `open`/`open_memory` return `runtime_unavailable`; no filesystem, OPFS,
 IndexedDB, SQLite WASM, or host import is added.
+
+### 6.28 `std.task`
+
+`std.task` exposes the isolated native task model accepted by
+[RFC 0026](./rfcs/0026-isolated-native-tasks-and-cooperative-cancellation.md).
+It uses non-capturing top-level workers and copied string boundaries instead
+of general closures, shared managed values, or async/await syntax.
+
+```rust
+pub struct Task {
+    handle: u64
+}
+
+pub struct TaskContext {
+    handle: u64
+}
+
+pub struct TaskError {
+    pub code: string
+    pub message: string
+}
+
+pub enum TaskJoin {
+    Completed(string)
+    Cancelled
+    Timeout
+}
+
+task.spawn(worker: task fn(TaskContext, string) -> string, input: string)
+    -> Result<Task, TaskError>
+task.is_cancelled(context: TaskContext) -> bool
+task.join(task_value: Task, timeout_millis: u64) -> Result<TaskJoin, TaskError>
+task.cancel(task_value: Task) -> Result<void, TaskError>
+task.close(task_value: Task) -> Result<void, TaskError>
+```
+
+The worker must be a non-generic, non-capturing top-level function in the
+caller's package with the exact declared signature. Input and completed output
+are each copied and limited to 8 MiB. A process may own at most 64 live task
+handles, and join timeouts are limited to 900,000 milliseconds. `join(..., 0)`
+is a nonblocking poll. Cancellation is cooperative; `close` returns `busy`
+until the worker terminates. Task handles and contexts are opaque.
+
+The compiler validates the worker's transitive call graph. Pure local
+computation, copied managed values, JSON, JSON-RPC, cron calculation, and
+nonstreaming structured HTTP are task-safe. FFI, nested task spawn, shared
+host handles, process/filesystem/network streaming, SQLite, and unknown effects
+are rejected with `E0821` and a call path. Unix-like targets use POSIX threads,
+Windows uses native threads, and application code writes no C FFI. Browser
+WASM returns `runtime_unavailable` without invoking the worker.
 
 ---
 

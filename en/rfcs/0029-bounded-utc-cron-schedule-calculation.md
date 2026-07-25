@@ -8,7 +8,7 @@
 | --- | --- |
 | Number | 0029 |
 | Title | Bounded UTC cron schedule calculation |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | cron, scheduling, time, Agent, bounds, browser WASM |
@@ -177,7 +177,7 @@ results must match a minute-by-minute search.
 | --- | --- |
 | `syntax` | wrong field count or malformed field grammar |
 | `range` | value, range, or step is outside the field contract |
-| `limit` | expression or bounded search limit is exceeded |
+| `limit` | expression size limit is exceeded |
 | `timestamp_range` | supplied timestamp is outside the supported UTC range |
 | `no_match` | no later occurrence exists within the defined search/range |
 
