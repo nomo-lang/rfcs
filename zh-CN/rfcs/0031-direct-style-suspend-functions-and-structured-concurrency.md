@@ -12,7 +12,7 @@
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | suspend 函数、effect、stackless coroutine、结构化并发、取消、ARC、C99 |
-| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0004](./0004-mutable-borrow-uniqueness.md)、[RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md)、[RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)、[RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md) |
+| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0004](./0004-mutable-borrow-uniqueness.md)、[RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md)、[RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)、[RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) |
 
 ## 1. 摘要
 
@@ -281,3 +281,4 @@ structured task scope；第一版不增加 `await`、隐式并发或通用 detac
 - [RFC 0032：分片 executor、reactor 与 blocking pool](./0032-sharded-executor-reactor-and-blocking-pool.md)
 - [RFC 0033：任务所有权转移与并发值](./0033-task-ownership-transfer-and-concurrent-values.md)
 - [RFC 0034：异步 runtime 验收与基准门禁](./0034-async-runtime-acceptance-and-benchmark-gates.md)
+- [RFC 0035：单调时钟挂起 Timer 与阻塞 Sleep 迁移](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)

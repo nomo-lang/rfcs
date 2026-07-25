@@ -12,7 +12,7 @@
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | executor, reactor, epoll, kqueue, IOCP, WASM, affinity, blocking pool, Agent I/O |
-| Related RFCs | [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0022](./0022-structured-http-client-and-host-runtime.md), [RFC 0023](./0023-pull-based-http-streaming-and-sse.md), [RFC 0024](./0024-controlled-child-processes-and-stdio.md), [RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md), [RFC 0027](./0027-bundled-sqlite-persistence-and-pull-queries.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md) |
+| Related RFCs | [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0022](./0022-structured-http-client-and-host-runtime.md), [RFC 0023](./0023-pull-based-http-streaming-and-sse.md), [RFC 0024](./0024-controlled-child-processes-and-stdio.md), [RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md), [RFC 0027](./0027-bundled-sqlite-persistence-and-pull-queries.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md), [RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) |
 
 ## 1. Summary
 
@@ -103,7 +103,8 @@ must fall back to `epoll` without changing application code.
 
 The timer wheel uses a monotonic clock, bounded horizon/buckets, and batched
 expiry. Wall-clock changes do not alter deadlines. Very long timers may be
-reinserted in bounded rounds.
+reinserted in bounded rounds. RFC 0035 defines the public suspend timer,
+blocking-sleep migration, ready path, and cancellation/drop contract.
 
 One wakeup source per shard handles cross-shard messages and cancellation.
 Reactor events are generation checked so a readiness event for a closed and
@@ -271,3 +272,4 @@ existing thread-per-task or unguarded global-registry architecture.
 - [RFC 0031: Direct-style suspend functions and structured concurrency](./0031-direct-style-suspend-functions-and-structured-concurrency.md)
 - [RFC 0033: Task ownership transfer and concurrent values](./0033-task-ownership-transfer-and-concurrent-values.md)
 - [RFC 0034: Async runtime acceptance and benchmark gates](./0034-async-runtime-acceptance-and-benchmark-gates.md)
+- [RFC 0035: Monotonic suspend timers and blocking sleep migration](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)
