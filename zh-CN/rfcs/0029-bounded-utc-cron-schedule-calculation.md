@@ -8,7 +8,7 @@
 | --- | --- |
 | 编号 | 0029 |
 | 标题 | 受限 UTC cron schedule 计算 |
-| 状态 | Proposed（已提案） |
+| 状态 | Accepted（已接受） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 主题 | cron、scheduling、time、Agent、bounds、browser WASM |
@@ -164,7 +164,7 @@ search 一致。
 | --- | --- |
 | `syntax` | field count 错误或 field grammar 非法 |
 | `range` | value、range 或 step 超出 field contract |
-| `limit` | expression 或 bounded search limit 被超过 |
+| `limit` | expression size limit 被超过 |
 | `timestamp_range` | timestamp 不在支持的 UTC range 内 |
 | `no_match` | 定义的 search/range 内没有更晚 occurrence |
 

@@ -37,7 +37,7 @@ v0.1 不追求功能面最大化，而追求规格、实现、测试和 RFC 决�
 | 类型检查 | 基础类型、函数、结构体、枚举、泛型、`Result`、`Option` | 类型检查测试通过 |
 | 可变性检查 | `let mut`、调用处 `mut`、可变借用唯一性 | Mutability tests 覆盖 |
 | C99 后端 | HIR/C IR 到可读 C99 | 生成 C 可由 `clang` 或 `gcc` 编译 |
-| 最小标准库 | `std.io`、`std.fs`、`std.env`、`std.result`、`std.option`、`std.array`、`std.string`、`std.char`、`std.os`、`std.time`、`std.process`、`std.testing`、`std.debug`、`std.log`、`std.path`、`std.math`、`std.num`、`std.hash`、`std.crypto`、`std.json`、`std.jsonrpc`、`std.net`、`std.http`、`std.sqlite`、`std.regex`、`std.collections` | 示例程序可用 |
+| 最小标准库 | `std.io`、`std.fs`、`std.env`、`std.result`、`std.option`、`std.array`、`std.string`、`std.char`、`std.os`、`std.time`、`std.cron`、`std.task`、`std.process`、`std.testing`、`std.debug`、`std.log`、`std.path`、`std.math`、`std.num`、`std.hash`、`std.crypto`、`std.json`、`std.jsonrpc`、`std.net`、`std.http`、`std.sqlite`、`std.regex`、`std.collections`、`std.fmt`、`std.ffi` | 示例程序可用 |
 | JSON 诊断 | 稳定机器可读错误结构 | 快照测试覆盖 |
 | 浏览器运行时 | 受限 WebAssembly 执行与浏览器沙箱验证 | Wasm 构建与沙箱检查通过 |
 
@@ -752,9 +752,15 @@ std.hash
 std.crypto
 std.json
 std.jsonrpc
+std.cron
+std.net
+std.http
 std.sqlite
 std.regex
 std.collections
+std.task
+std.fmt
+std.ffi
 ```
 
 ### 6.1 `std.io`
@@ -1240,7 +1246,51 @@ CRLF delimiter，并始终输出一个尾部 LF。单条 message 上限为 1,048
 method name、error data、token 或 stderr content。Native C99 与 browser WASM
 runtime 暴露相同的可观察行为。
 
-### 6.19 `std.net`
+### 6.19 `std.cron`
+
+`std.cron` 实现
+[RFC 0029](./rfcs/0029-bounded-utc-cron-schedule-calculation.md)
+接受的受限 UTC schedule-calculation contract。它恰好解析 minute、hour、
+day of month、month 与 day of week 五个 field，并支持 wildcard、unsigned
+value、inclusive range、list 与 wildcard/range step。Expression 最多为
+256 个 UTF-8 byte，接受的 syntax 为 ASCII。
+
+```rust
+pub struct CronSchedule {
+    expression: string
+}
+
+pub struct CronError {
+    pub code: string
+    pub message: string
+    pub field: u64
+}
+
+cron.parse(expression: string) -> Result<CronSchedule, CronError>
+cron.matches(schedule: CronSchedule, unix_millis: i64) -> Result<bool, CronError>
+cron.next_after(schedule: CronSchedule, unix_millis: i64) -> Result<i64, CronError>
+```
+
+`CronSchedule` 是 opaque value，只能由 `cron.parse` 创建。
+`CronError.field` 对五个 field 使用零到四，对 whole-expression 或 timestamp
+error 使用五。稳定 code 为 `syntax`、`range`、`limit`、`timestamp_range`
+与 `no_match`；error 不回显被拒绝的 expression。
+
+计算使用 UTC proleptic Gregorian calendar，范围为
+`1970-01-01T00:00:00.000Z` 到 `9999-12-31T23:59:59.999Z`。`matches`
+忽略给定 minute 内的 second 与 millisecond。`next_after` 返回严格晚于输入的
+minute boundary，最多检查连续 4,208,400 个 minute boundary；在该 search 或
+timestamp range 内不存在更晚 occurrence 时返回 `no_match`。
+
+Minute、hour 与 month 必须匹配。当 day field 的 selected set 覆盖完整 legal
+range 时，它是 unrestricted。只有一个 day field restricted 时，该 field 必须
+匹配；两个都 restricted 时，任意一个匹配即可。
+
+本 module 只负责计算；应用通过组合 `std.time`、`std.task` 与可选
+`std.sqlite` 自行管理等待、持久化、overlap 与 missed-run policy。Native C99
+与 browser WASM 暴露相同计算行为，pure operation 可安全用于 task。
+
+### 6.20 `std.net`
 
 `std.net` 在当前切片提供阻塞 TCP 与 UDP helper。`net.connect` 连接 host
 和 port。`net.listen` 绑定阻塞 `TcpListener`；`TcpListener.accept` 返回下一条
@@ -1291,7 +1341,7 @@ impl UdpSocket {
 }
 ```
 
-### 6.20 `std.http`
+### 6.21 `std.http`
 
 `std.http` 提供受限的阻塞式 HTTP/HTTPS client 与基础 plain-HTTP server
 helper。`http.send` 接受结构化 request，其中包含总 deadline、自定义应用 header
@@ -1405,7 +1455,7 @@ http.close_server(server: HttpServer) -> void
 http.close_exchange(exchange: HttpExchange) -> void
 ```
 
-### 6.21 `std.regex`
+### 6.22 `std.regex`
 
 `std.regex` 提供 v0.1 正则表达式 helper。`Regex` 保存经过
 `regex.compile` 校验后的源 pattern。编译失败通过
@@ -1427,7 +1477,7 @@ regex.is_match(regex: Regex, value: string) -> bool
 regex.captures(regex: Regex, value: string) -> Option<Array<string>>
 ```
 
-### 6.22 `std.collections`
+### 6.23 `std.collections`
 
 `std.collections` 提供 v0.1 字符串专用集合。`StringMap` 存储 string key
 和 string value；`StringSet` 存储去重 string。更新 helper 返回更新后的集合
@@ -1457,7 +1507,7 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.23 `std.testing`
+### 6.24 `std.testing`
 
 `std.testing` 提供面向 `#[test]` 函数的 assertion helper。断言失败时会
 panic，因此当前测试会在 `nomo test` 下失败。`testing.assert_equal` 支持
@@ -1470,7 +1520,7 @@ testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
 testing.assert_error<T, E>(result: Result<T, E>) -> void
 ```
 
-### 6.24 `std.debug`
+### 6.25 `std.debug`
 
 `std.debug` 提供轻量调试 helper。print helper 写入 stderr。`debug.panic`
 复用语言内建 `panic` 的执行路径。`debug.backtrace` 在 v0.1 返回稳定占位
@@ -1483,7 +1533,7 @@ debug.panic(message: string) -> void
 debug.backtrace() -> string
 ```
 
-### 6.25 `std.log`
+### 6.26 `std.log`
 
 `std.log` 提供轻量分级日志 helper。日志消息以 `[level] message` 行写入
 stderr。`NOMO_LOG` 控制最低启用级别；可接受值为 `debug`、`info`、`warn`、
@@ -1497,7 +1547,7 @@ log.error(message: string) -> void
 log.enabled(level: string) -> bool
 ```
 
-### 6.26 `std.sqlite`
+### 6.27 `std.sqlite`
 
 `std.sqlite` 提供原生持久化 SQLite 状态，应用侧不需要声明 C FFI、安装
 host SQLite package、启动数据库子进程或依赖独立服务。工具链固定并校验官方
@@ -1589,6 +1639,57 @@ SQLite handle 是 thread-confined capability；compiler 以 `E0821` 拒绝在
 `std.task` worker 中使用 `std.sqlite`。browser WASM 仍会 type-check 同一 API，
 但 `open`/`open_memory` 返回 `runtime_unavailable`；不会增加 filesystem、
 OPFS、IndexedDB、SQLite WASM 或 host import。
+
+### 6.28 `std.task`
+
+`std.task` 暴露
+[RFC 0026](./rfcs/0026-isolated-native-tasks-and-cooperative-cancellation.md)
+接受的 isolated native task model。它使用 non-capturing top-level worker
+与 copied string boundary，而不是 general closure、shared managed value 或
+async/await syntax。
+
+```rust
+pub struct Task {
+    handle: u64
+}
+
+pub struct TaskContext {
+    handle: u64
+}
+
+pub struct TaskError {
+    pub code: string
+    pub message: string
+}
+
+pub enum TaskJoin {
+    Completed(string)
+    Cancelled
+    Timeout
+}
+
+task.spawn(worker: task fn(TaskContext, string) -> string, input: string)
+    -> Result<Task, TaskError>
+task.is_cancelled(context: TaskContext) -> bool
+task.join(task_value: Task, timeout_millis: u64) -> Result<TaskJoin, TaskError>
+task.cancel(task_value: Task) -> Result<void, TaskError>
+task.close(task_value: Task) -> Result<void, TaskError>
+```
+
+Worker 必须是 caller package 中 non-generic、non-capturing 的 top-level
+function，并具有完全一致的签名。Input 与 completed output 分别复制，且各自最多
+8 MiB。每个 process 最多拥有 64 个 live task handle；join timeout 最多为
+900,000 millisecond。`join(..., 0)` 是 nonblocking poll。Cancellation 为
+cooperative；worker 结束前 `close` 返回 `busy`。Task handle 与 context 都是
+opaque value。
+
+Compiler 验证 worker 的 transitive call graph。Pure local computation、copied
+managed value、JSON、JSON-RPC、cron calculation 与 nonstreaming structured
+HTTP 是 task-safe。FFI、nested task spawn、shared host handle、
+process/filesystem/network streaming、SQLite 与 unknown effect 会以 `E0821`
+及 call path 拒绝。Unix-like target 使用 POSIX thread，Windows 使用 native
+thread，应用代码无需 C FFI。Browser WASM 不调用 worker，直接返回
+`runtime_unavailable`。
 
 ---
 
