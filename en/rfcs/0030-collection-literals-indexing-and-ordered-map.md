@@ -8,7 +8,7 @@
 | --- | --- |
 | Number | 0030 |
 | Title | Collection literals, indexing, and ordered Map |
-| Status | Proposed |
+| Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | arrays, indexing, COW, generics, map, determinism, Agent |
@@ -155,4 +155,6 @@ This RFC becomes `Accepted` only after:
 8. format, Clippy, full workspace tests, release C99, browser WASM, and required
    platform/cross-build CI pass.
 
-Until all gates have evidence, the status remains `Proposed`.
+The implementation, cross-backend tests, Tree-sitter corpus, production
+Playground WASM, documentation, and protected CI provide the evidence for
+`Accepted` status.

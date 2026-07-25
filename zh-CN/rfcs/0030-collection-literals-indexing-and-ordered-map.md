@@ -8,7 +8,7 @@
 | --- | --- |
 | 编号 | 0030 |
 | 标题 | 集合字面量、索引与有序 Map |
-| 状态 | Proposed |
+| 状态 | Accepted |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 主题 | 数组、索引、COW、泛型、Map、确定性、Agent |
@@ -84,4 +84,4 @@ Map 上限为 65,536 项，超过时以 `map capacity exceeded` panic。线性�
 
 ## 6. 验收门
 
-仅在 parser、formatter、semantic、IR、C99、WASM、LSP bridge、Tree-sitter、Playground 影响已落实，并且一维/嵌套/jagged、COW 写回、诊断、泛型和 managed 生命周期、`Map<string,JsonValue>`、`Map<string,ToolDefinition>`、StringMap 兼容、全量及跨平台 CI 均有证据后，才把 RFC 改为 `Accepted`。在此之前状态保持 `Proposed`。
+parser、formatter、semantic、IR、C99、WASM、LSP bridge、Tree-sitter 与生产 Playground WASM 均已落实；一维/嵌套/jagged、COW 写回、诊断、泛型与 managed 值、Map 常用类型、StringMap 兼容以及受保护 CI 已提供证据，因此状态为 `Accepted`。
