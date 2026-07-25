@@ -93,5 +93,6 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0027](./rfcs/0027-bundled-sqlite-persistence-and-pull-queries.md) | 内置 SQLite 持久化与 Pull-Based Query | Accepted（已接受） | SQLite、持久化、database、标准库、C99 backend、Agent | 在工具链内固定并按需编译 SQLite，提供受限参数化执行与 pull-based row，应用侧无需 FFI。 |
 | [0028](./rfcs/0028-bounded-json-rpc-and-newline-stdio-framing.md) | 受限 JSON-RPC 与换行分帧标准 I/O | Accepted（已接受） | JSON-RPC、MCP、stdio、framing、process、JSON、Agent | 验证受限 JSON-RPC 2.0 envelope，并以 opaque value state 增量解码换行分帧 stdio。 |
 | [0029](./rfcs/0029-bounded-utc-cron-schedule-calculation.md) | 受限 UTC Cron Schedule 计算 | Accepted（已接受） | cron、scheduling、time、Agent、bounds、browser WASM | 解析受限五字段 UTC schedule，并在不引入 process-global scheduler 的情况下确定性计算匹配分钟。 |
+| [0030](./rfcs/0030-collection-literals-indexing-and-ordered-map.md) | 集合字面量、索引与有序 Map | Proposed（提案） | 数组、索引、COW、泛型、Map、确定性、Agent | 增加数组字面量、检查式 COW 安全索引和唯一的插入有序通用 Map，不重复提供 HashMap。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
