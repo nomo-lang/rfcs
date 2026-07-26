@@ -161,9 +161,64 @@ does not expose a non-consuming request-only operation for `Task<T>`: such an
 API would require a borrowed handle and a later mandatory join, which the
 first affine-handle slice intentionally avoids.
 
-`task.deadline(duration) { ... }` is a scope with a monotonic deadline. An
-earlier parent deadline wins. Timeout is represented by a typed task/runtime
-error at the operation that observes it; it is not a panic.
+The v0.1 cancellation/deadline source surface is compiler-recognized:
+
+```nomo
+task.check_cancelled()
+
+task.deadline(duration) {
+    // structured children and direct-style suspend calls
+}
+```
+
+Neither form introduces a public first-class token. Every async task carries an
+implicit runtime cancellation state inherited by its children. A later RFC may
+add borrowed token observation only after the ownership and cross-shard memory
+model can express it without turning ordinary task-local values atomic.
+
+`task.check_cancelled() -> void` is available only inside `suspend fn`. It does
+not suspend, allocate, or enqueue. When no cancellation or expired deadline is
+visible it is a no-op. Otherwise it performs the generated child/frame cleanup
+and terminates the current task with the structured `cancelled` or `timeout`
+runtime outcome; control does not return to the following source statement.
+This makes the operation a cooperative checkpoint for CPU loops without
+offering an error that user code can ignore. The current-thread backend may
+drive an explicitly cancelled child directly to terminal cleanup; the check
+also defines how a future owner-shard request is observed.
+
+`task.deadline(duration) { ... }` is a structured task scope with a monotonic
+deadline, not a value-producing expression. Its duration is evaluated exactly
+once before the body:
+
+- `duration.millis <= 0` produces an immediate `timeout` before the body runs
+  and does not register a timer;
+- a positive duration uses checked saturating monotonic arithmetic and owns one
+  generation-checked timer registration;
+- an inherited earlier deadline wins; normal block completion disarms the
+  local registration and restores the parent deadline;
+- the runtime checks the effective deadline before entering the body, before
+  and after every runtime suspension, and at `task.check_cancelled`;
+- when an operation becomes ready at the exact effective deadline, the timeout
+  check wins before that operation resumes;
+- this is cooperative, not preemptive: source that neither suspends nor calls
+  `task.check_cancelled` is not interrupted.
+
+On expiry, the deadline body does not resume. Its children and descendants are
+cancelled, pending registrations are removed, initialized frame values are
+dropped exactly once, and the current task becomes terminal with
+`TaskError { code: "timeout", ... }`. A parent observes that outcome through
+`task.join`; an explicit `task.cancel` of a child that had already reached a
+structured failure returns that failure. An unjoined child failure discovered
+during scope cleanup is propagated after siblings are cleaned rather than
+silently discarded; spawn/source order breaks ties between multiple
+non-panic runtime failures. A root-task timeout performs the same cleanup and
+becomes a bounded, secret-safe nonzero process runtime error.
+
+`cancelled` and `timeout` are stable structured `TaskError.code` values.
+Timer-capacity or backend failure before the body starts uses the stable timer
+error contract from RFC 0035. These runtime outcomes remain distinct from a
+Nomo panic. Targets without a deadline backend return
+`runtime_unavailable` without executing the body.
 
 `task.select` waits for the first ready operation from a statically enumerated
 set. Non-winning registrations are cancelled before the selected arm runs.
@@ -289,10 +344,20 @@ cover cancel-before-start, a suspended child with pending timer or I/O,
 descendant propagation, an already-completed child, exactly-once cleanup, and
 the allocation-free current-thread ready path.
 
+Deadline tests cover non-positive expiry before body evaluation, a positive
+deadline that cancels pending timer and I/O registrations, normal completion
+and timer disarm, inherited earlier deadlines, the exact ready/timeout tie,
+`task.check_cancelled` in a CPU loop, typed `timeout` observation through join,
+unobserved child-failure propagation, root-task failure, and browser
+`runtime_unavailable`. Counter gates require zero allocation and queue traffic
+for `task.check_cancelled` and the immediate-timeout path, no live
+registrations at exit, and exact once-only frame/ARC cleanup.
+
 Negative tests cover each diagnostic above, including transitive effect calls,
 generic instantiations, handle escape, double join, double cancel,
 cancel-after-join, join-after-cancel, mutable field/index loans, lock guards,
-and FFI borrows.
+FFI borrows, deadline use from a synchronous function, treating a deadline
+block as a value, and unsupported nested deadline/control-flow placement.
 
 C99 lifecycle tests inspect generated frames and instrument all completion and
 cleanup paths. Native integration tests run cancellation storms and panic
