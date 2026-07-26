@@ -12,7 +12,7 @@
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | Send、Sync、Local、Freeze、move、channel、lock、concurrent collection、ARC、COW |
-| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0004](./0004-mutable-borrow-uniqueness.md)、[RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md)、[RFC 0019](./0019-typed-ffi-handles-callbacks-and-bindings.md)、[RFC 0030](./0030-collection-literals-indexing-and-ordered-map.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md) |
+| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0004](./0004-mutable-borrow-uniqueness.md)、[RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md)、[RFC 0019](./0019-typed-ffi-handles-callbacks-and-bindings.md)、[RFC 0030](./0030-collection-literals-indexing-and-ordered-map.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0036](./0036-bounded-channels-publication-moves-and-static-select.md) |
 
 ## 1. 摘要
 
@@ -112,6 +112,10 @@ message 仍可 receive，之后 send 失败。
 RFC 0031 的 `task.select` 可选择 channel send/receive、timer、task join 与 reactor
 operation。registration、winner election、losing-arm cancellation 与 moved-value
 recovery 必须 atomic 且 exactly once。
+
+RFC 0036 固定这些要求的 source-defined channel API、带类型化 rollback owner 的
+无条件 consuming-binding rule、static select arm 语法、capacity bound 与分阶段
+验收门禁。
 
 ## 7. Lock 与 Guard
 

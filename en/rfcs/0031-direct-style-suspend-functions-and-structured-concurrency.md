@@ -12,7 +12,7 @@
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | suspend functions, effects, stackless coroutines, structured concurrency, cancellation, ARC, C99 |
-| Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0004](./0004-mutable-borrow-uniqueness.md), [RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md), [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md), [RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md), [RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) |
+| Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0004](./0004-mutable-borrow-uniqueness.md), [RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md), [RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md), [RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md), [RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md), [RFC 0036](./0036-bounded-channels-publication-moves-and-static-select.md) |
 
 ## 1. Summary
 
@@ -223,8 +223,9 @@ Nomo panic. Targets without a deadline backend return
 `task.select` waits for the first ready operation from a statically enumerated
 set. Non-winning registrations are cancelled before the selected arm runs.
 Selection order is deterministic for operations that were already ready when
-the select began; the source order wins. The exact arm syntax may be refined
-without changing these semantics before this RFC becomes `Accepted`.
+the select began; the source order wins. RFC 0036 fixes the static arm syntax,
+typed channel operations, and losing-arm ownership without changing these
+semantics.
 
 Detached work is not a normal escape hatch. A `task.daemon_scope` capability is
 available only to the process root or a host embedding API. It must name its
@@ -397,9 +398,10 @@ The implementation order is:
 and compiler-enforced structured task scopes. Do not add `await`, implicit
 concurrency, or general detached tasks in the first version.
 
-The spelling of `task.select` arms and daemon capability construction may be
-refined in review. The effect boundary, stackless lowering, structured lifetime,
-and exactly-once drop rules are not open implementation choices.
+RFC 0036 fixes the spelling and ownership of `task.select` arms. Daemon
+capability construction may still be refined in review. The effect boundary,
+stackless lowering, structured lifetime, and exactly-once drop rules are not
+open implementation choices.
 
 ## 12. References
 

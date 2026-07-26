@@ -99,5 +99,6 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0033](./rfcs/0033-task-ownership-transfer-and-concurrent-values.md) | 任务所有权转移与并发值 | Proposed（已提案） | Send、Sync、Local、Freeze、channel、lock、collection | 普通 ARC/COW 保持 task-local；跨 task 使用 consuming move/detach 或显式 frozen/shared/concurrent storage。 |
 | [0034](./rfcs/0034-async-runtime-acceptance-and-benchmark-gates.md) | 异步 Runtime 验收与基准门禁 | Proposed（已提案） | 性能、内存、Go 对比、低配设备、跨平台 | 强制验证 unused/ready-path 成本、正确性/泄漏、平台矩阵与公平可复现 Agent benchmark。 |
 | [0035](./rfcs/0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) | 单调时钟挂起 Timer 与阻塞 Sleep 迁移 | Proposed（已提案） | suspend function、timer、monotonic clock、blocking compatibility、C99 | 增加唯一有界 `task.sleep(Duration)` timer，并在不破坏 legacy 同步代码的前提下禁止 async worker 调用阻塞 `time.sleep*`。 |
+| [0036](./rfcs/0036-bounded-channels-publication-moves-and-static-select.md) | 有界 Channel、Publication Move 与静态 Select | Proposed（已提案） | channel、select、move publication、Send、backpressure、cancellation、C99 | 在实现前固定类型化 channel API、consuming publication boundary、确定性 static select 语法与分阶段 ownership/correctness 门禁。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
