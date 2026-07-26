@@ -139,7 +139,8 @@ Calls remain direct-style, but the caller must be `suspend`. Reads return after
 at least one byte, EOF, timeout, cancellation, or error; they never imply
 read-to-EOF. `eof` may be true with empty data. Writes either complete the
 whole bounded input or return an error, retaining progress across readiness
-events.
+events. Native writes advance at most 64 KiB per executor poll so one ready
+stream cannot monopolize the current-thread executor.
 
 `max_bytes` is in `1..=1,048,576`; one write is at most 1,048,576 bytes.
 `timeout_millis` is at most 900,000. Zero performs one immediate attempt and
@@ -201,7 +202,9 @@ A native operation:
 Unix sockets are nonblocking. Linux normalizes epoll one-shot readiness and
 macOS normalizes kqueue one-shot filters. Windows uses IOCP completion
 ownership, not a blocking worker. Spurious readiness simply rearms after
-would-block.
+would-block. A write attempt advances at most 64 KiB before yielding and
+rearming when more payload remains; this fairness budget does not change the
+complete-write result contract.
 
 The effective deadline is the earlier of the operation timeout and enclosing
 structured deadline. Cancellation wins once; late events are ignored by slot
@@ -226,18 +229,26 @@ milestone, not a complete Agent networking claim.
 
 ## 8. Platform Phases
 
-| Slice | Required behavior |
-| --- | --- |
-| P2-TCP-A | bounded owner table, generation checks, registration lifecycle, numeric-host nonblocking connect on epoll/kqueue |
-| P2-TCP-B | incremental bounded read and complete bounded write on epoll/kqueue |
-| P2-TCP-C | hostname resolution through the bounded blocking pool |
-| P2-TCP-D | IOCP connect/read/write with native Windows execution |
-| P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `runtime_unavailable` |
+| Slice | Required behavior | Status |
+| --- | --- | --- |
+| P2-TCP-A | bounded owner table, generation checks, registration lifecycle, numeric-host nonblocking connect on epoll/kqueue | Implemented by [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) |
+| P2-TCP-B | incremental bounded read and complete bounded write on epoll/kqueue | Implemented by [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) |
+| P2-TCP-C | hostname resolution through the bounded blocking pool | Not implemented |
+| P2-TCP-D | IOCP connect/read/write with native Windows execution | Not implemented |
+| P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `runtime_unavailable` | Not implemented |
 
 During A through C, Windows compiles and returns `Unsupported` for new client
 calls without evaluating or logging secret payloads. This is explicit phased
 behavior, not IOCP acceptance. RFC 0032 cannot become `Accepted` before required
 Windows and browser evidence exists.
+
+The A/B implementation includes bounded read/write payloads, positive and zero
+timeouts, structured cancellation, one pending operation per stream direction,
+exact registration/retained-buffer lifecycle counters, native Linux/macOS
+execution, explicit pre-evaluation Windows rejection, and a Nomo example.
+`shutdown_write`, hostname resolution, native IOCP, and the browser adapter
+remain follow-up slices. These partial implementation results do not change
+this RFC from `Proposed`.
 
 ## 9. Metrics and Limits
 
@@ -308,9 +319,11 @@ fixtures, and exact lifecycle counters mitigate them.
 
 ## 13. v0.1 Impact and Open Follow-Ups
 
-This is an additive `Proposed` decision until implementation PRs update the
-SPEC and standard library. The current blocking API remains the executable
-baseline until the corresponding migration PR passes its gates.
+P2-TCP-A/B are additive executable slices and update the SPEC and standard
+library with numeric-address suspend connect plus bounded incremental
+read/write on Linux and macOS. The old client behavior remains available
+through explicit `_blocking` compatibility names for the preview migration
+window. Listener accept and UDP remain blocking.
 
 A dedicated byte type may later replace `Array<u32>` without changing the
 reactor contract. Listener/UDP migration, TLS, and cross-shard stream transfer
