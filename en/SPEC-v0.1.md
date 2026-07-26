@@ -1394,24 +1394,44 @@ calculation behavior, and the pure operations are task-safe.
 
 ### 6.20 `std.net`
 
-`std.net` provides blocking TCP and UDP helpers in the current slice.
-`net.connect` opens a TCP connection to a host and port. `net.listen` binds a
-blocking `TcpListener`; `TcpListener.accept` returns the next `TcpStream`, and
-`TcpListener.close` closes the listener socket. `TcpStream.write_string` writes
-a string to the peer, `TcpStream.read_to_string` reads until the peer closes its
-write side, and `TcpStream.close` closes the stream socket. `net.udp_bind` binds
-a blocking `UdpSocket`; `UdpSocket.recv_from_string` receives a datagram as a
-`UdpDatagram` with `data`, `host`, and `port`, `UdpSocket.send_to_string` sends
-a datagram, and `UdpSocket.close` closes the socket. Listener address
-inspection, backlog configuration, and nonblocking handles remain later
-`std.net` slices.
+`std.net` provides owner-affine suspend TCP client operations plus explicit
+blocking compatibility helpers. Linux and macOS execute numeric-address
+connect, bounded incremental reads, and complete bounded writes through
+epoll/kqueue. Hostname resolution, native Windows IOCP, browser raw TCP, and
+`shutdown_write` remain later RFC 0037 slices.
 
-```rust
+```nomo
+pub enum NetErrorKind {
+    InvalidInput
+    Unsupported
+    Timeout
+    Cancelled
+    Closed
+    Busy
+    Limit
+    Resolve
+    Connect
+    Read
+    Write
+    Reactor
+}
+
 pub struct NetError {
+    pub kind: NetErrorKind
     pub message: string
 }
 
 pub struct TcpStream
+
+pub struct TcpChunk {
+    pub data: Array<u32>
+    pub eof: bool
+}
+
+pub struct TcpTextChunk {
+    pub data: string
+    pub eof: bool
+}
 
 pub struct TcpListener
 
@@ -1423,7 +1443,8 @@ pub struct UdpDatagram {
 
 pub struct UdpSocket
 
-net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
+net.connect(host: string, port: i64, timeout_millis: u64) -> Result<TcpStream, NetError>
+net.connect_blocking(host: string, port: i64) -> Result<TcpStream, NetError>
 net.listen(host: string, port: i64) -> Result<TcpListener, NetError>
 net.udp_bind(host: string, port: i64) -> Result<UdpSocket, NetError>
 
@@ -1433,8 +1454,12 @@ impl TcpListener {
 }
 
 impl TcpStream {
-    fn write_string(self, content: string) -> Result<void, NetError>
-    fn read_to_string(self) -> Result<string, NetError>
+    suspend fn read(self, max_bytes: u64, timeout_millis: u64) -> Result<TcpChunk, NetError>
+    suspend fn read_string(self, max_bytes: u64, timeout_millis: u64) -> Result<TcpTextChunk, NetError>
+    suspend fn write(self, data: Array<u32>, timeout_millis: u64) -> Result<void, NetError>
+    suspend fn write_string(self, content: string, timeout_millis: u64) -> Result<void, NetError>
+    fn read_to_string_blocking(self) -> Result<string, NetError>
+    fn write_string_blocking(self, content: string) -> Result<void, NetError>
     fn close(self) -> void
 }
 
@@ -1444,6 +1469,26 @@ impl UdpSocket {
     fn close(self) -> void
 }
 ```
+
+`TcpStream` is Local/!Send and is identified by an owner-table slot and
+generation. Each direction permits one pending operation; a conflict returns
+`Busy`. Reads return after at least one byte, EOF, timeout, cancellation, or
+error and never imply read-to-EOF. Binary chunks use `Array<u32>` values in
+`0..=255`; text chunks require valid UTF-8.
+
+One read/write payload is limited to 1,048,576 bytes and one timeout to
+900,000 milliseconds. Zero performs one immediate attempt without reactor
+registration. Positive operations use monotonic timeout/cancellation and
+one-shot readiness. Writes retain only the unsent suffix, advance at most
+64 KiB per executor poll, and either complete the whole input or fail.
+Cancellation and timeout release registrations and retained buffers exactly
+once while leaving the stream reusable; `close` invalidates its generation.
+
+Hostnames and Windows return `Unsupported` in this slice; Windows rejects
+write payloads before evaluating them. For the preview migration window,
+`connect_blocking`, `read_to_string_blocking`, and
+`write_string_blocking` preserve the old client behavior. `listen`,
+`TcpListener.accept`, and UDP operations remain blocking.
 
 ### 6.21 `std.http`
 

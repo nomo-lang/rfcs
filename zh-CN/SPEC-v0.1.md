@@ -1292,22 +1292,44 @@ range 时，它是 unrestricted。只有一个 day field restricted 时，该 fi
 
 ### 6.20 `std.net`
 
-`std.net` 在当前切片提供阻塞 TCP 与 UDP helper。`net.connect` 连接 host
-和 port。`net.listen` 绑定阻塞 `TcpListener`；`TcpListener.accept` 返回下一条
-`TcpStream`，`TcpListener.close` 关闭 listener socket。`TcpStream.write_string`
-向 peer 写入字符串，`TcpStream.read_to_string` 读取直到 peer 关闭写端，
-`TcpStream.close` 关闭 stream socket。`net.udp_bind` 绑定阻塞 `UdpSocket`；
-`UdpSocket.recv_from_string` 接收 datagram 并返回包含 `data`、`host`、`port`
-的 `UdpDatagram`，`UdpSocket.send_to_string` 发送 datagram，`UdpSocket.close`
-关闭 socket。listener 地址查询、backlog 配置与 nonblocking handle 留给后续
-`std.net` 切片。
+`std.net` 提供 owner-affine suspend TCP client operation 与显式 blocking
+compatibility helper。Linux/macOS 通过 epoll/kqueue 执行 numeric-address
+connect、bounded incremental read 与 complete bounded write。hostname
+resolution、Windows native IOCP、browser raw TCP 与 `shutdown_write`
+留给 RFC 0037 后续切片。
 
-```rust
+```nomo
+pub enum NetErrorKind {
+    InvalidInput
+    Unsupported
+    Timeout
+    Cancelled
+    Closed
+    Busy
+    Limit
+    Resolve
+    Connect
+    Read
+    Write
+    Reactor
+}
+
 pub struct NetError {
+    pub kind: NetErrorKind
     pub message: string
 }
 
 pub struct TcpStream
+
+pub struct TcpChunk {
+    pub data: Array<u32>
+    pub eof: bool
+}
+
+pub struct TcpTextChunk {
+    pub data: string
+    pub eof: bool
+}
 
 pub struct TcpListener
 
@@ -1319,7 +1341,8 @@ pub struct UdpDatagram {
 
 pub struct UdpSocket
 
-net.connect(host: string, port: i64) -> Result<TcpStream, NetError>
+net.connect(host: string, port: i64, timeout_millis: u64) -> Result<TcpStream, NetError>
+net.connect_blocking(host: string, port: i64) -> Result<TcpStream, NetError>
 net.listen(host: string, port: i64) -> Result<TcpListener, NetError>
 net.udp_bind(host: string, port: i64) -> Result<UdpSocket, NetError>
 
@@ -1329,8 +1352,12 @@ impl TcpListener {
 }
 
 impl TcpStream {
-    fn write_string(self, content: string) -> Result<void, NetError>
-    fn read_to_string(self) -> Result<string, NetError>
+    suspend fn read(self, max_bytes: u64, timeout_millis: u64) -> Result<TcpChunk, NetError>
+    suspend fn read_string(self, max_bytes: u64, timeout_millis: u64) -> Result<TcpTextChunk, NetError>
+    suspend fn write(self, data: Array<u32>, timeout_millis: u64) -> Result<void, NetError>
+    suspend fn write_string(self, content: string, timeout_millis: u64) -> Result<void, NetError>
+    fn read_to_string_blocking(self) -> Result<string, NetError>
+    fn write_string_blocking(self, content: string) -> Result<void, NetError>
     fn close(self) -> void
 }
 
@@ -1340,6 +1367,23 @@ impl UdpSocket {
     fn close(self) -> void
 }
 ```
+
+`TcpStream` 为 Local/!Send，由 owner-table slot 与 generation 标识。每个
+direction 只允许一个 pending operation，冲突返回 `Busy`。read 在至少一个
+byte、EOF、timeout、cancellation 或 error 后返回，绝不隐含 read-to-EOF。
+binary chunk 使用 `0..=255` 的 `Array<u32>`；text chunk 必须是合法 UTF-8。
+
+单次 read/write payload 上限为 1,048,576 bytes，timeout 上限为 900,000
+milliseconds。零值只做一次 immediate attempt，不注册 reactor；正 timeout
+使用 monotonic timeout/cancellation 与 one-shot readiness。write 只保留未发送
+suffix，每轮 executor poll 最多推进 64 KiB，并且要么完整写入，要么失败。
+cancellation/timeout 各自恰好一次释放 registration 与 retained buffer，同时
+stream 仍可复用；`close` 使 generation 失效。
+
+本切片中 hostname 与 Windows 返回 `Unsupported`；Windows 在求值 write
+payload 前拒绝。preview migration window 内，`connect_blocking`、
+`read_to_string_blocking` 与 `write_string_blocking` 保留旧 client 行为。
+`listen`、`TcpListener.accept` 与 UDP operation 仍为 blocking。
 
 ### 6.21 `std.http`
 

@@ -134,7 +134,9 @@ impl TcpStream {
 调用保持 direct style，但 caller 必须是 `suspend`。read 在至少读取一个 byte、
 EOF、timeout、cancellation 或 error 时返回，绝不隐含 read-to-EOF；空 data
 也可以带 `eof = true`。write 要么完整写完 bounded 输入，要么返回 error，
-跨 readiness event 的进度保存在 operation frame 中。
+跨 readiness event 的进度保存在 operation frame 中。native write 每轮
+executor poll 最多推进 64 KiB，避免一条 ready stream 独占 current-thread
+executor。
 
 `max_bytes` 范围为 `1..=1,048,576`；单次 write 上限为 1,048,576 bytes；
 `timeout_millis` 上限为 900,000。零值只执行一次 immediate attempt，绝不注册
@@ -194,7 +196,8 @@ structured cleanup 同时关闭其 owner。
 Unix socket 为 nonblocking。Linux 归一化 epoll one-shot readiness，macOS
 归一化 kqueue one-shot filter。Windows 使用 IOCP completion ownership，
 不能用 blocking worker 模拟 readiness。spurious readiness 遇到 would-block
-后直接 rearm。
+后直接 rearm。write attempt 最多推进 64 KiB；payload 仍有剩余时 yield 并
+rearm。该 fairness budget 不改变 complete-write result contract。
 
 effective deadline 取 operation timeout 与外层 structured deadline 的较早值。
 cancellation 只能赢一次，late event 由 slot/generation check 忽略。I/O
@@ -217,17 +220,24 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 
 ## 8. Platform Phase
 
-| 切片 | 必需行为 |
-| --- | --- |
-| P2-TCP-A | bounded owner table、generation check、registration lifecycle、epoll/kqueue numeric-host nonblocking connect |
-| P2-TCP-B | epoll/kqueue 增量 bounded read 与完整 bounded write |
-| P2-TCP-C | bounded blocking pool hostname resolution |
-| P2-TCP-D | native Windows IOCP connect/read/write |
-| P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前 `runtime_unavailable` |
+| 切片 | 必需行为 | 状态 |
+| --- | --- | --- |
+| P2-TCP-A | bounded owner table、generation check、registration lifecycle、epoll/kqueue numeric-host nonblocking connect | 已由 [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) 实现 |
+| P2-TCP-B | epoll/kqueue 增量 bounded read 与完整 bounded write | 已由 [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) 实现 |
+| P2-TCP-C | bounded blocking pool hostname resolution | 未实现 |
+| P2-TCP-D | native Windows IOCP connect/read/write | 未实现 |
+| P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前 `runtime_unavailable` | 未实现 |
 
 A 到 C 阶段，Windows 必须可编译并返回 `Unsupported`，不得求值或记录 secret
 payload。这是显式 phase behavior，不等于 IOCP acceptance。Windows/browser
 证据完成前，RFC 0032 不能进入 `Accepted`。
+
+A/B 实现包含 bounded read/write payload、zero/positive timeout、structured
+cancellation、每个 stream direction 一个 pending operation、精确
+registration/retained-buffer lifecycle counter、Linux/macOS native 执行、
+Windows 求值前明确拒绝与 Nomo example。`shutdown_write`、hostname
+resolution、native IOCP 与 browser adapter 仍是后续切片。这些部分实现证据
+不会把本 RFC 从 `Proposed` 提升为 `Accepted`。
 
 ## 9. Metrics 与 Limit
 
@@ -294,9 +304,10 @@ counter 用于降低这些风险。
 
 ## 13. v0.1 影响与后续问题
 
-在 implementation PR 更新 SPEC/标准库之前，本提案只是 additive `Proposed`
-decision；当前 blocking API 仍是 executable baseline，直到对应 migration PR
-通过全部 gate。
+P2-TCP-A/B 已作为 additive executable slice 更新 SPEC 与标准库：Linux/macOS
+提供 numeric-address suspend connect 和 bounded incremental read/write。
+preview migration window 内，旧 client 行为通过显式 `_blocking` compatibility
+名称保留；listener accept 与 UDP 仍为 blocking。
 
 未来 dedicated byte type 可以替代 `Array<u32>`，但不改变 reactor contract。
 listener/UDP migration、TLS 与 cross-shard stream transfer 都留给聚焦 follow-up，
