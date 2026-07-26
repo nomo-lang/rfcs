@@ -125,7 +125,8 @@ form avoids introducing closures merely to capture a task body. The result is
 - may be moved within that scope;
 - may not be returned, stored globally, captured by a longer-lived value, or
   left unconsumed;
-- may be joined once.
+- is consumed by at most one explicit `task.join` or structured
+  `task.cancel`; otherwise scope exit consumes it through implicit cleanup.
 
 Every child is complete before `task.scope` returns. On normal scope exit,
 unjoined children are cancelled and then joined. On an early `return`, `?`
@@ -143,6 +144,22 @@ Cancellation is cooperative but structured:
   explicit `task.check_cancelled()`;
 - a pending I/O registration or timer is removed before its frame is dropped;
 - cancellation never exposes a partially initialized return value.
+
+For a scope-owned `Task<T>`,
+`task.cancel(handle) -> Result<void, TaskError>` is a suspending, consuming
+cancel-and-join operation. It requests cancellation, propagates that request to
+descendants, waits until the child reaches terminal cleanup, removes its
+pending registrations, drops the child frame, and only then returns. The
+handle cannot be joined or cancelled again. A child that already completed
+normally is still consumed and returns `Ok(void)`; a structured runtime failure
+is returned as `Err`. The current-thread ready path may complete inline, but
+must not allocate or enqueue merely because the API is suspend-capable.
+
+This typed overload is distinct from RFC 0026's synchronous
+`task.cancel(Task)` compatibility operation for an isolated native worker. v0.1
+does not expose a non-consuming request-only operation for `Task<T>`: such an
+API would require a borrowed handle and a later mandatory join, which the
+first affine-handle slice intentionally avoids.
 
 `task.deadline(duration) { ... }` is a scope with a monotonic deadline. An
 earlier parent deadline wins. Timeout is represented by a typed task/runtime
@@ -267,11 +284,15 @@ of the implementation gate.
 
 Positive tests cover direct suspend chains, immediate-ready calls, nested
 scopes, typed results, cancellation, deadlines, selection, early return, `?`,
-and legal immutable locals across suspension.
+and legal immutable locals across suspension. Structured cancellation tests
+cover cancel-before-start, a suspended child with pending timer or I/O,
+descendant propagation, an already-completed child, exactly-once cleanup, and
+the allocation-free current-thread ready path.
 
 Negative tests cover each diagnostic above, including transitive effect calls,
-generic instantiations, handle escape, double join, mutable field/index loans,
-lock guards, and FFI borrows.
+generic instantiations, handle escape, double join, double cancel,
+cancel-after-join, join-after-cancel, mutable field/index loans, lock guards,
+and FFI borrows.
 
 C99 lifecycle tests inspect generated frames and instrument all completion and
 cleanup paths. Native integration tests run cancellation storms and panic

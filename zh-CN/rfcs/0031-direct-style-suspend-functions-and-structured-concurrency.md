@@ -112,7 +112,8 @@ closure。返回值是 `Task<T>`，其中 `T` 是 callee 的返回类型。
 - 归属其词法 scope；
 - 可在 scope 内 move；
 - 不得 return、存入全局、被更长生命周期的值捕获或未消费地离开 scope；
-- 只能 join 一次。
+- 最多被一次显式 `task.join` 或结构化 `task.cancel` 消费；否则由 scope
+  退出时的隐式清理消费。
 
 `task.scope` 返回前所有 child 必须完成。正常退出时，未 join 的 child 先被
 取消，再被 join。提前 `return`、`?` 传播或 panic 时，先取消 sibling，再
@@ -128,6 +129,19 @@ closure。返回值是 `Task<T>`，其中 `T` 是 callee 的返回类型。
   `task.check_cancelled()`；
 - pending I/O registration 或 timer 必须先移除，再 drop frame；
 - 取消不暴露部分初始化的返回值。
+
+对于 scope-owned `Task<T>`，
+`task.cancel(handle) -> Result<void, TaskError>` 是可挂起且消费 handle 的
+cancel-and-join 操作。它请求取消、把请求传播到 descendants、等待 child
+进入终态清理、移除 pending registration、drop child frame，然后才返回。
+该 handle 不能再次 join 或 cancel。已经正常完成的 child 仍会被消费并返回
+`Ok(void)`；结构化 runtime failure 返回 `Err`。current-thread ready path
+可以 inline 完成，但不能仅因为该 API 具备 suspend 能力就 allocation 或入队。
+
+这个 typed overload 不同于 RFC 0026 为隔离 native worker 定义的同步
+`task.cancel(Task)` 兼容操作。v0.1 不为 `Task<T>` 暴露 non-consuming、
+request-only 操作：这种 API 需要 borrowed handle 与后续 mandatory join，
+第一版 affine-handle 切片有意不引入它。
 
 `task.deadline(duration) { ... }` 是带 monotonic deadline 的 scope；更早的
 parent deadline 优先。timeout 由观察到它的操作返回 typed task/runtime error，
@@ -235,10 +249,14 @@ surface，并迁移到 RFC 0032 的 bounded blocking pool；不能把它们当�
 ## 9. 测试计划
 
 正向测试覆盖 direct suspend chain、immediate-ready、nested scope、typed result、
-取消、deadline、select、early return、`?` 与合法 immutable local。
+取消、deadline、select、early return、`?` 与合法 immutable local。结构化取消
+还覆盖 cancel-before-start、带 pending timer 或 I/O 的 suspended child、
+descendant propagation、已经完成的 child、exactly-once cleanup，以及
+current-thread ready path 零 allocation。
 
 负向测试覆盖上述每个诊断，包括 transitive effect、generic instantiation、
-handle escape、double join、mutable field/index loan、lock guard 与 FFI borrow。
+handle escape、double join、double cancel、cancel-after-join、join-after-cancel、
+mutable field/index loan、lock guard 与 FFI borrow。
 
 C99 lifecycle 测试检查生成 frame，并对所有完成/cleanup 路径做计数。native
 集成测试在支持的平台用 sanitizer 执行 cancellation storm 与 panic cleanup。
