@@ -143,9 +143,57 @@ cancel-and-join 操作。它请求取消、把请求传播到 descendants、等�
 request-only 操作：这种 API 需要 borrowed handle 与后续 mandatory join，
 第一版 affine-handle 切片有意不引入它。
 
-`task.deadline(duration) { ... }` 是带 monotonic deadline 的 scope；更早的
-parent deadline 优先。timeout 由观察到它的操作返回 typed task/runtime error，
-不是 panic。
+v0.1 的 cancellation/deadline 源码表面由编译器识别：
+
+```nomo
+task.check_cancelled()
+
+task.deadline(duration) {
+    // structured child 与 direct-style suspend call
+}
+```
+
+两种形式都不引入公开 first-class token。每个 async task 携带隐式 runtime
+cancellation state，并由 child 继承。只有 ownership 与 cross-shard memory
+model 能在不让普通 task-local value 支付 atomic 成本的前提下表达 borrowed
+token observation 后，后续 RFC 才能增加公开 token。
+
+`task.check_cancelled() -> void` 只能在 `suspend fn` 内使用。它不 suspend、
+allocation 或入队。没有观察到 cancellation 或 deadline expiry 时它是 no-op；
+否则执行生成式 child/frame cleanup，并以 structured `cancelled` 或 `timeout`
+runtime outcome 终止当前 task，不会返回下一条源码语句。这样 CPU loop 可以显式
+加入 cooperative checkpoint，同时不会暴露可被用户忽略的 error。current-thread
+backend 可以把显式取消的 child 直接推进到终态；这个 check 也定义了未来
+owner-shard request 的观察方式。
+
+`task.deadline(duration) { ... }` 是带 monotonic deadline 的 structured task
+scope，不是产生 value 的表达式。duration 在进入 body 前只求值一次：
+
+- `duration.millis <= 0` 在 body 执行前立即产生 `timeout`，且不注册 timer；
+- 正 duration 使用 checked saturating monotonic arithmetic，并拥有一个带
+  generation 校验的 timer registration；
+- 继承到的更早 deadline 优先；block 正常完成时 disarm 本地 registration，
+  并恢复 parent deadline；
+- runtime 在进入 body 前、每个 runtime suspension 前后，以及
+  `task.check_cancelled` 处检查 effective deadline；
+- operation 在 effective deadline 的同一时刻 ready 时，先判定 timeout，不恢复
+  该 operation；
+- 这是 cooperative 而非 preemptive：既不 suspend 也不调用
+  `task.check_cancelled` 的源码不会被中断。
+
+deadline 到期后 body 不再恢复。其 child 与 descendant 被取消，pending
+registration 被移除，已初始化 frame value 恰好 drop 一次，当前 task 以
+`TaskError { code: "timeout", ... }` 进入终态。parent 通过 `task.join`
+观察该 outcome；若 child 已经进入 structured failure 后再显式
+`task.cancel`，cancel 返回该 failure。scope cleanup 发现未 join child failure
+时，必须先清理 sibling 再传播，不得静默丢弃；多个非 panic runtime failure
+按 spawn/source order 确定性选择。root task timeout 执行同样清理，并转化为
+有界、secret-safe 的非零进程 runtime error。
+
+`cancelled` 与 `timeout` 是稳定的 structured `TaskError.code`。body 开始前的
+timer capacity/backend failure 使用 RFC 0035 的稳定 timer error contract。
+这些 runtime outcome 与 Nomo panic 保持不同。没有 deadline backend 的 target
+返回 `runtime_unavailable`，且不执行 body。
 
 `task.select` 等待静态枚举操作中的第一个 ready 项。selected arm 执行前先取消
 非 winning registration。select 开始时已经 ready 的多个操作按源码顺序确定性
@@ -254,9 +302,19 @@ surface，并迁移到 RFC 0032 的 bounded blocking pool；不能把它们当�
 descendant propagation、已经完成的 child、exactly-once cleanup，以及
 current-thread ready path 零 allocation。
 
+deadline 测试覆盖 body 求值前的 non-positive expiry、取消 pending timer/I/O
+registration 的 positive deadline、正常完成与 timer disarm、继承到的更早
+deadline、ready/timeout 精确同刻竞争、CPU loop 中的
+`task.check_cancelled`、通过 join 观察 typed `timeout`、未观察 child failure
+传播、root task failure 与 browser `runtime_unavailable`。counter gate 要求
+`task.check_cancelled` 和 immediate-timeout 路径零 allocation/queue traffic、
+退出时无 live registration，并证明 frame/ARC 只清理一次。
+
 负向测试覆盖上述每个诊断，包括 transitive effect、generic instantiation、
 handle escape、double join、double cancel、cancel-after-join、join-after-cancel、
-mutable field/index loan、lock guard 与 FFI borrow。
+mutable field/index loan、lock guard、FFI borrow、同步函数中的 deadline、把
+deadline block 当作 value，以及暂不支持的 nested deadline/control-flow
+位置。
 
 C99 lifecycle 测试检查生成 frame，并对所有完成/cleanup 路径做计数。native
 集成测试在支持的平台用 sanitizer 执行 cancellation storm 与 panic cleanup。
