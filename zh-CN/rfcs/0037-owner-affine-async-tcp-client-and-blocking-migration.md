@@ -224,7 +224,7 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 | --- | --- | --- |
 | P2-TCP-A | bounded owner table、generation check、registration lifecycle、epoll/kqueue numeric-host nonblocking connect | 已由 [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) 实现 |
 | P2-TCP-B | epoll/kqueue 增量 bounded read 与完整 bounded write | 已由 [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) 实现 |
-| P2-TCP-C | bounded blocking pool hostname resolution | 未实现 |
+| P2-TCP-C | bounded blocking pool hostname resolution | 已由 [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) 实现 |
 | P2-TCP-D | native Windows IOCP connect/read/write | 未实现 |
 | P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前 `runtime_unavailable` | 未实现 |
 
@@ -232,12 +232,16 @@ A 到 C 阶段，Windows 必须可编译并返回 `Unsupported`，不得求值�
 payload。这是显式 phase behavior，不等于 IOCP acceptance。Windows/browser
 证据完成前，RFC 0032 不能进入 `Accepted`。
 
-A/B 实现包含 bounded read/write payload、zero/positive timeout、structured
+A/B/C 实现包含 bounded read/write payload、zero/positive timeout、structured
 cancellation、每个 stream direction 一个 pending operation、精确
 registration/retained-buffer lifecycle counter、Linux/macOS native 执行、
-Windows 求值前明确拒绝与 Nomo example。`shutdown_write`、hostname
-resolution、native IOCP 与 browser adapter 仍是后续切片。这些部分实现证据
-不会把本 RFC 从 `Proposed` 提升为 `Accepted`。
+Windows 求值前明确拒绝与 Nomo example。hostname 使用一个惰性 worker 与
+16 个 live-job slot，completion 通过 owner reactor 返回，最多复制 16 个
+candidate，并与按顺序的 connect attempt 共用一个 deadline。queued
+cancellation 会立即完成；已进入系统 resolver 的调用采用 cooperative detach，
+返回后再清理。`shutdown_write`、RFC 0032 的通用 blocking pool、native IOCP
+与 browser adapter 仍是后续切片。这些部分实现证据不会把本 RFC 从
+`Proposed` 提升为 `Accepted`。
 
 ## 9. Metrics 与 Limit
 
@@ -249,7 +253,9 @@ versioned metrics 至少增加：
 - `io_ready_completions`、`io_timeouts`、`io_cancellations`、`io_errors`；
 - `live_io_handles`、`peak_live_io_handles`、`live_io_operations`、
   `peak_live_io_operations`；
-- retained read/write bytes 与 peak retained bytes。
+- retained read/write bytes 与 peak retained bytes；
+- blocking-pool 初始化、thread start/retirement、job queued/started/
+  completed/cancelled/saturation，以及 live/peak thread 与 job counter。
 
 ready path 的 registration 与 queue traffic 都为 0。timeout、cancellation、
 close 与 failure fixture 结束时 live operation、registration、buffer 必须为 0。
@@ -275,8 +281,9 @@ write/receive payload、高层 authorization token、environment value 或无界
 
 确定性 fixture 覆盖 immediate/pending connect、one-byte/maximum read/write、
 partial write、多次 readiness、EOF、zero/positive timeout、各生命周期阶段取消、
-close/late-event、slot reuse、saturation、非法 UTF-8、numeric-only hostname
-rejection、后续 bounded resolution 与 secret-safe error。
+close/late-event、slot reuse、saturation、非法 UTF-8、numeric 零线程执行、
+hostname 成功与 zero-timeout 不初始化、queued/running resolver cancellation、
+精确 resolver capacity overflow 与 secret-safe error。
 
 Linux/macOS 必须 native 执行 epoll/kqueue。P2-TCP-D 前 Windows 验证显式
 unsupported，之后必须 native IOCP；cross-build 不能替代 native gate。
@@ -304,10 +311,11 @@ counter 用于降低这些风险。
 
 ## 13. v0.1 影响与后续问题
 
-P2-TCP-A/B 已作为 additive executable slice 更新 SPEC 与标准库：Linux/macOS
-提供 numeric-address suspend connect 和 bounded incremental read/write。
-preview migration window 内，旧 client 行为通过显式 `_blocking` compatibility
-名称保留；listener accept 与 UDP 仍为 blocking。
+P2-TCP-A/B/C 已作为 additive executable slice 更新 SPEC 与标准库：
+Linux/macOS 提供 numeric-address 或 bounded-hostname suspend connect 和
+bounded incremental read/write。preview migration window 内，旧 client 行为
+通过显式 `_blocking` compatibility 名称保留；listener accept 与 UDP 仍为
+blocking。
 
 未来 dedicated byte type 可以替代 `Array<u32>`，但不改变 reactor contract。
 listener/UDP migration、TLS 与 cross-shard stream transfer 都留给聚焦 follow-up，

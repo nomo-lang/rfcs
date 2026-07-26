@@ -233,7 +233,7 @@ milestone, not a complete Agent networking claim.
 | --- | --- | --- |
 | P2-TCP-A | bounded owner table, generation checks, registration lifecycle, numeric-host nonblocking connect on epoll/kqueue | Implemented by [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) |
 | P2-TCP-B | incremental bounded read and complete bounded write on epoll/kqueue | Implemented by [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) |
-| P2-TCP-C | hostname resolution through the bounded blocking pool | Not implemented |
+| P2-TCP-C | hostname resolution through the bounded blocking pool | Implemented by [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) |
 | P2-TCP-D | IOCP connect/read/write with native Windows execution | Not implemented |
 | P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `runtime_unavailable` | Not implemented |
 
@@ -242,13 +242,17 @@ calls without evaluating or logging secret payloads. This is explicit phased
 behavior, not IOCP acceptance. RFC 0032 cannot become `Accepted` before required
 Windows and browser evidence exists.
 
-The A/B implementation includes bounded read/write payloads, positive and zero
-timeouts, structured cancellation, one pending operation per stream direction,
-exact registration/retained-buffer lifecycle counters, native Linux/macOS
-execution, explicit pre-evaluation Windows rejection, and a Nomo example.
-`shutdown_write`, hostname resolution, native IOCP, and the browser adapter
-remain follow-up slices. These partial implementation results do not change
-this RFC from `Proposed`.
+The A/B/C implementation includes bounded read/write payloads, positive and
+zero timeouts, structured cancellation, one pending operation per stream
+direction, exact registration/retained-buffer lifecycle counters, native
+Linux/macOS execution, explicit pre-evaluation Windows rejection, and Nomo
+examples. Hostnames use one lazy worker and 16 live-job slots, return
+completion through the owner reactor, copy at most 16 candidates, and share
+one deadline with ordered connect attempts. Queued cancellation is immediate;
+an in-progress system resolver call is cooperatively detached and cleaned
+after it returns. `shutdown_write`, the general RFC 0032 blocking pool, native
+IOCP, and the browser adapter remain follow-up slices. These partial
+implementation results do not change this RFC from `Proposed`.
 
 ## 9. Metrics and Limits
 
@@ -260,7 +264,10 @@ Versioned metrics add at least:
 - `io_ready_completions`, `io_timeouts`, `io_cancellations`, and `io_errors`;
 - `live_io_handles`, `peak_live_io_handles`, `live_io_operations`, and
   `peak_live_io_operations`;
-- retained read/write bytes and peak retained bytes.
+- retained read/write bytes and peak retained bytes;
+- blocking-pool initialization, thread start/retirement, job
+  queued/started/completed/cancelled/saturation, and live/peak thread and job
+  counters.
 
 Ready paths have zero registrations and queue traffic. Timeout, cancellation,
 close, and failure fixtures end with zero live operations, registrations, and
@@ -289,8 +296,9 @@ counter/leak assertions.
 Deterministic fixtures cover immediate/pending connect, one-byte and maximum
 read/write boundaries, partial writes, multiple readiness cycles, EOF, zero and
 positive timeout, cancellation at every lifecycle phase, close/late-event and
-slot-reuse races, saturation, invalid UTF-8, numeric-only hostname rejection,
-later bounded resolution, and secret-safe errors.
+slot-reuse races, saturation, invalid UTF-8, numeric zero-thread execution,
+hostname success and zero-timeout no-initialization, queued/running resolver
+cancellation, exact resolver-capacity overflow, and secret-safe errors.
 
 Linux and macOS require native epoll/kqueue execution. Windows requires explicit
 unsupported behavior before P2-TCP-D and native IOCP execution afterward;
@@ -319,11 +327,11 @@ fixtures, and exact lifecycle counters mitigate them.
 
 ## 13. v0.1 Impact and Open Follow-Ups
 
-P2-TCP-A/B are additive executable slices and update the SPEC and standard
-library with numeric-address suspend connect plus bounded incremental
-read/write on Linux and macOS. The old client behavior remains available
-through explicit `_blocking` compatibility names for the preview migration
-window. Listener accept and UDP remain blocking.
+P2-TCP-A/B/C are additive executable slices and update the SPEC and standard
+library with numeric-address or bounded-hostname suspend connect plus bounded
+incremental read/write on Linux and macOS. The old client behavior remains
+available through explicit `_blocking` compatibility names for the preview
+migration window. Listener accept and UDP remain blocking.
 
 A dedicated byte type may later replace `Array<u32>` without changing the
 reactor contract. Listener/UDP migration, TLS, and cross-shard stream transfer
