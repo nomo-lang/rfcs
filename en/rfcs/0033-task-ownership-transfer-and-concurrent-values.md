@@ -12,7 +12,7 @@
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | Send, Sync, Local, Freeze, move, channels, locks, concurrent collections, ARC, COW |
-| Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0004](./0004-mutable-borrow-uniqueness.md), [RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md), [RFC 0019](./0019-typed-ffi-handles-callbacks-and-bindings.md), [RFC 0030](./0030-collection-literals-indexing-and-ordered-map.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md) |
+| Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0004](./0004-mutable-borrow-uniqueness.md), [RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md), [RFC 0019](./0019-typed-ffi-handles-callbacks-and-bindings.md), [RFC 0030](./0030-collection-literals-indexing-and-ordered-map.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md), [RFC 0036](./0036-bounded-channels-publication-moves-and-static-select.md) |
 
 ## 1. Summary
 
@@ -131,6 +131,10 @@ multi-producer scheduling order is not promised.
 RFC 0031's `task.select` can select channel send/receive, timer, task join, and
 reactor operations. Registration, winner election, cancellation of losing
 arms, and moved-value recovery must be atomic and exactly once.
+
+RFC 0036 fixes the source-defined channel API, unconditional consuming-binding
+rule with a typed rollback owner, static select arm syntax, capacity bounds,
+and phased acceptance gates for these requirements.
 
 ## 7. Locks and Guards
 

@@ -12,7 +12,7 @@
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | suspend 函数、effect、stackless coroutine、结构化并发、取消、ARC、C99 |
-| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0004](./0004-mutable-borrow-uniqueness.md)、[RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md)、[RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)、[RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) |
+| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0004](./0004-mutable-borrow-uniqueness.md)、[RFC 0010](./0010-constrained-generics-and-static-interface-dispatch.md)、[RFC 0015](./0015-source-defined-standard-library-and-intrinsics.md)、[RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)、[RFC 0036](./0036-bounded-channels-publication-moves-and-static-select.md) |
 
 ## 1. 摘要
 
@@ -197,7 +197,8 @@ timer capacity/backend failure 使用 RFC 0035 的稳定 timer error contract。
 
 `task.select` 等待静态枚举操作中的第一个 ready 项。selected arm 执行前先取消
 非 winning registration。select 开始时已经 ready 的多个操作按源码顺序确定性
-选择。arm 具体语法可以在 RFC 变为 `Accepted` 前细化，但这些语义不变。
+选择。RFC 0036 在不改变这些语义的前提下固定 static arm 语法、类型化 channel
+operation 与 losing-arm ownership。
 
 detached work 不是普通逃生口。`task.daemon_scope` capability 只提供给进程
 root 或 host embedding API，并必须声明 shutdown deadline 与 error sink。
@@ -347,9 +348,9 @@ slice；RFC 0034 的门禁全部满足前，本 RFC 不能变为 `Accepted`。
 **提议决定：**采用显式 `suspend fn`、direct-style suspend call 与编译器强制的
 structured task scope；第一版不增加 `await`、隐式并发或通用 detached task。
 
-`task.select` arm 拼写和 daemon capability 构造方式可在评审中细化；effect
-边界、stackless lowering、structured lifetime 与 exactly-once drop 不是开放的
-实现选项。
+RFC 0036 固定 `task.select` arm 的拼写与 ownership。daemon capability 构造方式
+仍可在评审中细化；effect 边界、stackless lowering、structured lifetime 与
+exactly-once drop 不是开放的实现选项。
 
 ## 12. 参考
 
