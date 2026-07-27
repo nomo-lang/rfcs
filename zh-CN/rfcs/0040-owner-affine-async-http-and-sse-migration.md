@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0040 |
 | 标题 | Owner-affine async HTTP/HTTPS、SSE 与 blocking migration |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#61`](https://github.com/nomo-lang/nomo/pull/61) 的 P2-HTTP-A public suspend ABI 与 migration boundary；P2-HTTP-B–F 尚未实现 |
 | 作者 | Nomo Language Working Group |
 | 创建时间 | 2026-07-27 |
 | 关联主题 | HTTP、HTTPS、TLS、SSE、async I/O、reactor、owner affinity、connection reuse、migration |
@@ -145,8 +147,8 @@ pub suspend fn next_sse(
     max_event_bytes: u64
 ) -> Result<Option<SseEvent>, HttpError>
 
-pub fn cancel_stream(stream: HttpStream) -> void
-pub fn close_stream(stream: HttpStream) -> void
+pub fn cancel_stream(stream: HttpStream)
+pub fn close_stream(stream: HttpStream)
 ```
 
 Direct-style call 要求 caller 为 `suspend`。`get` 与 `post` 通过构造一个
@@ -184,8 +186,8 @@ http.next_sse_blocking(
     stream: BlockingHttpStream,
     max_event_bytes: u64
 ) -> Result<Option<SseEvent>, HttpError>
-http.cancel_stream_blocking(stream: BlockingHttpStream) -> void
-http.close_stream_blocking(stream: BlockingHttpStream) -> void
+http.cancel_stream_blocking(stream: BlockingHttpStream)
+http.close_stream_blocking(stream: BlockingHttpStream)
 ```
 
 每个 `_blocking` request 或 pull operation 在 suspend call graph 中继续被
@@ -437,16 +439,21 @@ fd/handle/thread count、live idle connection 与 retained buffer。第一份正
 
 | 切片 | 必须实现的行为 | 状态 |
 | --- | --- | --- |
-| P2-HTTP-A | public suspend/handle/migration contract、`E0870`/`E0890`/`E0891`、typed lowering ABI、blocking compatibility cleanup/sanitizer 回归与 benchmark fixture | Planned |
+| P2-HTTP-A | public suspend/handle/migration contract、`E0870`/`E0890`/`E0891`、typed lowering ABI、blocking compatibility cleanup/sanitizer 回归与 benchmark fixture | 由 [`nomo#61`](https://github.com/nomo-lang/nomo/pull/61) 实现 |
 | P2-HTTP-B | Unix buffered send/open 通过 owner-local curl multi、bounded resolver、TLS fixture、connection reuse、timeout/cancel 与精确 lifecycle counter | Planned |
 | P2-HTTP-C | Unix incremental text/SSE pull、terminal cancellation、slot reuse、limit 与 epoll/kqueue native stress | Planned |
 | P2-HTTP-D | asynchronous WinHTTP send/stream parity、owner wakeup、bounded connection reuse、late-callback drain 与 Windows native stress | Planned |
 | P2-HTTP-E | browser pre-evaluation unsupported boundary 与 zero-import release-WASM 证据 | Planned |
 | P2-HTTP-F | Nomo OpenAI-compatible buffered/SSE 示例、saturation/low-memory storm 与 RFC 0034 HTTP/SSE report | Planned |
 
-P2-HTTP-A 开始前，本 RFC 必须先以 `Proposed` 合并。每个 implementation slice
+本 RFC 已先以 `Proposed` 合并，之后才开始 P2-HTTP-A。后续每个 implementation slice
 通过聚焦 signed branch/PR 落地，并包含 Nomo example、compiler/CLI test、双语
 stdlib/SPEC/docs 更新、native platform 证据与精确 cleanup counter。
+
+P2-HTTP-A 已建立 public direct-style suspend ABI、Local owner handle、blocking
+compatibility 名称、诊断、typed lowering boundary 与 zero-thread ready placeholder；
+它没有实现 native curl-multi/WinHTTP transport progress、browser capability closure
+或 P2-HTTP-F resource/performance report，这些仍属于 P2-HTTP-B–F。
 
 全部所需 platform、correctness、resource、compatibility 与公平 benchmark gate
 完成前，本 RFC 保持 `Proposed`。仅落地文档或单个实现切片不会让它变为

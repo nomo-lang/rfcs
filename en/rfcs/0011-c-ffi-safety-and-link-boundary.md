@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0011 |
 | Title | The safety, ownership, and link boundary of C FFI |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: `extern "C"`, call-site `unsafe`, primitive/CString/Opaque mappings, manifest linker metadata, package-relative C sources, and checksum/publish/vendor aggregation have tests |

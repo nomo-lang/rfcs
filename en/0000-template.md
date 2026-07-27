@@ -9,14 +9,16 @@
 | --- | --- |
 | Number | NNNN |
 | Title | <one-line title> |
-| Status | Draft |
+| Decision Status | Draft |
+| Implementation Status | Not implemented |
 | Author | <author> |
 | Created | YYYY-MM-DD |
 | Related topics | <e.g. error handling, pattern matching, name resolution> |
 | Related RFCs | <e.g. [RFC 0001](./0001-example.md), none> |
 
-> Status field values: `Draft` / `Proposed` / `Accepted` / `Rejected` / `Deferred`.
-> The meaning of each status is in this language directory's process README. This template defaults to `Draft`.
+> Decision status values: `Draft` / `Proposed` / `Accepted` / `Rejected` / `Deferred`.
+> Implementation status values: `Not implemented` / `Partially implemented` / `Implemented`.
+> The meaning of each decision status is in this language directory's process README. This template defaults to `Draft`.
 > After copying to `rfcs/NNNN-title.md`, same-directory RFC links use `./0001-example.md`, and the process document link uses `../README.md`.
 
 ---

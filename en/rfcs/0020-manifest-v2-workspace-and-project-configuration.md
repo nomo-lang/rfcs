@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0020 |
 | Title | Manifest v2, Workspace Membership, and Project Configuration |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-17 |
 | Related topics | manifest, package management, workspace, migration, registry trust |

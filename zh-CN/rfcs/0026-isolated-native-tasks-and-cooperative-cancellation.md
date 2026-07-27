@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0026 |
 | 标题 | 隔离式 native task 与协作取消 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | [`nomo#15`](https://github.com/nomo-lang/nomo/pull/15)，merge [`8e48862`](https://github.com/nomo-lang/nomo/commit/8e4886217069b9ebc3617f70f6b971a80f869f44) |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | concurrency、task、isolation、cancellation、C99 backend、Agent |
@@ -120,7 +122,7 @@ API 或 FFI declaration 中。
 ### 4.2 Worker 声明与 Spawn
 
 ```rust
-package parallel_agent_tools.main
+package parallel_agent_tools
 
 import std.http
 import std.task

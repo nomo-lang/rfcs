@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0017 |
 | 标题 | Target Triple、条件依赖与交叉编译 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已完整实现：canonical target、受限 manifest predicate、完整条件 lockfile、按 target 过滤的 workspace/package/module/FFI graph、隔离产物目录，以及真实 macOS 与 GNU/Linux cross-build CI 路径均已落地 |

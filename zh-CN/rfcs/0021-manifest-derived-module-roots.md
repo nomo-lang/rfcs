@@ -11,7 +11,7 @@
 | 决策状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-23 |
-| 实现状态 | Not implemented（尚未实现） |
+| 实现状态 | Not implemented（未实现） |
 | 关联主题 | package declaration、module identity、dependency alias、manifest migration、LSP |
 | 关联 RFC | [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0020](./0020-manifest-v2-workspace-and-project-configuration.md) |
 

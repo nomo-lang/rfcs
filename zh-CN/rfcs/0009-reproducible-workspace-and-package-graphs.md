@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0009 |
 | 标题 | 可复现的 Workspace、Package 与 Module 图 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：`WorkspaceGraph -> PackageGraph -> ModuleGraph`、稳定拓扑序、workspace lockfile、checksum、locked/offline/frozen、vendor 与 cycle/conflict 测试 |

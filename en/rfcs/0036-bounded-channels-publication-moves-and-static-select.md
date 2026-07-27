@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0036 |
 | Title | Bounded channels, publication moves, and static select |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | P3-A [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41), P3-B [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42), P3-C [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43); P3-D/P4 remain open |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-26 |
 | Topics | channel, select, move publication, Send, backpressure, cancellation, C99 |
@@ -114,7 +116,7 @@ pub suspend fn send<T>(
 pub suspend fn receive<T>(channel: Channel<T>) -> Option<T>
 pub fn try_send<T>(channel: Channel<T>, value: T) -> ChannelTrySend<T>
 pub fn try_receive<T>(channel: Channel<T>) -> ChannelTryReceive<T>
-pub fn close<T>(channel: Channel<T>) -> void
+pub fn close<T>(channel: Channel<T>)
 ```
 
 All functions are compiler-known intrinsics with source-defined signatures and
@@ -471,17 +473,20 @@ select must contain no channel storage, atomic shim call, or select metadata.
 
 Implementation is split into reviewable PRs:
 
-1. **P3-A capability and move dataflow:** compiler-known `Send` derivation,
+1. **P3-A capability and move dataflow — implemented by
+   [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41):** compiler-known `Send` derivation,
    publication move/use-after-move analysis, IR ownership bits, and tests; no
    public channel yet.
-2. **P3-B current-thread channel:** constructor, send/receive, try operations,
+2. **P3-B current-thread channel — implemented by
+   [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42):** constructor, send/receive, try operations,
    close, managed-value detach/drop, counters, native/browser capability gate.
-3. **P3-C static receive/timer select:** exact parser/formatter form, immediate
+3. **P3-C static receive/timer select — implemented by
+   [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43):** exact parser/formatter form, immediate
    source ordering, pending registration, cancellation, deadline, and loser
    cleanup.
-4. **P3-D send/join select:** staged moved values, affine join ownership, early
+4. **P3-D send/join select — planned:** staged moved values, affine join ownership, early
    exits, and complete diagnostics.
-5. **P4 cross-shard publication:** private atomic shim, owner wakeup, stress
+5. **P4 cross-shard publication — planned:** private atomic shim, owner wakeup, stress
    tests, and per-core evidence.
 
 RFCs 0031, 0033, and this RFC remain `Proposed` until the implementation,

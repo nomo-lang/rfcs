@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0023 |
 | Title | Pull-based HTTP text streaming and SSE |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
 | Implementation | Implemented by [nomo PR #12](https://github.com/nomo-lang/nomo/pull/12); acceptance gates passed on 2026-07-24 |
@@ -108,8 +109,8 @@ http.next_sse(
     max_event_bytes: u64
 ) -> Result<Option<SseEvent>, HttpError>
 
-http.cancel_stream(stream: HttpStream) -> void
-http.close_stream(stream: HttpStream) -> void
+http.cancel_stream(stream: HttpStream)
+http.close_stream(stream: HttpStream)
 ```
 
 `open_stream` validates and sends the same `GET` or `POST` request accepted by

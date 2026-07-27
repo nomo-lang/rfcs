@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0035 |
 | 标题 | 单调时钟挂起 timer 与阻塞 sleep 迁移 |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | blocking gate [`nomo#26`](https://github.com/nomo-lang/nomo/pull/26)、owner-local timer [`nomo#28`](https://github.com/nomo-lang/nomo/pull/28)、deadline/cancellation [`nomo#40`](https://github.com/nomo-lang/nomo/pull/40) |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | suspend function、timer、monotonic clock、取消、blocking compatibility、C99 |
@@ -43,8 +45,8 @@ RFC 0031/0032 要求 timer wheel、deadline、取消和 ready fast path，但尚
 
 当前实现包含：
 
-- 同步 `time.sleep(Duration) -> void`；
-- 同步 `time.sleep_millis(i64) -> void`；
+- 同步 `time.sleep(Duration)`；
+- 同步 `time.sleep_millis(i64)`；
 - 作为首个 suspend runtime primitive 的 `task.yield_now()`；
 - 有意在 async executor 之外使用 blocking sleep 的 legacy `task fn` worker
   和 cron 示例；
@@ -73,7 +75,7 @@ pub suspend fn sleep(duration: Duration) -> Result<void, TaskError>
 典型调用仍保持 direct-style：
 
 ```nomo
-package agent.main
+package agent
 
 import std.result
 import std.task

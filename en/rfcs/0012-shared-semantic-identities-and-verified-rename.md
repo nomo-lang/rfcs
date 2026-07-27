@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0012 |
 | Title | Shared semantic identities and type-checked rename |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: compiler semantic APIs, declaration-aware references, receiver/member ownership, workspace references, dependency definitions, and post-edit rename checking have compiler/LSP tests |

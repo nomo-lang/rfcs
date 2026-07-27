@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0029 |
 | Title | Bounded UTC cron schedule calculation |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
+| Implementation Evidence | [`nomo#18`](https://github.com/nomo-lang/nomo/pull/18), merge [`bf290fd`](https://github.com/nomo-lang/nomo/commit/bf290fd75e235c083c5b9df441e9043292076096) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | cron, scheduling, time, Agent, bounds, browser WASM |

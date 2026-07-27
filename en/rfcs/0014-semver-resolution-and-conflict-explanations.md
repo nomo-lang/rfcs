@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0014 |
 | Title | Semantic Version Resolution and Conflict Explanations |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: strict constraints, deterministic project/workspace single-version selection, stable minimal conflicts, registry-index caching, exact lockfile output, range-aware locked validation, constrained precise updates, and locked/offline/yank/prerelease/conflict tests |

@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0012 |
 | 标题 | 共享语义身份与类型检查后的 Rename |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：compiler semantic API、声明感知 reference、receiver/member owner、workspace reference、dependency definition、rename edit 后重检均有 compiler/LSP 测试 |

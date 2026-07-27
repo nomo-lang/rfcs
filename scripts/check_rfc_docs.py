@@ -12,8 +12,20 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[1]
 LOCALES = ("en", "zh-CN")
 RFC_FILE = re.compile(r"^(?P<number>\d{4})-[a-z0-9-]+\.md$")
-INDEX_LINK = re.compile(r"\[(?P<number>\d{4})\]\(\./rfcs/(?P<file>[^)]+\.md)\)")
+INDEX_ROW = re.compile(
+    r"^\| \[(?P<number>\d{4})\]\(\./rfcs/(?P<file>[^)]+\.md)\)"
+    r" \| .*? \| (?P<decision>[^|]+) \| (?P<implementation>[^|]+) \|"
+)
 MARKDOWN_LINK = re.compile(r"\]\((?P<target>[^)]+)\)")
+LEGACY_MAIN_PACKAGE = re.compile(
+    r"\bpackage\s+[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\.main\b"
+)
+DECLARATION_VOID = re.compile(
+    r"\b(?:pub\s+)?(?:suspend\s+)?fn\s+[A-Za-z_][A-Za-z0-9_.]*"
+    r"(?:<[^>\n]+>)?\([^)\n]*\)\s*->\s*void\b"
+)
+DECISION_VALUES = {"Draft", "Proposed", "Accepted", "Rejected", "Deferred"}
+IMPLEMENTATION_VALUES = {"Not implemented", "Partially implemented", "Implemented"}
 
 
 def fail(message: str, errors: list[str]) -> None:
@@ -35,18 +47,23 @@ def rfc_inventory(locale: str, errors: list[str]) -> dict[str, Path]:
     return inventory
 
 
-def index_inventory(locale: str, errors: list[str]) -> dict[str, str]:
+def index_inventory(
+    locale: str, errors: list[str]
+) -> dict[str, tuple[str, str, str]]:
     path = ROOT / locale / "README.md"
-    entries: dict[str, str] = {}
+    entries: dict[str, tuple[str, str, str]] = {}
     for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        match = INDEX_LINK.search(line)
+        match = INDEX_ROW.match(line)
         if match is None:
             continue
         number = match.group("number")
-        filename = match.group("file")
         if number in entries:
             fail(f"{path.relative_to(ROOT)}:{line_number}: duplicate index {number}", errors)
-        entries[number] = filename
+        entries[number] = (
+            match.group("file"),
+            match.group("decision").strip(),
+            match.group("implementation").strip(),
+        )
     return entries
 
 
@@ -58,29 +75,91 @@ def metadata_value(text: str, labels: tuple[str, ...]) -> str | None:
     return None
 
 
-def check_metadata(locale: str, inventory: dict[str, Path], errors: list[str]) -> None:
-    decision_labels = ("Decision Status", "Status") if locale == "en" else ("决策状态", "状态")
+def normalized_status(value: str) -> str:
+    return value.split("（", 1)[0].strip()
+
+
+def check_metadata(
+    locale: str, inventory: dict[str, Path], errors: list[str]
+) -> dict[str, tuple[str, str]]:
+    decision_label = "Decision Status" if locale == "en" else "决策状态"
     implementation_label = "Implementation Status" if locale == "en" else "实现状态"
+    evidence_label = "Implementation Evidence" if locale == "en" else "实现证据"
+    statuses: dict[str, tuple[str, str]] = {}
 
     for number, path in inventory.items():
         text = path.read_text(encoding="utf-8")
-        decision = metadata_value(text, decision_labels)
+        decision = metadata_value(text, (decision_label,))
         implementation = metadata_value(text, (implementation_label,))
         if decision is None:
-            fail(f"{path.relative_to(ROOT)}: missing decision/status metadata", errors)
-        if metadata_value(text, (decision_labels[0],)) is not None and implementation is None:
+            fail(f"{path.relative_to(ROOT)}: missing {decision_label}", errors)
+            continue
+        if implementation is None:
+            fail(f"{path.relative_to(ROOT)}: missing {implementation_label}", errors)
+            continue
+        normalized_decision = normalized_status(decision)
+        normalized_implementation = normalized_status(implementation)
+        if normalized_decision not in DECISION_VALUES:
             fail(
-                f"{path.relative_to(ROOT)}: decision status requires implementation status",
+                f"{path.relative_to(ROOT)}: invalid decision status {decision}",
                 errors,
             )
-        if number in {"0021", "0041"}:
-            if decision is None or not decision.startswith("Proposed"):
-                fail(f"{path.relative_to(ROOT)}: must initially remain Proposed", errors)
-            if implementation is None or not implementation.startswith("Not implemented"):
-                fail(
-                    f"{path.relative_to(ROOT)}: must initially remain Not implemented",
-                    errors,
-                )
+        if normalized_implementation not in IMPLEMENTATION_VALUES:
+            fail(
+                f"{path.relative_to(ROOT)}: invalid implementation status {implementation}",
+                errors,
+            )
+        if (
+            int(number) >= 26
+            and normalized_implementation != "Not implemented"
+            and metadata_value(text, (evidence_label,)) is None
+        ):
+            fail(
+                f"{path.relative_to(ROOT)}: implemented RFC 0026+ requires "
+                f"{evidence_label}",
+                errors,
+            )
+        statuses[number] = (decision, implementation)
+    return statuses
+
+
+def check_canonical_current_docs(errors: list[str]) -> None:
+    for locale in LOCALES:
+        for path in sorted((ROOT / locale).rglob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            relative = path.relative_to(ROOT)
+            if path.name != "0021-manifest-derived-module-roots.md":
+                match = LEGACY_MAIN_PACKAGE.search(text)
+                if match is not None:
+                    fail(
+                        f"{relative}: non-migration docs use legacy module root "
+                        f"{match.group(0)}",
+                        errors,
+                    )
+            if path.name != "0041-canonical-implicit-void-return-declarations.md":
+                match = DECLARATION_VOID.search(text)
+                if match is not None:
+                    fail(
+                        f"{relative}: non-compatibility docs use declaration void "
+                        f"{match.group(0)}",
+                        errors,
+                    )
+
+
+def check_documented_commands(errors: list[str]) -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for command, script in (
+        ("python3 scripts/check_rfc_docs.py", ROOT / "scripts/check_rfc_docs.py"),
+        (
+            "python3 scripts/check_nomo_snippets.py",
+            ROOT / "scripts/check_nomo_snippets.py",
+        ),
+        ("python3 scripts/check_release_set.py", ROOT / "scripts/check_release_set.py"),
+    ):
+        if command not in readme:
+            fail(f"README.md: missing documented validation command {command}", errors)
+        if not script.is_file():
+            fail(f"README.md: documented script does not exist: {script.name}", errors)
 
 
 def check_local_links(errors: list[str]) -> None:
@@ -110,24 +189,36 @@ def main() -> int:
     if en_names != zh_names:
         fail("en/rfcs and zh-CN/rfcs inventories must match exactly", errors)
 
+    metadata: dict[str, dict[str, tuple[str, str]]] = {}
     for locale in LOCALES:
         index = index_inventory(locale, errors)
-        actual = {number: path.name for number, path in inventories[locale].items()}
-        if index != actual:
-            missing = sorted(set(actual) - set(index))
-            extra = sorted(set(index) - set(actual))
+        actual_files = {number: path.name for number, path in inventories[locale].items()}
+        index_files = {number: value[0] for number, value in index.items()}
+        if index_files != actual_files:
+            missing = sorted(set(actual_files) - set(index_files))
+            extra = sorted(set(index_files) - set(actual_files))
             mismatched = sorted(
                 number
-                for number in set(actual) & set(index)
-                if actual[number] != index[number]
+                for number in set(actual_files) & set(index_files)
+                if actual_files[number] != index_files[number]
             )
             fail(
                 f"{locale}/README.md index mismatch: "
                 f"missing={missing}, extra={extra}, wrong_file={mismatched}",
                 errors,
             )
-        check_metadata(locale, inventories[locale], errors)
+        metadata[locale] = check_metadata(locale, inventories[locale], errors)
+        for number in sorted(set(index) & set(metadata[locale])):
+            indexed_status = index[number][1:]
+            if indexed_status != metadata[locale][number]:
+                fail(
+                    f"{locale}/README.md: RFC {number} index status "
+                    f"{indexed_status} != metadata {metadata[locale][number]}",
+                    errors,
+                )
 
+    check_canonical_current_docs(errors)
+    check_documented_commands(errors)
     check_local_links(errors)
 
     if errors:

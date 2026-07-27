@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0001 |
 | 标题 | `?` 传播与缺少自动错误转换的体验矛盾 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-06-18 |
 | 实现状态 | 已落地：`Result`/`Option` 后缀 `?`、同 carrier 早退及 `std.result.map_err(named_converter)?` 均有编译器与运行测试覆盖 |

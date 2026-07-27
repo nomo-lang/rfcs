@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0027 |
 | Title | Bundled SQLite persistence and pull-based queries |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
+| Implementation Evidence | [`nomo#16`](https://github.com/nomo-lang/nomo/pull/16), merge [`a6405a5`](https://github.com/nomo-lang/nomo/commit/a6405a55e9a98434ec95b536fc1585b8e381ebb4) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | SQLite, persistence, database, standard library, C99 backend, Agent |

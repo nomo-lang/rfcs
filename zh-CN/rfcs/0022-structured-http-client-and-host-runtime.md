@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0022 |
 | 标题 | 结构化 HTTP client 与工具链托管 host runtime |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-24 |
 | 实现状态 | 已由 [nomo PR #11](https://github.com/nomo-lang/nomo/pull/11) 实现；2026-07-24 通过 acceptance gate |

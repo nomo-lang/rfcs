@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0030 |
 | 标题 | 集合字面量、索引与有序 Map |
-| 状态 | Accepted |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | [`nomo#19`](https://github.com/nomo-lang/nomo/pull/19)，merge [`8cb9fe1`](https://github.com/nomo-lang/nomo/commit/8cb9fe1cc39ca63c3bfeeda0dc2a11a35bfe5318) |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 主题 | 数组、索引、COW、泛型、Map、确定性、Agent |
@@ -62,7 +64,7 @@ map.contains_key<K, V>(map: Map<K, V>, key: K) -> bool
 map.get<K, V>(map: Map<K, V>, key: K) -> Option<V>
 map.set<K, V>(mut map: Map<K, V>, key: K, value: V) -> Option<V>
 map.remove<K, V>(mut map: Map<K, V>, key: K) -> Option<V>
-map.clear<K, V>(mut map: Map<K, V>) -> void
+map.clear<K, V>(mut map: Map<K, V>)
 map.keys<K, V>(map: Map<K, V>) -> Array<K>
 map.values<K, V>(map: Map<K, V>) -> Array<V>
 ```

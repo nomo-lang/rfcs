@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0001 |
 | Title | The experience tension between `?` propagation and the lack of automatic error conversion |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: postfix `?` for `Result`/`Option`, same-carrier early return, and `std.result.map_err(named_converter)?` have compiler and runtime coverage |

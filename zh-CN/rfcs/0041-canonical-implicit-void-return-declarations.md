@@ -9,7 +9,7 @@
 | 编号 | 0041 |
 | 标题 | Canonical 隐式 `void` 返回声明 |
 | 决策状态 | Proposed（已提案） |
-| 实现状态 | Not implemented（尚未实现） |
+| 实现状态 | Not implemented（未实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-27 |
 | 关联主题 | function declaration、method、suspend function、interface、extern declaration、formatter、doc、LSP、grammar |

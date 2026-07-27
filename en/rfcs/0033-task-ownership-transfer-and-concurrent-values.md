@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0033 |
 | Title | Task ownership transfer and concurrent values |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | Publication moves in [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41) and current-thread channel/select consumers in [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42) and [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | Send, Sync, Local, Freeze, move, channels, locks, concurrent collections, ARC, COW |

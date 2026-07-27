@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0031 |
 | Title | Direct-style suspend functions and structured concurrency |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | Suspend semantics and structured slices from [`nomo#20`](https://github.com/nomo-lang/nomo/pull/20) through [`nomo#40`](https://github.com/nomo-lang/nomo/pull/40), plus loop-carried state in [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | suspend functions, effects, stackless coroutines, structured concurrency, cancellation, ARC, C99 |
@@ -87,7 +89,7 @@ The following effect rules are mandatory:
    monomorphization.
 4. FFI functions are synchronous unless a toolchain-owned runtime intrinsic
    explicitly exposes a pollable operation to a `suspend fn`.
-5. A program may use `suspend fn main() -> void` or
+5. A program may use `suspend fn main()` or
    `suspend fn main() -> Result<void, E>` as its runtime entry. A synchronous
    `fn main` keeps the existing startup path and does not initialize async
    runtime state.
@@ -176,7 +178,7 @@ implicit runtime cancellation state inherited by its children. A later RFC may
 add borrowed token observation only after the ownership and cross-shard memory
 model can express it without turning ordinary task-local values atomic.
 
-`task.check_cancelled() -> void` is available only inside `suspend fn`. It does
+`task.check_cancelled()` is available only inside `suspend fn`. It does
 not suspend, allocate, or enqueue. When no cancellation or expired deadline is
 visible it is a no-op. Otherwise it performs the generated child/frame cleanup
 and terminates the current task with the structured `cancelled` or `timeout`

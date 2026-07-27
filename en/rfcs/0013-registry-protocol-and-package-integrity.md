@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0013 |
 | Title | Registry protocol, authentication, and package integrity |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: file/HTTP/HTTPS registries, TLS verification, metadata/index, archive checksums, cache, publish/search/yank/login/owner, and bearer-token tests |

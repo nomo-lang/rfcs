@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0002 |
 | Title | The ergonomics of `match` lacking the `_` wildcard arm and nested destructuring |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: `_` remains rejected in `match`; `let else` and `if let` are covered by parser, type-checker, C-backend, and example tests |

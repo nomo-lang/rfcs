@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0019 |
 | 标题 | 类型化 FFI Handle、Callback 与 Binding |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已实现：nominal handle、显式 nullability 与 ownership metadata、受限 callback、target-aware `repr(C)` layout、确定性 header binding、provenance 和真实 C 集成测试均已落地 |

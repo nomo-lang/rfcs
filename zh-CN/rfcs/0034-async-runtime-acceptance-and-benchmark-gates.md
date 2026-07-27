@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0034 |
 | 标题 | 异步 runtime 验收与基准门禁 |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#21`](https://github.com/nomo-lang/nomo/pull/21)/[`nomo#27`](https://github.com/nomo-lang/nomo/pull/27) 的 harness/counter、[`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 的 process evidence、[`nomo#60`](https://github.com/nomo-lang/nomo/pull/60) 的 CPU baseline |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | performance、memory、benchmark、Go comparison、low-end device、cross-platform、correctness |

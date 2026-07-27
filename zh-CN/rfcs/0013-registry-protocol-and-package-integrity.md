@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0013 |
 | 标题 | Registry 协议、认证与包完整性 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：file/HTTP/HTTPS registry、TLS 验证、metadata/index、archive checksum、cache、publish/search/yank/login/owner 与 bearer token 测试 |

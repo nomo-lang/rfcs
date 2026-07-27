@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0003 |
 | Title | The v0.1 runtime cost and degradation strategy of value semantics + reference counting + copy-on-write |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: immutable `string` sharing uses non-atomic RC; `Array<T>` uses non-atomic RC+COW with retain/release, early-cleanup, and write-separation coverage |

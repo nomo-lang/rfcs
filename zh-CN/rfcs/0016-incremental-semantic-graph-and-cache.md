@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0016 |
 | 标题 | 增量语义图与持久化缓存 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已接受基线：compiler-owned query key、内容指纹、依赖边、传递失效、统计/snapshot、保守 semantic/LSP cache、带 schema 版本的持久化 check/C-codegen value、原子写入、容量回收、损坏恢复与随机 clean 等价性测试均已落地 |

@@ -89,7 +89,7 @@ http = { package = "nomo-lang/http", git = "https://github.com/nomo-lang/http.gi
 源码 import 使用 dependency alias：
 
 ```nomo
-package app.main
+package app
 
 import json.parser
 import local_utils.path

@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0015 |
 | 标题 | 标准库源码化与受控 Intrinsic 身份 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已实现：intrinsic 清单、经过校验的 source contract、核心、扩展、网络、HTTP 与 FFI 源码 API、源码驱动的 doc/LSP 导航与发行包均已存在；表示相关 ABI 按设计继续由编译器/runtime 提供 |

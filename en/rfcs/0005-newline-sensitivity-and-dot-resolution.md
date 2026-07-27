@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0005 |
 | Title | Significant-newline separation and the polysemy-resolution rules of `.` |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: significant newlines, continuation anchors, dot-chain parsing, and value/module/type dispatch have parser and semantic-query coverage |

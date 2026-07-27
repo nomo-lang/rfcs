@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0025 |
 | 标题 | 结构化 JSON Value、访问与构造 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-24 |
 | 关联主题 | JSON、标准库、Agent、Unicode、limit、C backend、browser WASM |

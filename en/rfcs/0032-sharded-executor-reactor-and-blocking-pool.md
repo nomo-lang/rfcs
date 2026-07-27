@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0032 |
 | Title | Sharded executor, reactor, and blocking pool |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | Current-thread/reactor and native I/O slices from [`nomo#44`](https://github.com/nomo-lang/nomo/pull/44) through [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59); per-core sharding remains open |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | executor, reactor, epoll, kqueue, IOCP, WASM, affinity, blocking pool, Agent I/O |

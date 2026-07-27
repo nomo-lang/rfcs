@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0017 |
 | Title | Target Triples, Conditional Dependencies, and Cross Compilation |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Complete: canonical targets, restricted manifest predicates, complete conditional lockfiles, target-filtered workspace/package/module/FFI graphs, isolated artifacts, and real macOS and GNU/Linux cross-build CI paths are implemented |

@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0015 |
 | Title | Source-Defined Standard Library and Controlled Intrinsic Identities |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Implemented: the intrinsic manifest, validated source contracts, core, extension, network, HTTP, and FFI source-defined APIs, source-backed docs/LSP navigation, and release packaging are present; representation-sensitive ABI intentionally remains in the compiler/runtime |

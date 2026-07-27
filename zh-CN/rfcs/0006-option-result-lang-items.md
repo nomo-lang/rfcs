@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0006 |
 | 标题 | `Option`/`Result` 是纯库类型还是编译器内建 carrier |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-06-18 |
 | 实现状态 | 已落地：编译器内建 `Option`/`Result` carrier 身份、变体集合、`?` 语义与 C 布局；`std.option`/`std.result` 是稳定公共模块契约，不依赖 `#[lang]` 属性 |

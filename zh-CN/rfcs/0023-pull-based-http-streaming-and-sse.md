@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0023 |
 | 标题 | Pull-based HTTP 文本 streaming 与 SSE |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-24 |
 | 实现状态 | 由 [nomo PR #12](https://github.com/nomo-lang/nomo/pull/12) 实现；acceptance gate 于 2026-07-24 全部通过 |
@@ -102,8 +103,8 @@ http.next_sse(
     max_event_bytes: u64
 ) -> Result<Option<SseEvent>, HttpError>
 
-http.cancel_stream(stream: HttpStream) -> void
-http.close_stream(stream: HttpStream) -> void
+http.cancel_stream(stream: HttpStream)
+http.close_stream(stream: HttpStream)
 ```
 
 `open_stream` 校验并发送 `send` 已接受的同一类 `GET` 或 `POST` request，在

@@ -37,7 +37,7 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 | Type checking | Basic types, functions, structs, enums, generics, `Result`, `Option` | Type checking tests pass |
 | Mutability checking | `let mut`, call-site `mut`, mutable-borrow uniqueness | Mutability tests covered |
 | C99 backend | HIR/C IR to readable C99 | Generated C compiles with `clang` or `gcc` |
-| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.cron`, `std.task`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.jsonrpc`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections`, `std.fmt`, `std.ffi` | Example programs usable |
+| Minimal standard library | `std.io`, `std.fs`, `std.env`, `std.result`, `std.option`, `std.array`, `std.string`, `std.char`, `std.os`, `std.time`, `std.cron`, `std.task`, `std.process`, `std.testing`, `std.debug`, `std.log`, `std.path`, `std.math`, `std.num`, `std.hash`, `std.crypto`, `std.json`, `std.jsonrpc`, `std.net`, `std.http`, `std.sqlite`, `std.regex`, `std.collections`, `std.map`, `std.fmt`, `std.ffi` | Example programs usable |
 | JSON diagnostics | Stable machine-readable error structure | Snapshot tests covered |
 | Browser runtime | Restricted WebAssembly execution and browser sandbox validation | Wasm build and sandbox check pass |
 
@@ -58,17 +58,29 @@ v0.1 does not pursue maximal feature coverage, but rather a closed loop of speci
 
 ### 2.1 Files, Packages, and Imports
 
-Each `.nomo` file belongs to a package:
+Each project source file declares the module derived from its package manifest:
 
-```rust
-package app.main
+```toml
+[package]
+name = "hello-world"
+```
+
+```nomo
+package hello_world
 
 import std.io
 import std.fs
 import std.result.Result
 ```
 
-v0.1 supports importing a package or a specific type/function. Wildcard imports are not supported. The origin of every symbol must be traceable.
+`src/main.nomo` declares `package hello_world`; `src/math.nomo` declares
+`package hello_world.math`; `src/http/main.nomo` declares
+`package hello_world.http`. The manifest name is converted deterministically to
+lower snake case. Namespace, canonical owner/package identity, and a consumer's
+dependency alias do not enter the source declaration.
+
+v0.1 supports importing a package or a specific type/function. Wildcard imports
+are not supported. The origin of every symbol must be traceable.
 
 ### 2.2 Bindings and Mutability
 
@@ -92,6 +104,23 @@ bool i32 i64 u32 u64 f64 char string void
 ```
 
 `int` is not introduced as an alias for now, to avoid platform bit-width ambiguity.
+
+Void-return declarations canonically omit the return arrow:
+
+```nomo
+fn log(message: string) {
+}
+
+extern "C" {
+    fn release(handle: i64)
+}
+```
+
+The parser accepts explicit declaration `-> void` during the preview
+compatibility window, while the formatter, scaffolder, documentation, and LSP
+emit the omitted form. The `void` type and value remain valid in
+`Result<void, E>` and `Ok(void)`. Callable types keep a complete return type:
+`task fn(string) -> void`.
 
 ### 2.4 Explicit Conversion
 
@@ -259,10 +288,10 @@ extern "C" {
     fn puts(message: CString) -> i32
     fn abs(value: i32) -> i32
     fn open_handle() -> Opaque
-    fn close_handle(handle: Opaque) -> void
+    fn close_handle(handle: Opaque)
 }
 
-fn main() -> void {
+fn main() {
     let message: CString = CString.from_string("hello")
     unsafe {
         puts(message)
@@ -297,7 +326,7 @@ struct Point {
 extern "C" {
     fn file_open() -> Nullable<Owned<FileHandle>>
     fn file_marker(handle: Borrowed<FileHandle>) -> i32
-    fn file_close(handle: Owned<FileHandle>) -> void
+    fn file_close(handle: Owned<FileHandle>)
     fn point_sum(point: Point) -> i32
     fn apply(value: i32, callback: extern "C" fn(i32) -> i32) -> i32
 }
@@ -427,8 +456,8 @@ core.workspace = true
 
 Source imports use dependency aliases:
 
-```rust
-package app.main
+```nomo
+package cli
 
 import json.parser
 import local_utils.path
@@ -617,16 +646,30 @@ v0.1 must validate:
   accessing the network. `--frozen` is equivalent to `--locked --offline`.
 - The same canonical package ID resolving to different sources or versions is a
   v0.1 error.
-- Project-level `nomo check/build/run` validates source imports against
-  dependency aliases declared in `nomo.toml`. Local project modules use Flat+Dir
-  lookup: `import app.util` first resolves `src/util.nomo`, then
-  `src/util/main.nomo`; `import app.main` resolves `src/main.nomo`. Imported
-  `path` and `git` dependency modules use the same lookup under the dependency
-  `src/` directory. Imported local modules and imported dependency modules
-  contribute public API to the current v0.1 compile unit, including public
-  functions, constants, structs, enums, and public methods; private items are
-  not exported. `nomoc` remains a standalone source-file compiler and only
-  accepts built-in `std.*` imports.
+- Project-level `nomo check/build/run` derives each package's module root from
+  that package's `[package].name`, converted deterministically to lower snake
+  case. The entry `src/main.nomo` maps to the root; `src/math.nomo` maps to
+  `<root>.math`; `src/http/main.nomo` maps to `<root>.http`. `E0904` reports a
+  mismatch for either the entry or an imported module. The project root is not
+  inferred from the first segment of entry source.
+- Local project modules use Flat+Dir lookup: `import hello_world.util` first
+  resolves `src/util.nomo`, then `src/util/main.nomo`; importing
+  `hello_world` resolves `src/main.nomo`. A dependency alias is used only by
+  the consumer's imports. The dependency source continues to declare its own
+  manifest-derived root, independent of namespace and canonical owner/package
+  identity.
+- Imported `path`, `git`, and registry dependency modules use the same lookup
+  under the dependency `src/` directory. Imported local and dependency modules
+  contribute public functions, constants, structs, enums, and methods; private
+  items are not exported. `nomoc` remains a standalone source-file compiler and
+  only accepts built-in `std.*` imports.
+- `nomo fix module-roots [path] [--check]` migrates only the selected package's
+  own declarations, writes atomically, and is idempotent. It never rewrites a
+  dependency's source to match the consumer alias. During one development
+  snapshot, an entry root ending in `.main` is accepted with `W0904` and a
+  migration suggestion. The compatibility branch is removed in the next
+  development snapshot only after templates, examples, standard library,
+  Playground, LSP/editors, and the migration gate have shipped together.
 - `nomo-lsp` diagnostics should match project-level `nomo check`: project files
   read dependency aliases from the nearest `nomo.toml`, while standalone files
   without a manifest keep `nomoc` behavior.
@@ -634,7 +677,7 @@ v0.1 must validate:
   project manifest. The file still uses the normal `package` declaration and
   normal imports. If it has no explicit `fn main`, then top-level script
   statements after all declarations are compiled as a synthesized
-  `main() -> void`. Declarations must appear before top-level script statements,
+  `fn main()`. Declarations must appear before top-level script statements,
   and an explicit `main` cannot be combined with top-level script statements.
   Project-level `check/build/run` and `nomoc check/build` do not enable this
   script entry mode.
@@ -655,7 +698,7 @@ v0.1 must validate:
   them one by one. Test functions must be non-generic, take no parameters,
   return `void`, and must not be named `main`. Each test reuses the project
   module resolver and dependency resolver, compiling a temporary runner
-  `main() -> void` that calls the test function; an existing project `main` is
+  `fn main()` that calls the test function; an existing project `main` is
   not executed as the test entrypoint. `--filter` keeps tests whose full name
   contains the filter text, `--workspace` runs workspace members, `--package`
   selects a package id or member name, and `--json` emits a stable test report.
@@ -836,6 +879,7 @@ std.http
 std.sqlite
 std.regex
 std.collections
+std.map
 std.task
 std.fmt
 std.ffi
@@ -884,7 +928,7 @@ fn open(path: string) -> Result<File, FsError>
 impl File {
     fn read_to_string(self) -> Result<string, FsError>
     fn write_string(self, content: string) -> Result<void, FsError>
-    fn close(self) -> void
+    fn close(self)
 }
 ```
 
@@ -905,7 +949,7 @@ call fails. `env.cwd` panics if the current directory cannot be read.
 ```rust
 env.args() -> Array<string>
 env.get(name: string) -> Option<string>
-env.set(name: string, value: string) -> void
+env.set(name: string, value: string)
 env.cwd() -> string
 env.home_dir() -> Option<string>
 env.temp_dir() -> string
@@ -920,9 +964,9 @@ Array.push(mut self, value: T)
 Array.get(self, index: u64) -> Option<T>
 Array.pop(mut self) -> Option<T>
 Array.remove(mut self, index: u64) -> Option<T>
-Array.set(mut self, index: u64, value: T) -> void
-Array.insert(mut self, index: u64, value: T) -> void
-Array.clear(mut self) -> void
+Array.set(mut self, index: u64, value: T)
+Array.insert(mut self, index: u64, value: T)
+Array.clear(mut self)
 Array.iter(self) -> Array<T>
 ```
 
@@ -1025,8 +1069,8 @@ time.duration_millis(millis: i64) -> Duration
 time.duration_seconds(seconds: i64) -> Duration
 time.duration_as_millis(duration: Duration) -> i64
 time.format_duration(duration: Duration) -> string
-time.sleep(duration: Duration) -> void
-time.sleep_millis(duration: i64) -> void
+time.sleep(duration: Duration)
+time.sleep_millis(duration: i64)
 ```
 
 ### 6.11 `std.process`
@@ -1163,7 +1207,7 @@ inside a suspend call graph. `write_stdin`, `close_stdin`, `try_wait`,
 and remain non-waiting at the application call boundary.
 
 ```rust
-process.exit(code: i64) -> void
+process.exit(code: i64)
 process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
@@ -1174,14 +1218,14 @@ process.close_stdin(child: ProcessChild) -> Result<void, ProcessControlError>
 process.next_event(child: ProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
 process.try_wait(child: ProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate(child: ProcessChild) -> Result<void, ProcessControlError>
-process.close_child(child: ProcessChild) -> void
+process.close_child(child: ProcessChild)
 process.start_blocking(command: ProcessCommand) -> Result<BlockingProcessChild, ProcessControlError>
 process.write_stdin_blocking(child: BlockingProcessChild, data: string) -> Result<void, ProcessControlError>
 process.close_stdin_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
 process.next_event_blocking(child: BlockingProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
 process.try_wait_blocking(child: BlockingProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
-process.close_child_blocking(child: BlockingProcessChild) -> void
+process.close_child_blocking(child: BlockingProcessChild)
 ```
 
 ### 6.12 `std.path`
@@ -1510,7 +1554,7 @@ net.udp_bind(host: string, port: i64) -> Result<UdpSocket, NetError>
 
 impl TcpListener {
     fn accept(self) -> Result<TcpStream, NetError>
-    fn close(self) -> void
+    fn close(self)
 }
 
 impl TcpStream {
@@ -1521,13 +1565,13 @@ impl TcpStream {
     fn shutdown_write(self) -> Result<void, NetError>
     fn read_to_string_blocking(self) -> Result<string, NetError>
     fn write_string_blocking(self, content: string) -> Result<void, NetError>
-    fn close(self) -> void
+    fn close(self)
 }
 
 impl UdpSocket {
     fn recv_from_string(self, max_bytes: i64) -> Result<UdpDatagram, NetError>
     fn send_to_string(self, content: string, host: string, port: i64) -> Result<void, NetError>
-    fn close(self) -> void
+    fn close(self)
 }
 ```
 
@@ -1686,13 +1730,13 @@ http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
 http.open_stream(request: HttpRequest, idle_timeout_millis: u64) -> Result<HttpStream, HttpError>
 http.read_text(stream: HttpStream, max_chunk_bytes: u64) -> Result<HttpStreamChunk, HttpError>
 http.next_sse(stream: HttpStream, max_event_bytes: u64) -> Result<Option<SseEvent>, HttpError>
-http.cancel_stream(stream: HttpStream) -> void
-http.close_stream(stream: HttpStream) -> void
+http.cancel_stream(stream: HttpStream)
+http.close_stream(stream: HttpStream)
 http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
 http.accept(server: HttpServer) -> Result<HttpExchange, HttpError>
 http.respond_string(exchange: HttpExchange, status: i64, body: string) -> Result<void, HttpError>
-http.close_server(server: HttpServer) -> void
-http.close_exchange(exchange: HttpExchange) -> void
+http.close_server(server: HttpServer)
+http.close_exchange(exchange: HttpExchange)
 ```
 
 ### 6.22 `std.regex`
@@ -1748,7 +1792,34 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.24 `std.testing`
+### 6.24 `std.map`
+
+`std.map` provides the general-purpose insertion-ordered `Map<K, V>` accepted
+by RFC 0030. It has deterministic C99/WASM iteration order and COW value
+semantics. The initial bounded implementation uses equality plus a linear
+index; Nomo does not expose a second `HashMap` without an accepted `Hash`/`Eq`
+contract.
+
+```nomo
+import std.map
+
+Map.new<K, V>() -> Map<K, V>
+map.len<K, V>(map: Map<K, V>) -> u64
+map.is_empty<K, V>(map: Map<K, V>) -> bool
+map.contains_key<K, V>(map: Map<K, V>, key: K) -> bool
+map.get<K, V>(map: Map<K, V>, key: K) -> Option<V>
+map.set<K, V>(mut map: Map<K, V>, key: K, value: V) -> Option<V>
+map.remove<K, V>(mut map: Map<K, V>, key: K) -> Option<V>
+map.clear<K, V>(mut map: Map<K, V>)
+map.keys<K, V>(map: Map<K, V>) -> Array<K>
+map.values<K, V>(map: Map<K, V>) -> Array<V>
+```
+
+`StringMap` and `StringSet` remain compatible `std.collections` APIs. New
+generic key/value code should use `std.map`; no silent rewrite or removal of
+the string-specialized types occurs.
+
+### 6.25 `std.testing`
 
 `std.testing` provides assertion helpers intended for `#[test]` functions. A
 failed assertion panics, which makes the current test fail under `nomo test`.
@@ -1757,12 +1828,12 @@ failed assertion panics, which makes the current test fail under `nomo test`.
 `Result<T, E>` and passes only for `Err`.
 
 ```rust
-testing.assert(condition: bool, message: string) -> void
-testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
-testing.assert_error<T, E>(result: Result<T, E>) -> void
+testing.assert(condition: bool, message: string)
+testing.assert_equal<T: primitive-or-string>(left: T, right: T)
+testing.assert_error<T, E>(result: Result<T, E>)
 ```
 
-### 6.25 `std.debug`
+### 6.26 `std.debug`
 
 `std.debug` provides lightweight debugging helpers. Print helpers write to
 stderr. `debug.panic` uses the same panic path as the language builtin.
@@ -1770,13 +1841,13 @@ stderr. `debug.panic` uses the same panic path as the language builtin.
 can depend on the API before real stack capture is available.
 
 ```rust
-debug.print(message: string) -> void
-debug.println(message: string) -> void
-debug.panic(message: string) -> void
+debug.print(message: string)
+debug.println(message: string)
+debug.panic(message: string)
 debug.backtrace() -> string
 ```
 
-### 6.26 `std.log`
+### 6.27 `std.log`
 
 `std.log` provides lightweight leveled logging helpers. Log messages are
 written to stderr as `[level] message` lines. `NOMO_LOG` controls the minimum
@@ -1784,14 +1855,14 @@ enabled level; accepted values are `debug`, `info`, `warn`, `error`, and
 `off`. Unset or unknown values use the default `info` threshold.
 
 ```rust
-log.debug(message: string) -> void
-log.info(message: string) -> void
-log.warn(message: string) -> void
-log.error(message: string) -> void
+log.debug(message: string)
+log.info(message: string)
+log.warn(message: string)
+log.error(message: string)
 log.enabled(level: string) -> bool
 ```
 
-### 6.27 `std.sqlite`
+### 6.28 `std.sqlite`
 
 `std.sqlite` provides durable native SQLite state without application-side C
 FFI, a host SQLite package, a database subprocess, or a separate service. The
@@ -1886,7 +1957,7 @@ SQLite handles are thread-confined and `std.sqlite` is rejected from
 `open`/`open_memory` return `runtime_unavailable`; no filesystem, OPFS,
 IndexedDB, SQLite WASM, or host import is added.
 
-### 6.28 `std.task`
+### 6.29 `std.task`
 
 `std.task` exposes the isolated native task model accepted by
 [RFC 0026](./rfcs/0026-isolated-native-tasks-and-cooperative-cancellation.md).

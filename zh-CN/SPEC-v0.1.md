@@ -58,15 +58,25 @@ v0.1 不追求功能面最大化，而追求规格、实现、测试和 RFC 决�
 
 ### 2.1 文件、包与导入
 
-每个 `.nomo` 文件属于一个包：
+每个项目源码文件声明由自身 package manifest 派生的模块：
 
-```rust
-package app.main
+```toml
+[package]
+name = "hello-world"
+```
+
+```nomo
+package hello_world
 
 import std.io
 import std.fs
 import std.result.Result
 ```
+
+`src/main.nomo` 声明 `package hello_world`；`src/math.nomo` 声明
+`package hello_world.math`；`src/http/main.nomo` 声明
+`package hello_world.http`。manifest name 确定性转换为 lower snake case。
+namespace、canonical owner/package identity 与消费方 dependency alias 都不进入源码声明。
 
 v0.1 支持导入包或具体类型/函数。不支持通配符导入。所有符号来源必须可追踪。
 
@@ -92,6 +102,21 @@ bool i32 i64 u32 u64 f64 char string void
 ```
 
 `int` 暂不作为别名引入，避免平台位宽歧义。
+
+无返回值声明的规范形式省略返回箭头：
+
+```nomo
+fn log(message: string) {
+}
+
+extern "C" {
+    fn release(handle: i64)
+}
+```
+
+Preview 兼容窗口内 parser 仍接受声明级显式 `-> void`，formatter、scaffolder、
+文档与 LSP 统一输出省略形式。`void` 类型和值继续用于 `Result<void, E>` 与
+`Ok(void)`；callable type 仍写完整返回类型：`task fn(string) -> void`。
 
 ### 2.4 显式转换
 
@@ -248,10 +273,10 @@ extern "C" {
     fn puts(message: CString) -> i32
     fn abs(value: i32) -> i32
     fn open_handle() -> Opaque
-    fn close_handle(handle: Opaque) -> void
+    fn close_handle(handle: Opaque)
 }
 
-fn main() -> void {
+fn main() {
     let message: CString = CString.from_string("hello")
     unsafe {
         puts(message)
@@ -283,7 +308,7 @@ struct Point {
 extern "C" {
     fn file_open() -> Nullable<Owned<FileHandle>>
     fn file_marker(handle: Borrowed<FileHandle>) -> i32
-    fn file_close(handle: Owned<FileHandle>) -> void
+    fn file_close(handle: Owned<FileHandle>)
     fn point_sum(point: Point) -> i32
     fn apply(value: i32, callback: extern "C" fn(i32) -> i32) -> i32
 }
@@ -521,8 +546,8 @@ core.workspace = true
 
 源码 import 使用依赖 alias：
 
-```rust
-package app.main
+```nomo
+package cli
 
 import json.parser
 import local_utils.path
@@ -679,17 +704,27 @@ v0.1 必须校验：
   lockfile 时，未缓存的 git dependency 会报错而不是访问网络。`--frozen` 等价于
   `--locked --offline`。
 - 同一 canonical package id 若解析到不同 source 或 version，v0.1 直接报错。
-- 项目级 `nomo check/build/run` 使用 `nomo.toml` 中声明的 dependency alias 校验源码 import；
-  本地项目模块使用 Flat+Dir 查找：`import app.util` 优先解析 `src/util.nomo`，然后回退到
-  `src/util/main.nomo`；`import app.main` 解析 `src/main.nomo`。已 import 的 `path`
-  与 `git` dependency module 在依赖包 `src/` 下使用同样的查找规则。已 import 的本地模块与依赖模块会把 public API
-  纳入当前 v0.1 编译单元，包括 public function、const、struct、enum 与 public method；private
-  item 不导出。`nomoc` 作为单文件编译器不读取 manifest，仍只接受内建 `std.*` import。
+- 项目级 `nomo check/build/run` 从每个 package 自身的 `[package].name` 确定性转换
+  lower snake case 模块根。`src/main.nomo` 映射到根，`src/math.nomo` 映射到
+  `<root>.math`，`src/http/main.nomo` 映射到 `<root>.http`。入口或 import module
+  声明与路径不一致都报 `E0904`；项目根不再从入口源码首段反推。
+- 本地模块使用 Flat+Dir 查找：`import hello_world.util` 优先解析
+  `src/util.nomo`，再回退到 `src/util/main.nomo`；`import hello_world` 解析
+  `src/main.nomo`。dependency alias 只用于消费方 import；依赖源码始终声明自身
+  manifest-derived root，与 namespace 和 canonical owner/package identity 无关。
+- 已 import 的 `path`、`git` 与 registry dependency module 在依赖包 `src/` 下使用
+  同样查找规则，并把 public function、const、struct、enum 与 public method 纳入当前
+  编译单元；private item 不导出。`nomoc` 作为单文件编译器不读取 manifest，仍只接受
+  内建 `std.*` import。
+- `nomo fix module-roots [path] [--check]` 只迁移选中 package 自身声明，原子写入且
+  幂等，不会把依赖源码改成消费方 alias。一个开发 snapshot 内，入口 `.main` 旧根以
+  `W0904` 与迁移建议继续兼容；只有模板、示例、标准库、Playground、LSP/editor 与迁移
+  gate 同步发布后，才在下一开发 snapshot 移除兼容分支。
 - `nomo-lsp` 诊断路径应与项目级 `nomo check` 保持一致：对项目文件读取最近的
   `nomo.toml` dependency alias；对无 manifest 的单文件保留 `nomoc` 行为。
 - `nomo run <source.nomo>` 支持直接运行项目 manifest 外的 standalone source file。
   文件仍使用普通 `package` 声明和普通 import。若文件没有显式 `fn main`，则所有声明之后的
-  top-level script statements 会被编译为合成的 `main() -> void`。声明必须出现在
+  top-level script statements 会被编译为合成的 `fn main()`。声明必须出现在
   top-level script statements 之前；显式 `main` 不能与 top-level script statements 混用。
   项目级 `check/build/run` 与 `nomoc check/build` 不启用该 script entry mode。
 - `nomo fmt [path] [--check] [--json-errors]` 是 v0.1 源码的 AST-based formatter。
@@ -705,7 +740,7 @@ v0.1 必须校验：
 - `nomo test [path] [--workspace] [--package <package>] [--filter <text>] [--json] [--locked] [--offline] [--frozen]`
   发现项目 `src/**/*.nomo` 中的顶层 `#[test]` 函数并逐个运行。测试函数必须无泛型、无参数、
   返回 `void`，且不能命名为 `main`。每个测试都复用项目模块 resolver 与 dependency resolver，
-  编译临时 runner `main() -> void` 调用该测试函数；已有项目 `main` 不作为测试入口执行。
+  编译临时 runner `fn main()` 调用该测试函数；已有项目 `main` 不作为测试入口执行。
   `--filter` 按完整测试名子串过滤，`--workspace` 运行 workspace members，`--package` 选择
   package id 或 member name，`--json` 输出稳定测试报告。
 - `nomo doc [path] [--workspace] [--package <package>] [--std] [--open] [--json] [--output <dir>]`
@@ -758,6 +793,7 @@ std.http
 std.sqlite
 std.regex
 std.collections
+std.map
 std.task
 std.fmt
 std.ffi
@@ -806,7 +842,7 @@ fn open(path: string) -> Result<File, FsError>
 impl File {
     fn read_to_string(self) -> Result<string, FsError>
     fn write_string(self, content: string) -> Result<void, FsError>
-    fn close(self) -> void
+    fn close(self)
 }
 ```
 
@@ -825,7 +861,7 @@ impl File {
 ```rust
 env.args() -> Array<string>
 env.get(name: string) -> Option<string>
-env.set(name: string, value: string) -> void
+env.set(name: string, value: string)
 env.cwd() -> string
 env.home_dir() -> Option<string>
 env.temp_dir() -> string
@@ -840,9 +876,9 @@ Array.push(mut self, value: T)
 Array.get(self, index: u64) -> Option<T>
 Array.pop(mut self) -> Option<T>
 Array.remove(mut self, index: u64) -> Option<T>
-Array.set(mut self, index: u64, value: T) -> void
-Array.insert(mut self, index: u64, value: T) -> void
-Array.clear(mut self) -> void
+Array.set(mut self, index: u64, value: T)
+Array.insert(mut self, index: u64, value: T)
+Array.clear(mut self)
 Array.iter(self) -> Array<T>
 ```
 
@@ -941,8 +977,8 @@ time.duration_millis(millis: i64) -> Duration
 time.duration_seconds(seconds: i64) -> Duration
 time.duration_as_millis(duration: Duration) -> i64
 time.format_duration(duration: Duration) -> string
-time.sleep(duration: Duration) -> void
-time.sleep_millis(duration: i64) -> void
+time.sleep(duration: Duration)
+time.sleep_millis(duration: i64)
 ```
 
 ### 6.11 `std.process`
@@ -1068,7 +1104,7 @@ blocking fallback。`spawn`、`status`、`exec`、`output` 与所有显式
 async handle，并在应用调用边界保持 non-waiting。
 
 ```rust
-process.exit(code: i64) -> void
+process.exit(code: i64)
 process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
@@ -1079,14 +1115,14 @@ process.close_stdin(child: ProcessChild) -> Result<void, ProcessControlError>
 process.next_event(child: ProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
 process.try_wait(child: ProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate(child: ProcessChild) -> Result<void, ProcessControlError>
-process.close_child(child: ProcessChild) -> void
+process.close_child(child: ProcessChild)
 process.start_blocking(command: ProcessCommand) -> Result<BlockingProcessChild, ProcessControlError>
 process.write_stdin_blocking(child: BlockingProcessChild, data: string) -> Result<void, ProcessControlError>
 process.close_stdin_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
 process.next_event_blocking(child: BlockingProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
 process.try_wait_blocking(child: BlockingProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
-process.close_child_blocking(child: BlockingProcessChild) -> void
+process.close_child_blocking(child: BlockingProcessChild)
 ```
 
 ### 6.12 `std.path`
@@ -1403,7 +1439,7 @@ net.udp_bind(host: string, port: i64) -> Result<UdpSocket, NetError>
 
 impl TcpListener {
     fn accept(self) -> Result<TcpStream, NetError>
-    fn close(self) -> void
+    fn close(self)
 }
 
 impl TcpStream {
@@ -1414,13 +1450,13 @@ impl TcpStream {
     fn shutdown_write(self) -> Result<void, NetError>
     fn read_to_string_blocking(self) -> Result<string, NetError>
     fn write_string_blocking(self, content: string) -> Result<void, NetError>
-    fn close(self) -> void
+    fn close(self)
 }
 
 impl UdpSocket {
     fn recv_from_string(self, max_bytes: i64) -> Result<UdpDatagram, NetError>
     fn send_to_string(self, content: string, host: string, port: i64) -> Result<void, NetError>
-    fn close(self) -> void
+    fn close(self)
 }
 ```
 
@@ -1566,13 +1602,13 @@ http.post(url: string, body: string) -> Result<HttpResponse, HttpError>
 http.open_stream(request: HttpRequest, idle_timeout_millis: u64) -> Result<HttpStream, HttpError>
 http.read_text(stream: HttpStream, max_chunk_bytes: u64) -> Result<HttpStreamChunk, HttpError>
 http.next_sse(stream: HttpStream, max_event_bytes: u64) -> Result<Option<SseEvent>, HttpError>
-http.cancel_stream(stream: HttpStream) -> void
-http.close_stream(stream: HttpStream) -> void
+http.cancel_stream(stream: HttpStream)
+http.close_stream(stream: HttpStream)
 http.listen(host: string, port: i64) -> Result<HttpServer, HttpError>
 http.accept(server: HttpServer) -> Result<HttpExchange, HttpError>
 http.respond_string(exchange: HttpExchange, status: i64, body: string) -> Result<void, HttpError>
-http.close_server(server: HttpServer) -> void
-http.close_exchange(exchange: HttpExchange) -> void
+http.close_server(server: HttpServer)
+http.close_exchange(exchange: HttpExchange)
 ```
 
 ### 6.22 `std.regex`
@@ -1627,7 +1663,31 @@ collections.set_insert(set: StringSet, value: string) -> StringSet
 collections.set_remove(set: StringSet, value: string) -> StringSet
 ```
 
-### 6.24 `std.testing`
+### 6.24 `std.map`
+
+`std.map` 提供 RFC 0030 接受的通用 insertion-ordered `Map<K, V>`，具有确定性的
+C99/WASM 迭代顺序与 COW 值语义。首个有界实现使用 equality 与线性索引；在通用
+`Hash`/`Eq` 契约被接受前，Nomo 不暴露语义重复的 `HashMap`。
+
+```nomo
+import std.map
+
+Map.new<K, V>() -> Map<K, V>
+map.len<K, V>(map: Map<K, V>) -> u64
+map.is_empty<K, V>(map: Map<K, V>) -> bool
+map.contains_key<K, V>(map: Map<K, V>, key: K) -> bool
+map.get<K, V>(map: Map<K, V>, key: K) -> Option<V>
+map.set<K, V>(mut map: Map<K, V>, key: K, value: V) -> Option<V>
+map.remove<K, V>(mut map: Map<K, V>, key: K) -> Option<V>
+map.clear<K, V>(mut map: Map<K, V>)
+map.keys<K, V>(map: Map<K, V>) -> Array<K>
+map.values<K, V>(map: Map<K, V>) -> Array<V>
+```
+
+`StringMap` 与 `StringSet` 继续作为兼容的 `std.collections` API。新的通用
+key/value 代码应使用 `std.map`；string-specialized 类型不会被静默重写或删除。
+
+### 6.25 `std.testing`
 
 `std.testing` 提供面向 `#[test]` 函数的 assertion helper。断言失败时会
 panic，因此当前测试会在 `nomo test` 下失败。`testing.assert_equal` 支持
@@ -1635,39 +1695,39 @@ string，以及类型一致的 bool、char、整数和 `f64` primitive 值。
 `testing.assert_error` 接受任意 `Result<T, E>`，仅在值为 `Err` 时通过。
 
 ```rust
-testing.assert(condition: bool, message: string) -> void
-testing.assert_equal<T: primitive-or-string>(left: T, right: T) -> void
-testing.assert_error<T, E>(result: Result<T, E>) -> void
+testing.assert(condition: bool, message: string)
+testing.assert_equal<T: primitive-or-string>(left: T, right: T)
+testing.assert_error<T, E>(result: Result<T, E>)
 ```
 
-### 6.25 `std.debug`
+### 6.26 `std.debug`
 
 `std.debug` 提供轻量调试 helper。print helper 写入 stderr。`debug.panic`
 复用语言内建 `panic` 的执行路径。`debug.backtrace` 在 v0.1 返回稳定占位
 字符串；这样代码可以先依赖 API，真实 stack capture 后续再接入。
 
 ```rust
-debug.print(message: string) -> void
-debug.println(message: string) -> void
-debug.panic(message: string) -> void
+debug.print(message: string)
+debug.println(message: string)
+debug.panic(message: string)
 debug.backtrace() -> string
 ```
 
-### 6.26 `std.log`
+### 6.27 `std.log`
 
 `std.log` 提供轻量分级日志 helper。日志消息以 `[level] message` 行写入
 stderr。`NOMO_LOG` 控制最低启用级别；可接受值为 `debug`、`info`、`warn`、
 `error` 和 `off`。未设置或无法识别时默认使用 `info` 阈值。
 
 ```rust
-log.debug(message: string) -> void
-log.info(message: string) -> void
-log.warn(message: string) -> void
-log.error(message: string) -> void
+log.debug(message: string)
+log.info(message: string)
+log.warn(message: string)
+log.error(message: string)
 log.enabled(level: string) -> bool
 ```
 
-### 6.27 `std.sqlite`
+### 6.28 `std.sqlite`
 
 `std.sqlite` 提供原生持久化 SQLite 状态，应用侧不需要声明 C FFI、安装
 host SQLite package、启动数据库子进程或依赖独立服务。工具链固定并校验官方
@@ -1760,7 +1820,7 @@ SQLite handle 是 thread-confined capability；compiler 以 `E0821` 拒绝在
 但 `open`/`open_memory` 返回 `runtime_unavailable`；不会增加 filesystem、
 OPFS、IndexedDB、SQLite WASM 或 host import。
 
-### 6.28 `std.task`
+### 6.29 `std.task`
 
 `std.task` 暴露
 [RFC 0026](./rfcs/0026-isolated-native-tasks-and-cooperative-cancellation.md)
