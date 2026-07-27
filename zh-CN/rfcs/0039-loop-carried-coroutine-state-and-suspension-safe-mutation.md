@@ -228,6 +228,42 @@ Implementation PR 必须提供：
 
 适用门禁全部通过前，本 RFC 保持 `Proposed`。
 
+### 5.1 `nomo#57` 后的实现证据
+
+[`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) 在不扩大源码语法的
+情况下实现了第一版 bounded slice。Validation 接受一个 flat top-level
+conditional loop、同步 condition、direct suspension site、immutable resumed
+result、同步 fallthrough，以及对 loop 前声明的 owned mutable local 赋值。
+Nested loop、suspending condition、branch-nested suspension、`break`、
+`continue`、`?`、`defer`、panic 与 early-exit 形态仍以 E0876 拒绝。
+
+C99 backend 在现有 stackless poll function 中发出显式 condition 与 backedge
+label。跨可能挂起点仍存活的 scalar 与 managed ARC/COW value 会存入 frame。
+Managed assignment 会先 retain 或 move replacement，再释放旧 slot；loop
+cancellation 只释放一次当前已初始化值。Compiler 与 CLI test 覆盖含两个
+suspension site 的零次、一次与多次迭代；generated-C assertion 锁定
+non-recursive backedge；cancellation path 则通过 lifecycle counter 与可用时的
+ASAN 检查。
+
+新增的 `examples/mcp_stdio_async` 只含 Nomo 应用代码，并组合 public
+`std.process` 与 `std.jsonrpc` API。Local fixture 会拆分第一条 JSON-RPC
+response，把 notification 与第二条 response 合并，并独立使用 stderr。同一
+示例已通过 Linux、macOS 与 Windows pull-request job，最终 live process
+handle、operation、retained process byte、blocking job、reactor registration
+与 timer 全部归零。
+
+Windows 执行暴露并在同一 PR 中修复了一处 IOCP 竞态：stdout/stderr overlapped
+read 现在属于稳定、owner-affine 的 `ProcessChild` slot，不再属于一次临时
+`next_event` pull。因此 stdin-flush 或 exit completion 不会取消并丢弃 Windows
+已经写入 buffer、但 read completion packet 尚未分发的字节。Close 与
+cancellation 会 detach buffer，直到 IOCP 排空 late completion。
+
+这些证据完成了 bounded-loop 核心与 native MCP 组合切片，但尚未满足上面的
+全部门禁。完整 E0873 borrow/guard/FFI-view 矩阵、每个 suspension site 的
+timeout/panic/error cleanup 矩阵、browser pure-loop 证据、稳定的最小 frame
+证明，以及聚焦 RFC 0034 ready/pending cost report 仍未完成。因此本 RFC 继续
+保持 `Proposed`。
+
 ## 6. 备选方案
 
 | 方案 | 做法 | 优点 | 缺点 |

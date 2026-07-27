@@ -1055,6 +1055,14 @@ pub struct ProcessCommand {
     pub inherit_env: bool
 }
 
+pub struct ProcessChild {
+    handle: u64
+}
+
+pub struct BlockingProcessChild {
+    handle: u64
+}
+
 pub struct ProcessExit {
     pub code: i32
     pub signal: i32
@@ -1088,17 +1096,28 @@ overrides. `false` passes only explicit entries plus platform-required
 variables. Environment names are non-empty, contain neither `=` nor NUL, and
 are unique; comparison is case-insensitive on Windows.
 
-`ProcessChild` is an opaque copied registry handle. `write_stdin` queues one
-non-empty UTF-8 payload of at most 1 MiB. A second pending payload returns
-`busy`; `StdinFlushed` reports complete delivery. A timeout preserves pending
-data. `close_stdin` is idempotent after flushing and returns `busy` while data
-remains pending.
+`ProcessChild` is an opaque `Local`/`!Send` identity in the current owner
+executor's fixed table. A copied value names the same generation-tagged slot;
+it does not create shared polling authority and cannot cross structured spawn,
+channel publication, frozen sharing, or shard transfer. The current native
+runtime permits at most 16 live or draining child slots and one pending event
+pull per child.
 
-`next_event` accepts a chunk bound from 4 bytes through 1 MiB and a positive
-timeout through 15 minutes. It multiplexes stdin progress, stdout, stderr, and
-exit, preserves per-stream ordering, does not split a UTF-8 scalar, and emits
-`Exited` only after both output streams reach EOF. Invalid UTF-8 or NUL returns
-`protocol` and destroys the child entry. A timeout leaves the child usable.
+`process.start` is a suspend operation with a positive timeout through 15
+minutes. The deadline covers bounded blocking-pool queueing, shell-free
+process creation, pipe setup, and owner-handle delivery. `write_stdin` copies
+and queues one non-empty UTF-8 payload of at most 1 MiB without waiting for
+pipe capacity. A second pending payload returns `busy`; `StdinFlushed` reports
+complete delivery. A timeout preserves pending data. `close_stdin` is
+idempotent after flushing and returns `busy` while data remains pending.
+
+`next_event` is a suspend operation. It accepts a chunk bound from 4 bytes
+through 1 MiB and a positive timeout through 15 minutes. It multiplexes stdin
+progress, stdout, stderr, and exit, preserves per-stream ordering, does not
+split a UTF-8 scalar, and emits `Exited` only after both output streams reach
+EOF and all buffered output is returned. Invalid UTF-8 or NUL returns
+`protocol` and closes the child. A timeout leaves the child, pending stdin
+suffix, output buffers, and exit state usable.
 
 `try_wait` observes exit without consuming the final event. `terminate` is a
 forced, direct-child termination request and is idempotent after exit.
@@ -1106,22 +1125,31 @@ forced, direct-child termination request and is idempotent after exit.
 After `Exited`, another `next_event` returns `invalid_request`, while
 `try_wait`, `terminate`, and `close_child` remain safe until close.
 
-`ProcessControlError.code` is one of `invalid_request`, `busy`, `spawn`, `io`,
-`timeout`, `protocol`, or `runtime_unavailable`. Errors and default diagnostics
-never include the program, argv, environment, cwd, stdin, stdout, or stderr.
+`ProcessControlError.code` on the async surface is `invalid_request`,
+`unsupported`, `closed`, `busy`, `limit`, `spawn`, `io`, `timeout`,
+`protocol`, or `reactor`. The preview blocking compatibility path may also
+return `runtime_unavailable`. Errors and default diagnostics never include the
+program, argv, environment, cwd, stdin, stdout, stderr, or JSON-RPC content.
 Native Unix-like and Windows adapters are toolchain-owned; application code
-declares no C FFI. Browser WASM rejects the controlled API before argument
-evaluation. The release artifact must import no host API and must return the
-stable process-capability error before evaluating async `process.start`
-command or timeout operands.
+declares no C FFI.
 
-In a suspend call graph, `process.spawn`, `status`, `exec`, `output`, `start`,
-`next_event`, `terminate`, and `close_child` are quarantined with `E0891`
-because they may spawn, wait, terminate, or reap on the current OS thread.
-`write_stdin`, `close_stdin`, and `try_wait` retain their specified
-non-waiting current-thread compatibility behavior; that does not make their
-legacy handles `Send` or cross-shard safe. E0891 renders only a safe
-`operation(...)` source label and never reproduces command or argument values.
+Linux uses epoll and `pidfd` where available; macOS uses kqueue and
+`EVFILT_PROC`; Windows uses overlapped named pipes and IOCP. Windows stdout
+and stderr reads remain in persistent owner-handle slots across individual
+`next_event` returns, so stdin-flush, exit, or timeout cannot discard an
+already transferred output buffer. Close and cancellation retain detached
+storage until late completion draining.
+
+Browser WASM rejects the async process capability before argument evaluation.
+The release artifact imports no host API and returns the stable capability
+error before evaluating `process.start` command or timeout operands.
+
+A synchronous call to `start` or `next_event` receives E0870 suspend-effect
+guidance; there is no implicit blocking fallback. `spawn`, `status`, `exec`,
+`output`, and all explicit `_blocking` functions are quarantined with E0891
+inside a suspend call graph. `write_stdin`, `close_stdin`, `try_wait`,
+`terminate`, and `close_child` operate only on the owner-affine async handle
+and remain non-waiting at the application call boundary.
 
 ```rust
 process.exit(code: i64) -> void
@@ -1129,13 +1157,20 @@ process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
 process.output(command: string) -> Result<ProcessOutput, ProcessError>
-process.start(command: ProcessCommand) -> Result<ProcessChild, ProcessControlError>
+process.start(command: ProcessCommand, timeout_millis: u64) -> Result<ProcessChild, ProcessControlError>
 process.write_stdin(child: ProcessChild, data: string) -> Result<void, ProcessControlError>
 process.close_stdin(child: ProcessChild) -> Result<void, ProcessControlError>
 process.next_event(child: ProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
 process.try_wait(child: ProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate(child: ProcessChild) -> Result<void, ProcessControlError>
 process.close_child(child: ProcessChild) -> void
+process.start_blocking(command: ProcessCommand) -> Result<BlockingProcessChild, ProcessControlError>
+process.write_stdin_blocking(child: BlockingProcessChild, data: string) -> Result<void, ProcessControlError>
+process.close_stdin_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
+process.next_event_blocking(child: BlockingProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
+process.try_wait_blocking(child: BlockingProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
+process.terminate_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
+process.close_child_blocking(child: BlockingProcessChild) -> void
 ```
 
 ### 6.12 `std.path`
@@ -1949,6 +1984,29 @@ type-check the resulting module graph before returning the rename operation.
 Accepted [RFC 0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md)
 fixes the shared declaration identity, receiver ownership, and rechecked-rename
 contract.
+
+### 7.2 Preview suspending-loop lowering boundary
+
+The preview compiler implements the bounded, still-`Proposed` RFC 0039 slice
+for loop-carried coroutine state. A suspend function may contain one flat
+top-level conditional `for` loop whose condition is synchronous. The body may
+contain direct suspend calls, immutable resumed-result bindings, synchronous
+`if`/`match` fallthrough, and direct assignment to owned task-local mutable
+locals declared before the loop.
+
+Nested suspending loops, suspension in a condition or conditional arm,
+`break`, `continue`, `?`, `defer`, panic, and early return across the loop
+suspension remain unsupported and report E0876. Mutable borrows, guards,
+raw/FFI views, and borrowed runtime buffers are not made suspension-safe by
+this slice.
+
+The C99 backend lowers the accepted loop into explicit condition, resume, and
+backedge labels inside one non-recursive stackless poll function. Values live
+across a possible suspension use frame slots. Managed assignment installs the
+new owned value before releasing the old slot, and cancellation drops each
+currently initialized loop-carried value exactly once. This preview behavior
+does not add atomic reference counting to ordinary ARC/COW values and does not
+change RFC 0039 from `Proposed` to `Accepted`.
 
 ---
 

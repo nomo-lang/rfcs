@@ -221,7 +221,7 @@ transfer。复制 identifier 仍指向同一 slot；复制出的 stale value 只
 每个 current-thread executor 持有固定 process table。第一版使用以下 hard
 bound：
 
-- 最多 64 个 live 或 draining child slot；
+- 最多 16 个 live 或 draining child slot；
 - 每个 child 最多一个 pending `next_event` operation；
 - 最多一个 pending stdin payload，上限 1 MiB；
 - stdout/stderr direction 各最多一个 bounded read buffer；
@@ -399,7 +399,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 | P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | 已由 [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 实现 |
 | P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | 已由 [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 实现 |
 | P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | 已由 [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) 实现 |
-| P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | Proposed；async loop-carried state 由 [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) 门禁 |
+| P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | 已由 [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) 部分实现；stress、low-memory 与 benchmark gate 仍未完成 |
 
 每个切片通过聚焦 implementation PR 落地，并在此记录证据。全部 required native
 correctness、resource、compatibility 与 benchmark gate 通过前，本 RFC 保持
@@ -483,12 +483,12 @@ completion 回投 owner IOCP，因此每个 child 都不占用 lifetime、reader
 writer thread。
 
 Runtime 会在打开 child endpoint 前启动每条 overlapped named-pipe connection，
-并限制 connection handshake。Stdin、stdout 与 stderr 使用固定表中的稳定
-`OVERLAPPED` storage。Cancellation 调用 `CancelIoEx`；late completion 在
-IOCP packet 排空前继续拥有 detached buffer，因此 coroutine frame drop 不会
-留下悬空 `OVERLAPPED` 指针。Process-pool completion registration 只在存在
-live job 时激活，并在最后一个 owner-visible completion 后停用，避免 idle
-registration 让 current-thread executor 永不退出。
+并限制 connection handshake。已提交的 stdin、stdout 与 stderr operation 使用
+固定表中的稳定 `OVERLAPPED` storage。Cancellation 调用 `CancelIoEx`；late
+completion 在 IOCP packet 排空前继续拥有 detached buffer，因此 coroutine
+frame drop 不会留下悬空 `OVERLAPPED` 指针。Process-pool completion
+registration 只在存在 live job 时激活，并在最后一个 owner-visible completion
+后停用，避免 idle registration 让 current-thread executor 永不退出。
 
 Windows native fixture 已验证 stdin flush、incremental output 与 exit 顺序；
 start/protocol failure；timeout 与 handle reuse；capability rejection；process、
@@ -526,6 +526,34 @@ run 与可参与声明的 RFC 0034 process measurement 仍属于 P2-PROC-E，因
 RFC 继续保持 `Proposed`。其中 MCP 组合依赖
 [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md)
 所提案的受限 suspending-loop 语义。
+
+### 11.5 P2-PROC-E 部分实现证据
+
+[`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) 新增
+`examples/mcp_stdio_async`：一个只使用 Nomo 应用代码、组合 owner-affine
+`std.process` 与 bounded `std.jsonrpc` framing 的示例。它会执行 initialize 与
+tools-list 两次 exchange，并让 decoder 与 completion state 穿过未知数量的
+suspending-loop iteration。Local、无需 key 的 fixture 会刻意拆分第一条
+response，合并一条 notification 与第二条 response，并独立发出 stderr。应用
+不写 C FFI，也没有新增 MCP-specific runtime intrinsic。
+
+同一 PR 修复了该 fixture 暴露的 Windows event-order 竞态。Stdout/stderr read
+现在使用固定 `ProcessChild` slot 持有的 persistent registration 与 buffer。
+返回 `StdinFlushed`、观察 exit 或一次 `next_event` timeout，不再取消可能已经
+收到数据的无关 output read。Close 与 cancellation 仍会调用 `CancelIoEx`、
+detach pending storage，并让固定 IOCP operation slot 持有它直到 completion
+排空。
+
+Linux epoll/`pidfd`、macOS kqueue/`EVFILT_PROC` 与 Windows IOCP job 都会执行
+fragmented/coalesced 示例并断言 protocol output 成功。示例 metrics 要求 close
+后 live process handle/operation、retained process byte、blocking job、reactor
+registration 与 timer 全部为零。Linux smoke 还通过 release-WASM 与现有
+P0/P1/P3 static/counter gate。
+
+这些证据只完成 P2-PROC-E 的 MCP 组合与聚焦 lifecycle 部分。覆盖大量 child
+及 cancellation race 的 saturation/leak stress、已记录的 low-memory run，以及
+固定版本、公平的 RFC 0034 process-pipe 对照仍未完成；当前不能做任何相对 Go
+的性能声明，本 RFC 继续保持 `Proposed`。
 
 ## 12. 备选与风险
 
