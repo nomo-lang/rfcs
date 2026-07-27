@@ -54,9 +54,10 @@ worker 上运行：
 - compatibility 实现没有稳定 completion slot，close/cancel 无法与 pending async
   callback 安全竞态；
 - 把任何现有 operation 包进 coroutine 仍会阻塞其他 task；
-- 当前 Unix stream cleanup template 会调用两次 easy-handle cleanup，SSE
-  size-error template 还重复了一段 message。Blocking migration 必须增加回归
-  覆盖并建立唯一 cleanup owner，不能把这些缺陷带进 async table。
+- compatibility registry 还没有 lifecycle counter 或 sanitizer gate，无法证明
+  future cancellation/completion race 下只有一个 cleanup owner。Blocking
+  migration 必须保留当前 single-thread behavior，并在 async table 落地前补充这类
+  回归证据。
 
 因此现有 `E0891` 隔离正确。真实替代实现必须把 transport
 readiness/completion 接入 executor，保留全部已接受 protocol behavior，并让
@@ -436,7 +437,7 @@ fd/handle/thread count、live idle connection 与 retained buffer。第一份正
 
 | 切片 | 必须实现的行为 | 状态 |
 | --- | --- | --- |
-| P2-HTTP-A | public suspend/handle/migration contract、`E0870`/`E0890`/`E0891`、typed lowering ABI、blocking cleanup 回归与 benchmark fixture | Planned |
+| P2-HTTP-A | public suspend/handle/migration contract、`E0870`/`E0890`/`E0891`、typed lowering ABI、blocking compatibility cleanup/sanitizer 回归与 benchmark fixture | Planned |
 | P2-HTTP-B | Unix buffered send/open 通过 owner-local curl multi、bounded resolver、TLS fixture、connection reuse、timeout/cancel 与精确 lifecycle counter | Planned |
 | P2-HTTP-C | Unix incremental text/SSE pull、terminal cancellation、slot reuse、limit 与 epoll/kqueue native stress | Planned |
 | P2-HTTP-D | asynchronous WinHTTP send/stream parity、owner wakeup、bounded connection reuse、late-callback drain 与 Windows native stress | Planned |
@@ -463,7 +464,7 @@ stdlib/SPEC/docs 更新、native platform 证据与精确 cleanup counter。
 | 保留 unsuffixed blocking 并永久增加 `_async` 名称 | 产生两套长期 API，违背 direct-style effect migration |
 
 风险包括动态 libcurl capability 差异、resolver/callback race、backend-specific
-connection reuse、early-cancel TLS state、retained secret buffer、重复 cleanup 与
+connection reuse、early-cancel TLS state、retained secret buffer、cleanup-owner 错误与
 preview source breakage。显式 compatibility 名称、固定 owner slot、generation
 check、bounded resolver job、统一 operation state machine、native fixture、
 sanitizer 证据与精确 counter 用于缓解这些风险。
