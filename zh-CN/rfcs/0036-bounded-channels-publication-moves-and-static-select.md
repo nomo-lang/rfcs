@@ -10,7 +10,7 @@
 | 标题 | 有界 Channel、Publication Move 与静态 Select |
 | 决策状态 | Proposed（已提案） |
 | 实现状态 | Partially implemented（部分已实现） |
-| 实现证据 | P3-A [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41)、P3-B [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42)、P3-C [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43)；P3-D/P4 尚未实现 |
+| 实现证据 | P3-A [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41)、P3-B [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42)、P3-C [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43)、P3-D [`nomo#64`](https://github.com/nomo-lang/nomo/pull/64)；P4 尚未实现 |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-26 |
 | 主题 | channel、select、move publication、Send、backpressure、cancellation、C99 |
@@ -465,8 +465,17 @@ storage、atomic shim call 或 select metadata。
    [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43) 实现：** 精确 parser/formatter form、immediate
    source ordering、pending registration、cancellation、deadline 与 loser
    cleanup。
-4. **P3-D send/join select——计划中：** staged moved value、affine join ownership、early
-   exit 与完整诊断。
+4. **P3-D send/join select——由
+   [`nomo#64`](https://github.com/nomo-lang/nomo/pull/64) 实现：** staged moved value、affine
+   join ownership、源码顺序 immediate selection、pending-winner
+   linearization、early exit、`E0887` 与 exactly-once loser/frame cleanup。
+   合并提交为
+   [`c6712c1`](https://github.com/nomo-lang/nomo/commit/c6712c1da1f65fcbdf0ce037224d11482b6a7e35)；
+   受保护 CI
+   [`30313432739`](https://github.com/nomo-lang/nomo/actions/runs/30313432739)
+   在 Linux、macOS 和 Windows 上执行了 P3-D 示例与精确 runtime counter
+   门禁。Browser WASM 保持显式 unsupported-capability 边界，且不会求值会被
+   消费的 arm operand。
 5. **P4 cross-shard publication——计划中：** 私有 atomic shim、owner wakeup、stress test
    与 per-core 证据。
 

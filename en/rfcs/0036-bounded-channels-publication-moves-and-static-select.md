@@ -10,7 +10,7 @@
 | Title | Bounded channels, publication moves, and static select |
 | Decision Status | Proposed |
 | Implementation Status | Partially implemented |
-| Implementation Evidence | P3-A [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41), P3-B [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42), P3-C [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43); P3-D/P4 remain open |
+| Implementation Evidence | P3-A [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41), P3-B [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42), P3-C [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43), P3-D [`nomo#64`](https://github.com/nomo-lang/nomo/pull/64); P4 remains open |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-26 |
 | Topics | channel, select, move publication, Send, backpressure, cancellation, C99 |
@@ -484,8 +484,17 @@ Implementation is split into reviewable PRs:
    [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43):** exact parser/formatter form, immediate
    source ordering, pending registration, cancellation, deadline, and loser
    cleanup.
-4. **P3-D send/join select — planned:** staged moved values, affine join ownership, early
-   exits, and complete diagnostics.
+4. **P3-D send/join select — implemented by
+   [`nomo#64`](https://github.com/nomo-lang/nomo/pull/64):** staged moved values, affine join
+   ownership, source-ordered immediate selection, pending-winner
+   linearization, early exits, `E0887`, and exactly-once loser/frame cleanup.
+   The merge commit is
+   [`c6712c1`](https://github.com/nomo-lang/nomo/commit/c6712c1da1f65fcbdf0ce037224d11482b6a7e35);
+   protected CI
+   [`30313432739`](https://github.com/nomo-lang/nomo/actions/runs/30313432739)
+   exercised the P3-D example and exact runtime counters on Linux, macOS, and
+   Windows. Browser WASM preserves the explicit unsupported-capability
+   boundary without evaluating consuming arm operands.
 5. **P4 cross-shard publication — planned:** private atomic shim, owner wakeup, stress
    tests, and per-core evidence.
 
