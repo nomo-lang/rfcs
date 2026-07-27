@@ -210,6 +210,41 @@ Root shutdown:
 | `E0892` | a target lacks a required reactor capability | name the target and supported backend/configuration |
 | `E0893` | a legacy `task fn` path violates blocking-pool nesting rules | flatten the job or use structured async tasks |
 
+### 9.1 Blocking compatibility quarantine
+
+Before an owner-affine suspend replacement is implemented, a `suspend fn`
+must fail with `E0891` when its local call graph reaches any compatibility
+operation that can wait on the current OS thread:
+
+- HTTP client and stream progress: `http.get`, `http.post`, `http.send`,
+  `http.open_stream`, `http.read_text`, and `http.next_sse`;
+- blocking HTTP server progress: `http.listen`, `http.accept`, and
+  `http.respond_string`;
+- legacy shell process helpers: `process.spawn`, `process.status`,
+  `process.exec`, and `process.output`;
+- controlled-process lifecycle calls that can spawn, wait, terminate, or reap:
+  `process.start`, `process.next_event`, `process.terminate`, and
+  `process.close_child`.
+
+The diagnostic applies to qualified calls, specifically imported calls, and
+transitive calls through local helper functions. It must name the call path
+and must not include argument values. Ordinary synchronous functions remain
+source-compatible.
+
+Compatibility operations that are specified to return without waiting, such
+as stream close/cancel, bounded process-stdin queueing, `close_stdin`, and
+`try_wait`, are not classified as `E0891` solely because they touch an older
+handle. They remain current-thread compatibility surfaces and must not be
+mistaken for proof of `Send`, cross-shard safety, or owner-affine async I/O.
+Their handle ownership is re-specified by the focused HTTP/process RFC before
+sharded execution.
+
+This quarantine is an implementation gate, not the async implementation:
+wrapping a synchronous pull in a coroutine or a polling loop is forbidden.
+Each operation leaves the quarantine only when its suspend path registers
+reactor/completion interest, passes cancellation/deadline and leak tests, and
+has the native platform evidence required by RFC 0034.
+
 Runtime backpressure, timeout, cancellation, closed-handle, and reactor errors
 are typed standard-library results with secret-safe messages. Authorization
 headers, tokens, process environment secrets, request bodies, and SQLite values

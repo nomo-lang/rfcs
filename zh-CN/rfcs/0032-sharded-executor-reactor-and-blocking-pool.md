@@ -192,6 +192,36 @@ root shutdown 顺序：
 | `E0892` | target 缺少所需 reactor capability | 指明 target 和支持的 backend/configuration |
 | `E0893` | legacy `task fn` 违反 blocking-pool nesting rule | flatten job 或使用 structured async task |
 
+### 9.1 Blocking compatibility 隔离
+
+在 owner-affine suspend 替代路径实现以前，`suspend fn` 的本地调用图只要到达
+任何会等待当前 OS thread 的 compatibility 操作，就必须以 `E0891` 失败：
+
+- HTTP client 与 stream progress：`http.get`、`http.post`、`http.send`、
+  `http.open_stream`、`http.read_text` 与 `http.next_sse`；
+- blocking HTTP server progress：`http.listen`、`http.accept` 与
+  `http.respond_string`；
+- legacy shell process helper：`process.spawn`、`process.status`、
+  `process.exec` 与 `process.output`；
+- 可能 spawn、wait、terminate 或 reap 的 controlled-process lifecycle：
+  `process.start`、`process.next_event`、`process.terminate` 与
+  `process.close_child`。
+
+诊断覆盖 qualified call、specific import call，以及经本地 helper function
+传递的 transitive call；诊断必须给出调用路径，且不得包含参数值。普通同步
+function 保持 source-compatible。
+
+stream close/cancel、bounded process-stdin queue、`close_stdin`、`try_wait`
+等按契约无需等待即可返回的 compatibility 操作，不会仅因接触旧 handle 就被
+归类为 `E0891`。它们仍只是 current-thread compatibility surface，不能作为
+`Send`、cross-shard safety 或 owner-affine async I/O 的证明；在进入 sharded
+execution 前，聚焦的 HTTP/process RFC 必须重新规定其 handle ownership。
+
+该隔离是实现门禁，不是 async 实现：禁止只把同步 pull 包进 coroutine 或
+polling loop。只有当对应 suspend path 注册 reactor/completion interest，
+通过 cancellation/deadline/leak test，并取得 RFC 0034 要求的 native platform
+证据后，操作才能移出隔离清单。
+
 runtime backpressure、timeout、cancellation、closed-handle 与 reactor error 使用
 typed stdlib result，且消息不得泄露 secret。Authorization header、token、process
 environment secret、request body、SQLite value 不得进入诊断或 scheduler trace。
