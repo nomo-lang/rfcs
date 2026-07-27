@@ -148,7 +148,26 @@ executor。
 `timeout_millis` 上限为 900,000。零值只执行一次 immediate attempt，绝不注册
 reactor；正 timeout 使用 monotonic clock。
 
-### 4.3 Blocking compatibility
+### 4.3 Write half-close
+
+`shutdown_write` 是同步 operation，因为 native half-close 只执行一次 bounded
+socket operation：它不等待 readiness、不注册 reactor，也不分配 operation frame。
+它保持 owner affinity 与幂等性。第一次成功调用在 Unix 执行
+`shutdown(SHUT_WR)`，在 Windows 执行 `shutdown(SD_SEND)`，并在 bounded
+handle slot 中记录 write-half 状态。后续对同一个 live stream 的调用直接返回
+`Ok`，不再执行 system call。
+
+该方法绝不取消 in-flight write。write direction 为 busy 时返回 `Busy`，并保持
+operation 与 stream 不变。成功 half-close 后，read 仍然有效，可以继续观察 peer
+data 与 EOF；新的 write 返回 `Closed`。stale、完全关闭或 wrong-owner stream
+也返回 `Closed`。native half-close 失败时返回 `Write` 与 bounded、
+secret-safe message，且不标记 write half closed。half-close 后最终 `close`
+仍保持幂等，并释放完整 socket。
+
+blocking preview stream 直接调用同一个 platform half-close；owner-table 状态与
+pending-write 冲突规则适用于 suspend `connect` 返回的 owner-affine stream。
+
+### 4.4 Blocking compatibility
 
 一个 preview migration window 内提供：
 
@@ -182,9 +201,11 @@ owner，绝不访问复用后的 resource。
 不创建第二条 queue。application 跨 task 传 owned request/response data，不传
 handle。
 
-`close` 是独占 terminal path：deregister readiness、只关闭一次、推进 generation，
-并使 late event 失效。取消一个 operation 会移除它，但 stream 保持打开，除非
-structured cleanup 同时关闭其 owner。
+`shutdown_write` 在同一个 owner slot 中记录 nonterminal write-half 状态；它既不
+推进 generation，也不使 read direction 失效。`close` 是独占 terminal path：
+deregister readiness、只关闭一次、推进 generation，并使 late event 失效。取消
+一个 operation 会移除它，但 stream 保持打开，除非 structured cleanup 同时关闭
+其 owner。
 
 ## 6. Reactor Progress
 
@@ -233,6 +254,7 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 | P2-TCP-C | bounded blocking pool hostname resolution | 已由 [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) 实现 |
 | P2-TCP-D | native Windows IOCP connect/read/write | 数值 IPv4/IPv6 子切片由 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) 实现，bounded hostname 子切片由 [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) 实现 |
 | P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前返回 `NetErrorKind.Unsupported`（`runtime_unavailable` capability category） | 无 raw-TCP sandbox 分支已由 [`nomo#50`](https://github.com/nomo-lang/nomo/pull/50) 实现；host-driven raw-TCP adapter 尚未完成 |
+| P2-TCP-F | 同步、幂等的 write half-close，排除 pending write 并保留 read | contract 已固定；实现待完成 |
 
 数值地址 P2-TCP-D 子切片之前，Windows 可编译并对新 client call 返回
 `Unsupported`，且不求值或记录 secret payload。现在 Windows 已通过 IOCP
@@ -310,7 +332,10 @@ partial write、多次 readiness、EOF、zero/positive timeout、各生命周期
 close/late-event、slot reuse、saturation、非法 UTF-8、numeric 零线程执行、
 hostname 成功与 zero-timeout 不初始化、queued/running resolver cancellation、
 精确 resolver capacity overflow、secret-safe error，以及不求值 host、port 或
-timeout operand 的 browser capability rejection。
+timeout operand 的 browser capability rejection。half-close fixture 还必须覆盖
+peer 观察到 EOF、local write shutdown 后继续 read、重复调用幂等、
+write-after-shutdown 返回 `Closed`、pending-write 返回 `Busy`、native failure
+不改变状态、最终 close、slot reuse，以及 operation/registration/buffer 零泄漏。
 
 Linux/macOS 必须 native 执行 epoll/kqueue。P2-TCP-D 前 Windows 验证显式
 unsupported，之后必须通过包含 bounded hostname resolution 的 native IOCP
@@ -348,6 +373,8 @@ client contract。preview migration window 内，旧 client 行为通过显式
 `_blocking` compatibility 名称保留。browser raw TCP 仍不可用，listener accept
 与 UDP 仍为 blocking。browser sandbox 会在不求值 connect operand 的情况下
 返回 typed `Unsupported`；未来 host-driven raw-TCP adapter 仍是独立实现切片。
+P2-TCP-F 已固定 cross-platform half-close contract，但在 native Linux/macOS/
+Windows execution 与 lifecycle fixture 通过前仍未实现。
 
 未来 dedicated byte type 可以替代 `Array<u32>`，但不改变 reactor contract。
 listener/UDP migration、TLS 与 cross-shard stream transfer 都留给聚焦 follow-up，

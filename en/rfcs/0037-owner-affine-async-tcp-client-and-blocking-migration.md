@@ -152,7 +152,29 @@ stream cannot monopolize the current-thread executor.
 `timeout_millis` is at most 900,000. Zero performs one immediate attempt and
 never registers with the reactor. Positive timeouts use the monotonic clock.
 
-### 4.3 Blocking compatibility
+### 4.3 Write half-close
+
+`shutdown_write` is synchronous because the native half-close is one bounded
+socket operation: it never waits for readiness, registers with the reactor,
+or allocates an operation frame. It is owner-affine and idempotent. The first
+successful call performs `shutdown(SHUT_WR)` on Unix or
+`shutdown(SD_SEND)` on Windows and records the write-half state in the bounded
+handle slot. Later calls on the same live stream return `Ok` without another
+system call.
+
+The method never cancels an in-flight write. If the write direction is busy it
+returns `Busy` and leaves both the operation and stream unchanged. After a
+successful half-close, reads remain valid and can observe peer data and EOF;
+new writes return `Closed`. A stale, fully closed, or wrong-owner stream also
+returns `Closed`. A native half-close failure returns `Write` with a bounded,
+secret-safe message and does not mark the write half closed. Final `close`
+remains idempotent and releases the complete socket after a half-close.
+
+The blocking preview stream invokes the same platform half-close directly;
+the owner-table state and pending-write conflict rule apply to owner-affine
+streams returned by suspend `connect`.
+
+### 4.4 Blocking compatibility
 
 For one preview migration window:
 
@@ -188,6 +210,8 @@ The first slice permits at most one pending operation per stream direction.
 Conflicts return `Busy` rather than allocating a second queue. Applications
 send owned request/response data across tasks, not the handle.
 
+`shutdown_write` records a nonterminal write-half state in the same owner
+slot; it neither advances the generation nor invalidates the read direction.
 `close` is the exclusive terminal path: it deregisters readiness, closes once,
 advances the generation, and invalidates late events. Cancelling one operation
 removes it but leaves the stream open unless structured cleanup closes it.
@@ -242,6 +266,7 @@ milestone, not a complete Agent networking claim.
 | P2-TCP-C | hostname resolution through the bounded blocking pool | Implemented by [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) |
 | P2-TCP-D | IOCP connect/read/write with native Windows execution | Implemented by numeric IPv4/IPv6 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) and bounded hostname [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) slices |
 | P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `NetErrorKind.Unsupported` (`runtime_unavailable` capability category) | No-raw-TCP sandbox branch implemented by [`nomo#50`](https://github.com/nomo-lang/nomo/pull/50); host-driven raw-TCP adapter remains |
+| P2-TCP-F | synchronous idempotent write half-close with pending-write exclusion and preserved reads | Contract fixed; implementation pending |
 
 Before the numeric P2-TCP-D sub-slice, Windows compiled and returned
 `Unsupported` for new client calls without evaluating or logging secret
@@ -328,7 +353,10 @@ slot-reuse races, saturation, invalid UTF-8, numeric zero-thread execution,
 hostname success and zero-timeout no-initialization, queued/running resolver
 cancellation, exact resolver-capacity overflow, secret-safe errors, and
 browser capability rejection without evaluating host, port, or timeout
-operands.
+operands. Half-close fixtures additionally cover peer-observed EOF, reads after
+local write shutdown, idempotent repetition, write-after-shutdown `Closed`,
+pending-write `Busy`, native failure without state mutation, final close, slot
+reuse, and zero operation/registration/buffer leaks.
 
 Linux and macOS require native epoll/kqueue execution. Windows requires
 explicit unsupported behavior before P2-TCP-D and native IOCP execution,
@@ -368,7 +396,9 @@ available through explicit `_blocking` compatibility names for the preview
 migration window. Browser raw TCP remains unavailable; listener accept and UDP
 remain blocking. The browser sandbox reports typed `Unsupported` without
 evaluating connect operands; a future host-driven raw-TCP adapter remains a
-separate implementation slice.
+separate implementation slice. P2-TCP-F fixes the cross-platform half-close
+contract but remains unimplemented until native Linux/macOS/Windows execution
+and lifecycle fixtures pass.
 
 A dedicated byte type may later replace `Array<u32>` without changing the
 reactor contract. Listener/UDP migration, TLS, and cross-shard stream transfer
