@@ -327,3 +327,4 @@ existing thread-per-task or unguarded global-registry architecture.
 - [RFC 0033: Task ownership transfer and concurrent values](./0033-task-ownership-transfer-and-concurrent-values.md)
 - [RFC 0034: Async runtime acceptance and benchmark gates](./0034-async-runtime-acceptance-and-benchmark-gates.md)
 - [RFC 0035: Monotonic suspend timers and blocking sleep migration](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)
+- [RFC 0038: Owner-affine async process pipes and blocking migration](./0038-owner-affine-async-process-pipes-and-blocking-migration.md)

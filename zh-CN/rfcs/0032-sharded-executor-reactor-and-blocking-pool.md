@@ -299,3 +299,4 @@ global-registry 架构。
 - [RFC 0033：任务所有权转移与并发值](./0033-task-ownership-transfer-and-concurrent-values.md)
 - [RFC 0034：异步 runtime 验收与基准门禁](./0034-async-runtime-acceptance-and-benchmark-gates.md)
 - [RFC 0035：单调时钟挂起 Timer 与阻塞 Sleep 迁移](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)
+- [RFC 0038：Owner-affine async process pipe 与 blocking migration](./0038-owner-affine-async-process-pipes-and-blocking-migration.md)
