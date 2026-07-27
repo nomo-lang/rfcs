@@ -1297,8 +1297,8 @@ compatibility helper。Linux/macOS 通过 epoll/kqueue 执行 connect、bounded
 incremental read 与 complete bounded write；Windows 使用 owner-local 固定
 IOCP operation table。native numeric address 走零线程路径。hostname 使用一个
 惰性 bounded resolver worker，通过 Unix nonblocking pipe 或 Windows posted
-IOCP completion 返回 owner。browser raw TCP 与 `shutdown_write` 留给 RFC
-0037 后续切片。
+IOCP completion 返回 owner。browser raw TCP 留给 RFC 0037 后续切片。RFC
+0037 已固定同步、幂等的 `shutdown_write` 语义；实现证据仍待补齐。
 
 ```nomo
 pub enum NetErrorKind {
@@ -1358,6 +1358,7 @@ impl TcpStream {
     suspend fn read_string(self, max_bytes: u64, timeout_millis: u64) -> Result<TcpTextChunk, NetError>
     suspend fn write(self, data: Array<u32>, timeout_millis: u64) -> Result<void, NetError>
     suspend fn write_string(self, content: string, timeout_millis: u64) -> Result<void, NetError>
+    fn shutdown_write(self) -> Result<void, NetError>
     fn read_to_string_blocking(self) -> Result<string, NetError>
     fn write_string_blocking(self, content: string) -> Result<void, NetError>
     fn close(self) -> void
@@ -1382,6 +1383,12 @@ zero-timeout hostname 返回 `Timeout`，且不初始化 resolver pool 或 react
 只保留未发送 suffix，每轮 executor poll 最多推进 64 KiB，并且要么完整写入，
 要么失败。cancellation/timeout 各自恰好一次释放 registration 与 retained
 buffer，同时 stream 仍可复用；`close` 使 generation 失效。
+
+`shutdown_write` 执行一次同步 native write half-close，不注册 reactor，也不分配
+operation frame。它不会取消 pending write，而是返回 `Busy`；成功后保持幂等、
+保留 read，并使后续 write 返回 `Closed`。stale、完全关闭或 wrong-owner
+stream 返回 `Closed`；native half-close 失败返回 `Write`，且不改变 handle
+state。最终 `close` 仍保持幂等。
 
 hostname 上限为 253 bytes。resolver 有 16 个 live-job slot，最多复制 16 个
 IPv4/IPv6 candidate，并与按顺序的 connect attempt 共用一个 overall deadline；

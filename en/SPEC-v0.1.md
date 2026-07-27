@@ -1400,7 +1400,8 @@ incremental reads, and complete bounded writes through epoll/kqueue; Windows
 uses an owner-local fixed IOCP operation table. Native numeric addresses use a
 zero-thread path. Hostnames use one lazy bounded resolver worker and return
 completion through a nonblocking Unix pipe or posted Windows IOCP completion.
-Browser raw TCP and `shutdown_write` remain later RFC 0037 slices.
+Browser raw TCP remains a later RFC 0037 slice. RFC 0037 fixes synchronous,
+idempotent `shutdown_write` semantics; implementation evidence remains pending.
 
 ```nomo
 pub enum NetErrorKind {
@@ -1460,6 +1461,7 @@ impl TcpStream {
     suspend fn read_string(self, max_bytes: u64, timeout_millis: u64) -> Result<TcpTextChunk, NetError>
     suspend fn write(self, data: Array<u32>, timeout_millis: u64) -> Result<void, NetError>
     suspend fn write_string(self, content: string, timeout_millis: u64) -> Result<void, NetError>
+    fn shutdown_write(self) -> Result<void, NetError>
     fn read_to_string_blocking(self) -> Result<string, NetError>
     fn write_string_blocking(self, content: string) -> Result<void, NetError>
     fn close(self) -> void
@@ -1487,6 +1489,13 @@ suffix, advance at most 64 KiB per executor poll, and either complete the whole
 input or fail. Cancellation and timeout release registrations and retained
 buffers exactly once while leaving the stream reusable; `close` invalidates
 its generation.
+
+`shutdown_write` performs one synchronous native write half-close without
+reactor registration or an operation frame. It returns `Busy` instead of
+cancelling a pending write, is idempotent after success, preserves reads, and
+causes later writes to return `Closed`. Stale, fully closed, and wrong-owner
+streams return `Closed`; a native half-close failure returns `Write` without
+changing the handle state. Final `close` remains idempotent.
 
 A hostname is limited to 253 bytes. The resolver has 16 live-job slots, copies
 at most 16 IPv4/IPv6 candidates, and shares one overall deadline with ordered
