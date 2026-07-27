@@ -12,7 +12,7 @@
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | performance、memory、benchmark、Go comparison、low-end device、cross-platform、correctness |
-| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0017](./0017-target-triples-and-cross-compilation.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md) |
+| 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0017](./0017-target-triples-and-cross-compilation.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0040](./0040-owner-affine-async-http-and-sse-migration.md) |
 
 ## 1. 摘要
 
@@ -259,3 +259,4 @@ gate 作为 RFC 0031 至 0033 的必需证据。受控结果支持更窄的声�
 - [RFC 0031：直写式挂起函数与结构化并发](./0031-direct-style-suspend-functions-and-structured-concurrency.md)
 - [RFC 0032：分片 executor、reactor 与 blocking pool](./0032-sharded-executor-reactor-and-blocking-pool.md)
 - [RFC 0033：任务所有权转移与并发值](./0033-task-ownership-transfer-and-concurrent-values.md)
+- [RFC 0040：Owner-affine async HTTP/HTTPS、SSE 与 blocking migration](./0040-owner-affine-async-http-and-sse-migration.md)

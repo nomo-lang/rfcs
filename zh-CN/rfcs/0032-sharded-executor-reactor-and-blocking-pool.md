@@ -12,7 +12,7 @@
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | executor、reactor、epoll、kqueue、IOCP、WASM、affinity、blocking pool、Agent I/O |
-| 关联 RFC | [RFC 0017](./0017-target-triples-and-cross-compilation.md)、[RFC 0022](./0022-structured-http-client-and-host-runtime.md)、[RFC 0023](./0023-pull-based-http-streaming-and-sse.md)、[RFC 0024](./0024-controlled-child-processes-and-stdio.md)、[RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md)、[RFC 0027](./0027-bundled-sqlite-persistence-and-pull-queries.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) |
+| 关联 RFC | [RFC 0017](./0017-target-triples-and-cross-compilation.md)、[RFC 0022](./0022-structured-http-client-and-host-runtime.md)、[RFC 0023](./0023-pull-based-http-streaming-and-sse.md)、[RFC 0024](./0024-controlled-child-processes-and-stdio.md)、[RFC 0026](./0026-isolated-native-tasks-and-cooperative-cancellation.md)、[RFC 0027](./0027-bundled-sqlite-persistence-and-pull-queries.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0035](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)、[RFC 0040](./0040-owner-affine-async-http-and-sse-migration.md) |
 
 ## 1. 摘要
 
@@ -317,3 +317,4 @@ global-registry 架构。
 - [RFC 0034：异步 runtime 验收与基准门禁](./0034-async-runtime-acceptance-and-benchmark-gates.md)
 - [RFC 0035：单调时钟挂起 Timer 与阻塞 Sleep 迁移](./0035-monotonic-suspend-timers-and-blocking-sleep-migration.md)
 - [RFC 0038：Owner-affine async process pipe 与 blocking migration](./0038-owner-affine-async-process-pipes-and-blocking-migration.md)
+- [RFC 0040：Owner-affine async HTTP/HTTPS、SSE 与 blocking migration](./0040-owner-affine-async-http-and-sse-migration.md)
