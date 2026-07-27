@@ -1388,8 +1388,10 @@ IPv4/IPv6 candidate，并与按顺序的 connect attempt 共用一个 overall de
 queue saturation 返回 `Limit`。queued cancellation 立即完成，running system
 resolver call 采用 cooperative detach 并在返回后清理。preview migration
 window 内，`connect_blocking`、`read_to_string_blocking` 与
-`write_string_blocking` 保留旧 client 行为。browser raw TCP 仍不可用；
-`listen`、`TcpListener.accept` 与 UDP operation 仍为 blocking。
+`write_string_blocking` 保留旧 client 行为。没有 raw TCP 的 browser sandbox
+在求值 `net.connect` 的 host、port 或 timeout operand 前返回 `Unsupported`；
+调用方不得解析 generic secret-safe message。`listen`、`TcpListener.accept`
+与 UDP operation 仍为 blocking。
 
 ### 6.21 `std.http`
 

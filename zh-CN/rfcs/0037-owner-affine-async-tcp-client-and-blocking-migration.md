@@ -92,6 +92,12 @@ portable control flow 使用 `kind`，application 不解析 `message` 中的平�
 message 必须 bounded、secret-safe。`Array<u32>` 沿用 v0.1 byte 约定，元素只能
 在 `0..=255`；text read 校验 UTF-8，非法输入返回 `Read`，不返回 partial text。
 
+browser sandbox 没有 raw-TCP host capability 时，`net.connect` 必须在求值
+`host`、`port` 或 `timeout_millis` 前返回
+`Err(NetError { kind: Unsupported, ... })`。platform matrix 中的
+`runtime_unavailable` 是 capability category，不是新的 `NetErrorKind`；
+application 必须按 `Unsupported` 分支，不能解析 `message`。
+
 ### 4.2 Suspend client operation
 
 ```nomo
@@ -226,7 +232,7 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 | P2-TCP-B | epoll/kqueue 增量 bounded read 与完整 bounded write | 已由 [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) 实现 |
 | P2-TCP-C | bounded blocking pool hostname resolution | 已由 [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) 实现 |
 | P2-TCP-D | native Windows IOCP connect/read/write | 数值 IPv4/IPv6 子切片由 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) 实现，bounded hostname 子切片由 [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) 实现 |
-| P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前 `runtime_unavailable` | 未实现 |
+| P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前返回 `NetErrorKind.Unsupported`（`runtime_unavailable` capability category） | 未实现 |
 
 数值地址 P2-TCP-D 子切片之前，Windows 可编译并对新 client call 返回
 `Unsupported`，且不求值或记录 secret payload。现在 Windows 已通过 IOCP
@@ -296,7 +302,8 @@ write/receive payload、高层 authorization token、environment value 或无界
 partial write、多次 readiness、EOF、zero/positive timeout、各生命周期阶段取消、
 close/late-event、slot reuse、saturation、非法 UTF-8、numeric 零线程执行、
 hostname 成功与 zero-timeout 不初始化、queued/running resolver cancellation、
-精确 resolver capacity overflow 与 secret-safe error。
+精确 resolver capacity overflow、secret-safe error，以及不求值 host、port 或
+timeout operand 的 browser capability rejection。
 
 Linux/macOS 必须 native 执行 epoll/kqueue。P2-TCP-D 前 Windows 验证显式
 unsupported，之后必须通过包含 bounded hostname resolution 的 native IOCP

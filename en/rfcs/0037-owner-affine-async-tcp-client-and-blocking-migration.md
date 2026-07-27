@@ -96,6 +96,12 @@ from `message`. Messages are bounded and secret-safe. `Array<u32>` follows the
 v0.1 byte convention and contains only `0..=255`. Text reads validate UTF-8;
 invalid input returns `Read` without returning partial text.
 
+In a browser sandbox without a raw-TCP host capability, `net.connect` returns
+`Err(NetError { kind: Unsupported, ... })` before evaluating `host`, `port`, or
+`timeout_millis`. `runtime_unavailable` names this capability category in the
+platform matrix; it is not a new `NetErrorKind`, and applications must branch
+on `Unsupported` rather than parse `message`.
+
 ### 4.2 Suspend client operations
 
 ```nomo
@@ -235,7 +241,7 @@ milestone, not a complete Agent networking claim.
 | P2-TCP-B | incremental bounded read and complete bounded write on epoll/kqueue | Implemented by [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) |
 | P2-TCP-C | hostname resolution through the bounded blocking pool | Implemented by [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) |
 | P2-TCP-D | IOCP connect/read/write with native Windows execution | Implemented by numeric IPv4/IPv6 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) and bounded hostname [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) slices |
-| P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `runtime_unavailable` | Not implemented |
+| P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `NetErrorKind.Unsupported` (`runtime_unavailable` capability category) | Not implemented |
 
 Before the numeric P2-TCP-D sub-slice, Windows compiled and returned
 `Unsupported` for new client calls without evaluating or logging secret
@@ -312,7 +318,9 @@ read/write boundaries, partial writes, multiple readiness cycles, EOF, zero and
 positive timeout, cancellation at every lifecycle phase, close/late-event and
 slot-reuse races, saturation, invalid UTF-8, numeric zero-thread execution,
 hostname success and zero-timeout no-initialization, queued/running resolver
-cancellation, exact resolver-capacity overflow, and secret-safe errors.
+cancellation, exact resolver-capacity overflow, secret-safe errors, and
+browser capability rejection without evaluating host, port, or timeout
+operands.
 
 Linux and macOS require native epoll/kqueue execution. Windows requires
 explicit unsupported behavior before P2-TCP-D and native IOCP execution,

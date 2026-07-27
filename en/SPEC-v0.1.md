@@ -1494,8 +1494,10 @@ connect attempts; queue saturation returns `Limit`. Queued cancellation is
 immediate, while a running system resolver call is detached cooperatively and
 cleaned on completion. For the preview migration window, `connect_blocking`,
 `read_to_string_blocking`, and `write_string_blocking` preserve the old client
-behavior. Browser raw TCP remains unavailable; `listen`,
-`TcpListener.accept`, and UDP operations remain blocking.
+behavior. A browser sandbox without raw TCP returns `Unsupported` before
+evaluating the `net.connect` host, port, or timeout operands; callers must not
+parse the generic secret-safe message. `listen`, `TcpListener.accept`, and UDP
+operations remain blocking.
 
 ### 6.21 `std.http`
 
