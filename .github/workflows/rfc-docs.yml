@@ -1,0 +1,31 @@
+name: RFC documentation
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rfc-docs.yml"
+      - "scripts/check_rfc_docs.py"
+      - "**/*.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/rfc-docs.yml"
+      - "scripts/check_rfc_docs.py"
+      - "**/*.md"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check changed lines
+        if: github.event_name == 'pull_request'
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+      - name: Validate bilingual RFC documentation
+        run: python3 scripts/check_rfc_docs.py

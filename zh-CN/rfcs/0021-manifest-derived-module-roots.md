@@ -8,10 +8,10 @@
 | --- | --- |
 | 编号 | 0021 |
 | 标题 | 由 Manifest 派生模块根并映射依赖别名 |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-23 |
-| 实现状态 | 尚未实现；本文固定迁移顺序与兼容边界 |
+| 实现状态 | Not implemented（尚未实现） |
 | 关联主题 | package declaration、module identity、dependency alias、manifest migration、LSP |
 | 关联 RFC | [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0020](./0020-manifest-v2-workspace-and-project-configuration.md) |
 
@@ -40,13 +40,21 @@ package app.main
 
 ## 3. 名称派生
 
-模块根通过确定性的 `lower_snake` 变换从 package name 派生：
+模块根只从 `[package].name` 进行确定性的 `lower_snake_case` 变换。
+package `namespace`、canonical `owner/package` identity 与所有消费方选择的
+dependency alias 都不参与结果。
 
-- ASCII 大写字母转为小写，并在小写/数字到大写的边界插入 `_`；
-- `-` 转为 `_`；
-- 连续 `_` 折叠为一个；
-- Manifest v2 仍优先要求 lowercase kebab package name，CamelCase 变换主要用于旧
-  manifest 迁移。
+对于已经通过 Manifest v2 校验的 package name，变换规则为：
+
+1. 把 `-` 转为 `_`；
+2. ASCII 大写字母的前一字符为小写/数字时，或连续大写之后紧跟小写时，在该大写字母
+   前插入 `_`；
+3. ASCII 大写字母转为小写；
+4. 连续 `_` 折叠为一个；
+5. 校验结果是单个、非保留的 Nomo 标识符。
+
+Manifest v2 仍优先要求 lowercase kebab name。CamelCase 处理只是确定性迁移行为，
+不是扩大 manifest grammar。
 
 示例：
 
@@ -55,8 +63,9 @@ package app.main
 | `hello` | `hello` |
 | `hello-world` | `hello_world` |
 | `HelloWorld`（legacy） | `hello_world` |
+| `HTTPServer`（legacy） | `http_server` |
 
-派生结果必须是合法 Nomo 标识符。无法得到合法标识符的 manifest 在项目发现阶段失败。
+无法得到合法标识符的 manifest 必须在加载源码前失败。
 
 ## 4. 文件到模块的映射
 
@@ -69,8 +78,18 @@ package app.main
 | `src/http/client.nomo` | `package hello_world.http.client` |
 | `src/http/main.nomo` | `package hello_world.http` |
 
-入口文件不追加 `.main`。文件路径与 package declaration 不一致时继续使用稳定诊断
-`E0904`，LSP 提供更新声明或重命名文件的 quick fix。
+编译器通过去掉 `src/` 前缀与 `.nomo` 后缀计算期望声明：
+
+- `src/main.nomo` 直接映射到 manifest root；
+- 嵌套 `main.nomo` 映射到其所在目录路径；
+- 其它文件映射到相对目录路径加文件名 stem。
+
+因此入口文件不追加 `.main`。项目发现必须先加载 manifest，再校验任何源码声明；
+编译器不得从 `src/main.nomo` 声明的第一个 segment 反推或替换项目根。
+
+`E0904` 同时覆盖入口与被导入模块不匹配。诊断包含 manifest 派生的期望声明、实际
+声明、源码路径、manifest 路径，以及修改声明或移动文件的安全修复。CLI、compiler、
+doc、formatter 与 LSP 必须共享同一映射 helper。
 
 ## 5. 依赖 alias 映射
 
@@ -118,11 +137,25 @@ import local_utils.path
 3. CLI、compiler、LSP、doc 和 formatter 使用同一个文件到模块映射。
 4. 增加 `nomo fix module-roots [path] [--check]`，原子更新 package declarations 与本包
    import。
-5. 一个开发 snapshot 接受旧 `app.*` 并给出迁移诊断；下一个 snapshot 移除兼容。
+5. 恰好一个开发 snapshot 接受旧入口声明 `package app.main` 与
+   `package <root>.main`，以及对应的 `app.<relative-path>` package layout，并给出
+   迁移诊断 `W0904`。
 6. 迁移标准库、示例、Playground、LSP fixtures 和编辑器文档。
 
-迁移工具不得修改 dependency alias import，除非该 import 实际引用当前包的旧
-`app.*` 根。
+迁移命令从 `path`（默认 `.`）只发现一个当前 package，在写入前计算全部修改，然后
+原子替换该 package 的 Nomo 源文件。任一文件无法读取、校验、格式化或暂存时，不得
+修改任何源码。`--check` 执行相同的发现与校验但不写入：无需修改时成功退出，需要
+迁移时失败退出并列出文件。正常迁移第二次运行必须是 no-op。
+
+只有解析为当前 package 的声明与 self-import 可以修改。依赖源码树、dependency
+alias、generated/vendor/cache 目录，以及通过 dependency alias 解析的 import
+永不重写。Workspace 调用默认只迁移显式选择的 member；其它 member 必须分别选择。
+
+兼容窗口从同时包含新 validator 与 `nomo fix module-roots` 的首个 snapshot 开始。
+`W0904` 必须说明接受的 legacy form、canonical replacement、迁移命令与移除 snapshot。
+只有 standard library、template、example、fixture、benchmark probe、`nomo-hello`、
+Playground、LSP 与 editor surface 全部 canonical，且仓库门禁确认除刻意 negative
+fixture 外不再存在 legacy declaration 后，下一个开发 snapshot 才移除兼容路径。
 
 ## 7. 备选方案
 
@@ -148,8 +181,24 @@ identity 决议与实现之间的矛盾，不增加新的语言表达能力。
 ## 10. 验收
 
 - `nomo new hello-world` 生成 `package hello_world`。
-- 主模块声明与 manifest name 不一致时产生 `E0904`。
-- 同一依赖可在两个消费者中使用不同 alias，依赖源码不变化。
+- `src/main.nomo`、`src/math.nomo`、`src/http/main.nomo` 分别映射为
+  `hello_world`、`hello_world.math`、`hello_world.http`。
+- 入口或被导入模块不匹配时由 manifest mapping 产生 `E0904`，即使入口声明的第一段
+  在自身看来一致也不能反推项目根。
+- Workspace member 分别从自身 manifest 派生 root。
+- 同一依赖可在两个消费者中使用不同 alias，依赖源码不变化；canonical identity
+  仍能区分相同 source root。
 - 本包模块、依赖模块、workspace member 的 definition/rename 与文档链接保持正确。
-- 迁移命令支持 `--check`、幂等、失败时不留下部分写入。
+- `--check` 不写入、正常迁移幂等、注入失败不留下部分写入，dependency source 与
+  alias import 保持逐字节不变。
+- Legacy 入口只在文档指定 snapshot 编译并发出 `W0904`；移除门禁 fixture 证明后续
+  snapshot 会拒绝它们。
+- C99 与 browser-WASM example gate 使用 canonical module root 编译。
 
+## 11. 决策与实现证据门禁
+
+评审期间本 RFC 保持 `Proposed` 与 `Not implemented`。只有 compiler、迁移命令、
+formatter、scaffolder、doc、LSP、grammar、editor、example、standard library、
+C99/WASM path 及以上文档门禁全部通过受保护 CI 后，才可在独立证据 PR 中改为
+`Accepted`。该 PR 必须记录相关 merged commit 与 snapshot/退场条件；内部测试不能
+被当作 production readiness 证据。
