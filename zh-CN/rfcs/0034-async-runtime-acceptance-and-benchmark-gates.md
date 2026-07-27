@@ -216,6 +216,24 @@ release/stabilization evidence 使用专用受控 host，不能从 noisy shared 
 - application-side 无 C FFI 与 toolchain 内部使用 system library；
 - 已实现 platform support 与仅 cross-build support。
 
+### 11.1 已交付的 P2 process-pipe 证据
+
+[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) 增加确定性的
+16-child saturation、类型化 overflow、32 次 slot reuse 与 15 个 queued job
+cancellation storm，并在 Linux、macOS、Windows 上验证精确的 zero-live cleanup
+counter。[`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 启动 result
+schema 2 与第一个 enabled P2 跨语言 workload。Nomo 与固定 Go 1.25.12 对同一个
+C99 fixture 执行 256 次、63-byte 的 bidirectional process-pipe protocol。
+Linux collector 强制单核 affinity、2 GiB address-space ceiling 与 128 MiB
+peak-RSS budget，并记录 CPU/RSS/fd/thread observation 与 p50/p99/p999。
+
+通过的 pull-request artifact 报告 Nomo/Go throughput `0.958986`、p99 wall
+ratio `1.004829` 与 peak-RSS ratio `0.997620`；两侧 peak RSS 都约为
+15.5 MiB。这些 hosted-runner 数字会作为 raw diagnostic evidence 保留，但尚未
+达到 1.10 throughput 与 0.80 RSS 设计目标，不能产生性能声明。
+controlled-host 重复、Windows-native resource collector，以及其余命名
+workload/platform matrix 仍然必需，因此本 RFC 继续保持 `Proposed`。
+
 ## 12. 备选与风险
 
 | 备选 | 不选择原因 |

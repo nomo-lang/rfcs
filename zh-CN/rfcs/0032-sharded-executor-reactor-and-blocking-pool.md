@@ -276,6 +276,7 @@ task 或 handle leak。
 | P2-PROC-B：owner-affine Unix process pipe | [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 已增加唯一的 bounded lazy start/reap worker、Linux epoll/`pidfd`、macOS kqueue/`EVFILT_PROC`、owner-local nonblocking pipe、cancellation/timeout/close、精确 counter、ASAN fixture 与 native Nomo 示例 | Unix correctness 无剩余门禁；cross-platform completion 继续在下方跟踪 |
 | P2-PROC-C：owner-affine Windows process pipe | [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 已增加 overlapped named pipe、owner-local IOCP completion、受限 process creation 与 exit notification、late-completion draining、精确 lifecycle counter、Windows native fixture，以及没有 per-child I/O thread 的 Nomo 示例 | Windows correctness 无剩余门禁；browser 与 resource 门禁继续在下方跟踪 |
 | P2-PROC-D：browser process capability boundary | [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) 已验证零 import 的 release WASM artifact 会在求值或泄漏毒化 command/timeout operand 前拒绝 async `process.start` | async MCP 组合、saturation/low-memory stress 与可参与声明的 RFC 0034 measurement |
+| P2-PROC-E：MCP/resource/measurement 收口 | [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57)、[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) 与 [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 已增加 native async MCP loop、16-child saturation 与 15-job cancellation stress、单核/128 MiB resource gate，以及固定 Go 1.25.12 的 process-pipe report | process 切片已完成；controlled-host target 与更广的 HTTP/SSE/TCP/platform benchmark matrix 仍未完成 |
 
 实现会跟踪 qualified call、specific import call、本地 transitive call 与跨 project
 module 的 transitive call。Compiler test 覆盖完整隔离操作集，并保留明确无需
@@ -293,9 +294,13 @@ polling。P2-PROC-C 已用 owner-local overlapped named pipe、固定 IOCP
 operation table、唯一的惰性 bounded process-creation worker，以及把
 completion 回投 owner IOCP 的受限 system exit wait 替换 Windows 占位实现。
 P2-PROC-D 已验证最终零 import 的 browser WASM artifact 会在求值 async
-command 或 timeout operand 前返回稳定的 process-capability error。Async MCP
-组合、low-memory/saturation stress 与 RFC 0034 process measurement 仍未完成；
-这些 resource 与 benchmark gate 全部满足前，本 RFC 保持 `Proposed`。
+command 或 timeout operand 前返回稳定的 process-capability error。
+P2-PROC-E 增加 Nomo-native MCP loop、受限 saturation/cancellation cleanup，
+并在 Linux affinity、address-space、RSS、fd 与 thread control 下生成版本化
+process-pipe 对照。通过的 hosted-runner result 接近持平，但尚未达到 RFC 0034
+的 throughput 与 RSS 设计目标。HTTP/SSE/TCP path、per-core shard、
+controlled-host 重复与更广平台 benchmark matrix 仍未完成，因此本 RFC 继续
+保持 `Proposed`。
 
 **提议决定：**采用 owner-affine current-thread/sharded executor、platform
 reactor 与独立 bounded blocking pool；不扩张现有 thread-per-task 或 unguarded

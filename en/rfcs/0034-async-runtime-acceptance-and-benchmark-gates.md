@@ -237,6 +237,26 @@ Public documentation must distinguish:
   use;
 - implemented platform support from cross-build-only support.
 
+### 11.1 Delivered P2 process-pipe evidence
+
+[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) adds deterministic
+16-child saturation, typed overflow, 32-slot reuse, and a 15-queued-job
+cancellation storm with exact zero-live cleanup counters across Linux, macOS,
+and Windows. [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) starts
+result schema 2 and the first enabled P2 cross-language workload. Nomo and
+pinned Go 1.25.12 execute the same 256-exchange, 63-byte bidirectional
+process-pipe protocol against one C99 fixture. The Linux collector enforces
+one-core affinity, a 2 GiB address-space ceiling, and a 128 MiB peak-RSS
+budget, and records CPU/RSS/fd/thread observations plus p50/p99/p999.
+
+The passing pull-request artifact reported Nomo/Go throughput `0.958986`, p99
+wall ratio `1.004829`, and peak-RSS ratio `0.997620`; both implementations
+used about 15.5 MiB peak RSS. These hosted-runner numbers are preserved as raw
+diagnostic evidence. They miss the 1.10 throughput and 0.80 RSS design targets
+and cannot authorize a claim. Controlled-host repetition, a Windows-native
+resource collector, and the remaining named workload/platform matrix are
+still required. This RFC therefore remains `Proposed`.
+
 ## 12. Alternatives and Risks
 
 | Alternative | Why it is not selected |

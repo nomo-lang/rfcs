@@ -399,7 +399,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 | P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | 已由 [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 实现 |
 | P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | 已由 [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 实现 |
 | P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | 已由 [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) 实现 |
-| P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | 已由 [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) 部分实现；stress、low-memory 与 benchmark gate 仍未完成 |
+| P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | 已由 [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57)、[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) 与 [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 实现 |
 
 每个切片通过聚焦 implementation PR 落地，并在此记录证据。全部 required native
 correctness、resource、compatibility 与 benchmark gate 通过前，本 RFC 保持
@@ -554,6 +554,34 @@ P0/P1/P3 static/counter gate。
 及 cancellation race 的 saturation/leak stress、已记录的 low-memory run，以及
 固定版本、公平的 RFC 0034 process-pipe 对照仍未完成；当前不能做任何相对 Go
 的性能声明，本 RFC 继续保持 `Proposed`。
+
+### 11.6 P2-PROC-E resource 与 benchmark 完成证据
+
+[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) 增加跨平台 controlled
+process fixture 与 `examples/async_process_stress`。该 Nomo 程序会填满固定的
+16-child table，要求第 17 次 start 返回 `limit`，关闭全部 child，然后通过
+复用的 slot 连续完成 32 次 stdin/stdout/exit round trip。聚焦 cancellation
+storm 会向唯一的 bounded worker 提交 16 次 process start，让 1 次进入 worker，
+取消另外 15 个 queued job，并要求 cancellation counter 精确匹配。两个门禁都
+要求退出时 live process handle/operation、retained process byte、blocking job、
+reactor registration 与 timer 为零；Linux、macOS 与 Windows CI 全部通过。
+
+[`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 启用版本化的 RFC 0034
+process-pipe report。Nomo 与固定的 Go 1.25.12 会启动同一个 C99 fixture，并
+通过 stdin、stdout、stderr 完成 256 次相同的 63-byte line exchange。Result
+schema 2 记录五次 wall/CPU/RSS sample、p50/p99/p999、每秒 operation 与 Linux
+fd/thread peak。Linux 会把两侧固定到一个 CPU，应用 2 GiB address-space
+ceiling，并拒绝任何 peak RSS 超过 128 MiB 的 measured sample。门禁还要求
+一次 start、256 次 write、769 个类型化 process event，以及退出时 live runtime
+resource 全为零。
+
+通过的 pull-request artifact 记录 Nomo/Go throughput `0.958986`、p99 wall
+ratio `1.004829` 与 peak-RSS ratio `0.997620`。两侧 peak 约 15.5 MiB，
+peak fd 为 10/10，peak thread 为 2/3。这些只是 hosted-runner observation，
+不是 marketing claim；它们尚未达到 RFC 0034 的 throughput 至少 1.10 与 RSS
+至多 0.80 设计目标，版本化 collector 也仍只支持 POSIX。P2-PROC-E 已实现，
+但在 controlled-host 重复、更多平台 performance 证据与 RFC 0034 其余验收
+矩阵完成前，本 RFC 继续保持 `Proposed`。
 
 ## 12. 备选与风险
 

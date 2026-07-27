@@ -1144,6 +1144,17 @@ Browser WASM rejects the async process capability before argument evaluation.
 The release artifact imports no host API and returns the stable capability
 error before evaluating `process.start` command or timeout operands.
 
+Preview conformance evidence fills the 16-child native table, requires a typed
+`limit` for a seventeenth start, closes every slot, and then completes 32 reuse
+round trips. A separate bounded-worker gate starts one of 16 submitted jobs
+and cancels the other 15 before delivery. Both require zero live process
+handles/operations, retained bytes, blocking jobs, reactor registrations, and
+timers at shutdown. The versioned process-pipe report runs 256 identical
+63-byte stdin/stdout/stderr exchanges against one fixture for Nomo and pinned
+Go 1.25.12, with five samples and explicit one-core/memory/resource controls.
+These measurements are evidence only and do not change an RFC from `Proposed`
+or create a performance claim.
+
 A synchronous call to `start` or `next_event` receives E0870 suspend-effect
 guidance; there is no implicit blocking fallback. `spawn`, `status`, `exec`,
 `output`, and all explicit `_blocking` functions are quarantined with E0891

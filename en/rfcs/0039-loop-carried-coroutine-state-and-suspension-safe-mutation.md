@@ -285,6 +285,16 @@ therefore cannot cancel and discard bytes that Windows has transferred before
 the read completion packet is dispatched. Close and cancellation detach the
 buffer until IOCP drains the late completion.
 
+[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) adds two focused
+lowering regressions discovered by the process stress program. Transitive
+suspend calls inside the accepted loop now use the complete global call graph
+instead of a second single-function validation pass. Frame aliases restored
+at the loop condition are additionally filtered by last use, so a managed
+local that crossed an earlier suspension but died before the loop is not
+reintroduced as an undeclared or stale C99 local. The 16-child saturation and
+32-round slot-reuse example exercises the corrected path across Linux, macOS,
+and Windows.
+
 This evidence satisfies the core bounded-loop and native MCP composition
 slices, but it does not complete every gate above. The full E0873
 borrow/guard/FFI-view matrix, per-suspension timeout/panic/error cleanup
