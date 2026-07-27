@@ -55,7 +55,7 @@ RFCs 0031–0040 remain Proposed. Their implementation status is independent:
 | 0033 ownership transfer | compiler-known Send/publication moves for current channel/task slices | full Send/Sync/Freeze/shared-value model |
 | 0034 acceptance gates | P0/P1 controls, P2 TCP/process evidence, P3 channel/select counters | P4–P6 matrix and controlled-host performance evidence |
 | 0035 monotonic timers | owner-local suspend timers and blocking-operation quarantine | compatibility-window closure and full acceptance promotion |
-| 0036 channels/select | P3-A moves, P3-B bounded current-thread channels, P3-C receive/timer select | send/join select and cross-shard publication |
+| 0036 channels/select | P3-A moves, P3-B bounded current-thread channels, P3-C receive/timer select, P3-D send/join select | P4 cross-shard publication |
 | 0037 async TCP | native Unix/Windows connect/read/write/DNS/half-close and browser unsupported boundary | host-driven browser TCP and full benchmark/stabilization matrix |
 | 0038 async process | P2-PROC-A–E native pipes, browser boundary, MCP loop, stress/resource report | decision acceptance and broader controlled-host repetition |
 | 0039 loop-carried state | first bounded owned-mutable suspending loop slice used by MCP | full borrow/guard/error/panic/browser matrix |
@@ -66,14 +66,14 @@ continue to reject unsupported control flow or capabilities explicitly.
 
 ## Next delivery order
 
-1. Close the syntax-convergence acceptance PR with complete cross-repository
-   evidence.
-2. Continue RFC 0040 P2-HTTP-B through P2-HTTP-F as focused signed PRs.
-3. Complete RFC 0036 send/join select before cross-shard publication.
-4. Add RFC 0032/0033 shard and ownership-transfer slices only with bounded
-   lifecycle and low-memory evidence.
-5. Run the full RFC 0034 platform/performance matrix on controlled hosts.
-6. Close installer, editor, packaging, external-use, and ecosystem release
+1. Continue RFC 0040 P2-HTTP-B through P2-HTTP-F as focused signed PRs.
+2. Implement RFC 0036 P4 cross-shard publication together with the required
+   RFC 0032/0033 private-atomic-shim, owner-wakeup, and ownership-transfer
+   slices.
+3. Add further RFC 0032/0033 shard and ownership-transfer slices only with
+   bounded lifecycle and low-memory evidence.
+4. Run the full RFC 0034 platform/performance matrix on controlled hosts.
+5. Close installer, editor, packaging, external-use, and ecosystem release
    gates before any stable-version claim.
 
 ## Stability boundary
