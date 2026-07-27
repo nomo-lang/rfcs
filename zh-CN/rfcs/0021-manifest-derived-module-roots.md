@@ -8,10 +8,11 @@
 | --- | --- |
 | 编号 | 0021 |
 | 标题 | 由 Manifest 派生模块根并映射依赖别名 |
-| 决策状态 | Proposed（已提案） |
+| 决策状态 | Accepted（已接受） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-23 |
-| 实现状态 | Not implemented（未实现） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | [nomo #62](https://github.com/nomo-lang/nomo/pull/62)、[nomo #63](https://github.com/nomo-lang/nomo/pull/63)、[核心 CI](https://github.com/nomo-lang/nomo/actions/runs/30307518265)、[nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5)、[LSP CI](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643)、[Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19)、[网站 #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15)、[治理 #54](https://github.com/nomo-lang/rfcs/pull/54) |
 | 关联主题 | package declaration、module identity、dependency alias、manifest migration、LSP |
 | 关联 RFC | [RFC 0008](./0008-canonical-package-identity-and-aliases.md)、[RFC 0009](./0009-reproducible-workspace-and-package-graphs.md)、[RFC 0020](./0020-manifest-v2-workspace-and-project-configuration.md) |
 
@@ -164,7 +165,7 @@ fixture 外不再存在 legacy declaration 后，下一个开发 snapshot 才移
 | 永久保留 `app` 根 | 多个 package 的源码身份不可读，manifest name 不参与模块契约 | 拒绝 |
 | 源码使用 canonical `owner/package` | `/` 与模块语法冲突，组织迁移会污染所有源码 | 拒绝 |
 | 源码使用消费方 alias | 同一包无法被不同 alias 复用 | 拒绝 |
-| manifest 派生源码根 + consumer alias 映射 | 源码稳定、import 可本地命名、内部身份无歧义 | 提案 |
+| manifest 派生源码根 + consumer alias 映射 | 源码稳定、import 可本地命名、内部身份无歧义 | 已接受 |
 
 ## 8. 风险
 
@@ -197,8 +198,36 @@ identity 决议与实现之间的矛盾，不增加新的语言表达能力。
 
 ## 11. 决策与实现证据门禁
 
-评审期间本 RFC 保持 `Proposed` 与 `Not implemented`。只有 compiler、迁移命令、
-formatter、scaffolder、doc、LSP、grammar、editor、example、standard library、
-C99/WASM path 及以上文档门禁全部通过受保护 CI 后，才可在独立证据 PR 中改为
-`Accepted`。该 PR 必须记录相关 merged commit 与 snapshot/退场条件；内部测试不能
-被当作 production readiness 证据。
+本 RFC 对声明的 Preview 范围已为 `Accepted` 与 `Implemented`。
+
+评审使用的 merge baseline 为 `nomo`
+[`6acff2b`](https://github.com/nomo-lang/nomo/commit/6acff2bba0113efa3d49254ec2b9c72e1d442b33)
+与
+[`085da51`](https://github.com/nomo-lang/nomo/commit/085da513ff6c042bd00571c49a6eb061722acf6f)、
+`nomo-lsp`
+[`f855514`](https://github.com/nomo-lang/nomo-lsp/commit/f8555148617efbc3b21fabd75f94773c3bccd959)、
+Playground
+[`8cf8ba5`](https://github.com/nomo-lang/nomo-playground/commit/8cf8ba507b90c9b825d997e8f1359dd9894f1b1d)、
+网站
+[`aa6f412`](https://github.com/nomo-lang/www.nomo-lang.org/commit/aa6f412bc279647ea6b6c1eb4b37743a3395baff)
+与治理
+[`99d6f14`](https://github.com/nomo-lang/rfcs/commit/99d6f14207b44a3162fcc61a3abf545c2a20c9e1)。
+
+- Compiler、module graph、`E0904`、迁移命令、formatter、scaffolder、doc、
+  standard library、example、C99、WASM 与兼容覆盖已通过
+  [nomo #62](https://github.com/nomo-lang/nomo/pull/62) 和
+  [nomo #63](https://github.com/nomo-lang/nomo/pull/63) 合并；macOS、Windows、
+  smoke、workspace、C99 与 browser-WASM 门禁见
+  [核心 CI 30307518265](https://github.com/nomo-lang/nomo/actions/runs/30307518265)。
+- Alias-aware navigation 与 canonical signature 已通过
+  [nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5) 合并；98 项 protocol/
+  unit test 与 release gate 见
+  [LSP CI 30308080643](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643)。
+- Canonical 示例已进入
+  [Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19) 与
+  [网站 #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15)。
+- 双语 SPEC、迁移政策、恰好一个 snapshot 的兼容窗口、退场条件与可执行文档门禁已在
+  [rfcs #54](https://github.com/nomo-lang/rfcs/pull/54) 合并。
+
+Accepted 不代表 production ready；第 6 节规定的 `package <root>.main` 兼容仍在
+下一个开发 snapshot 到期。

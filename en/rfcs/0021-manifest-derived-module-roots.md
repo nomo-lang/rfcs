@@ -8,10 +8,11 @@
 | --- | --- |
 | Number | 0021 |
 | Title | Manifest-derived module roots and dependency alias mapping |
-| Decision Status | Proposed |
+| Decision Status | Accepted |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-23 |
-| Implementation Status | Not implemented |
+| Implementation Status | Implemented |
+| Implementation Evidence | [nomo #62](https://github.com/nomo-lang/nomo/pull/62), [nomo #63](https://github.com/nomo-lang/nomo/pull/63), [core CI](https://github.com/nomo-lang/nomo/actions/runs/30307518265), [nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5), [LSP CI](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643), [Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19), [website #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15), [governance #54](https://github.com/nomo-lang/rfcs/pull/54) |
 | Related topics | package declaration, module identity, dependency alias, manifest migration, LSP |
 | Related RFCs | [RFC 0008](./0008-canonical-package-identity-and-aliases.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0020](./0020-manifest-v2-workspace-and-project-configuration.md) |
 
@@ -153,7 +154,7 @@ fixtures.
 | Keep `app` permanently | Source identity remains unreadable and detached from manifests | Reject |
 | Use canonical `owner/package` in source | `/` conflicts with module syntax and organization changes leak into source | Reject |
 | Use the consumer alias in source | One package cannot be reused under different aliases | Reject |
-| Manifest-derived source root plus alias mapping | Stable source, locally named imports, unambiguous internal identity | Proposed |
+| Manifest-derived source root plus alias mapping | Stable source, locally named imports, unambiguous internal identity | Accepted |
 
 ## 8. Risks
 
@@ -191,10 +192,38 @@ decision and its implementation without adding language expressiveness.
 
 ## 11. Decision and implementation gate
 
-This RFC remains `Proposed` and `Not implemented` while the contract is under
-review. It may move to `Accepted` only in a separate evidence PR after the
-compiler, migration command, formatter, scaffolder, docs, LSP, grammars,
-editors, examples, standard library, C99/WASM paths, and documentation gates
-above pass protected CI. Acceptance records the relevant merged commits and
-snapshot/removal condition; internal tests alone are not production-readiness
-evidence.
+This RFC is `Accepted` and `Implemented` for the declared Preview scope.
+
+The reviewed merge baseline is `nomo`
+[`6acff2b`](https://github.com/nomo-lang/nomo/commit/6acff2bba0113efa3d49254ec2b9c72e1d442b33)
+and
+[`085da51`](https://github.com/nomo-lang/nomo/commit/085da513ff6c042bd00571c49a6eb061722acf6f),
+`nomo-lsp`
+[`f855514`](https://github.com/nomo-lang/nomo-lsp/commit/f8555148617efbc3b21fabd75f94773c3bccd959),
+Playground
+[`8cf8ba5`](https://github.com/nomo-lang/nomo-playground/commit/8cf8ba507b90c9b825d997e8f1359dd9894f1b1d),
+website
+[`aa6f412`](https://github.com/nomo-lang/www.nomo-lang.org/commit/aa6f412bc279647ea6b6c1eb4b37743a3395baff),
+and governance
+[`99d6f14`](https://github.com/nomo-lang/rfcs/commit/99d6f14207b44a3162fcc61a3abf545c2a20c9e1).
+
+- Compiler, module-graph, `E0904`, migration, formatter, scaffolder, docs,
+  standard-library, example, C99, WASM, and compatibility coverage merged in
+  [nomo #62](https://github.com/nomo-lang/nomo/pull/62) and
+  [nomo #63](https://github.com/nomo-lang/nomo/pull/63); the macOS, Windows,
+  smoke, workspace, C99, and browser-WASM gates passed in
+  [core CI run 30307518265](https://github.com/nomo-lang/nomo/actions/runs/30307518265).
+- Alias-aware navigation and canonical signatures merged in
+  [nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5), with 98 protocol
+  and unit tests plus the release gate in
+  [LSP CI run 30308080643](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643).
+- Canonical examples shipped through
+  [Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19) and
+  [website #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15).
+- The bilingual SPEC, migration policy, exact one-snapshot compatibility
+  window, removal condition, and executable documentation gate merged in
+  [rfcs #54](https://github.com/nomo-lang/rfcs/pull/54).
+
+Acceptance is not a production-readiness claim. `package <root>.main`
+compatibility still expires at the next development snapshot as specified in
+section 6.

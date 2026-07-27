@@ -8,8 +8,9 @@
 | --- | --- |
 | Number | 0041 |
 | Title | Canonical implicit `void` return declarations |
-| Decision Status | Proposed |
-| Implementation Status | Not implemented |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
+| Implementation Evidence | [nomo #62](https://github.com/nomo-lang/nomo/pull/62), [nomo #63](https://github.com/nomo-lang/nomo/pull/63), [core CI](https://github.com/nomo-lang/nomo/actions/runs/30307518265), [nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5), [LSP CI](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643), [Tree-sitter #10](https://github.com/nomo-lang/tree-sitter-nomo/pull/10), [VS Code #4](https://github.com/nomo-lang/vscode-nomo/pull/4), [IntelliJ #3](https://github.com/nomo-lang/intellij-nomo/pull/3), [Zed #4](https://github.com/nomo-lang/zed-nomo/pull/4), [Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19), [website #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15), [governance #54](https://github.com/nomo-lang/rfcs/pull/54) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-27 |
 | Related topics | function declarations, methods, suspend functions, interfaces, extern declarations, formatter, docs, LSP, grammars |
@@ -209,7 +210,7 @@ excluded from the canonical-source gate.
 | Keep explicit `-> void` canonical | Consistent but noisy, with no added declaration information | Reject |
 | Remove `void` and infer it everywhere | Breaks generic results, values, callable types, and ABI descriptions | Reject |
 | Permit omission only on ordinary functions | Leaves methods, interfaces, suspend, extern, docs, and LSP inconsistent | Reject |
-| Canonical omission in declaration contexts only | Concise declarations with complete callable and generic types | Proposed |
+| Canonical omission in declaration contexts only | Concise declarations with complete callable and generic types | Accepted |
 
 ## 9. Risks
 
@@ -242,12 +243,50 @@ Protected CI must prove:
 
 ## 11. Decision and implementation gate
 
-This RFC initially lands as `Proposed` with `Implementation Status:
-Not implemented`. No implementation branch may depend on acceptance by
-assertion alone.
+This RFC is `Accepted` and `Implemented` for the declared Preview scope.
 
-After the implementation and all applicable protected CI gates merge, a
-separate evidence PR may set the decision to `Accepted` and implementation to
-`Implemented`. That PR records merged compiler and ecosystem commits plus the
-exact validation commands. It must not equate internal test coverage with
+The reviewed merge baseline is `nomo`
+[`6acff2b`](https://github.com/nomo-lang/nomo/commit/6acff2bba0113efa3d49254ec2b9c72e1d442b33)
+and
+[`085da51`](https://github.com/nomo-lang/nomo/commit/085da513ff6c042bd00571c49a6eb061722acf6f),
+`nomo-lsp`
+[`f855514`](https://github.com/nomo-lang/nomo-lsp/commit/f8555148617efbc3b21fabd75f94773c3bccd959),
+Tree-sitter
+[`e62a073`](https://github.com/nomo-lang/tree-sitter-nomo/commit/e62a0736271074587dbcdb48768e08de3f7b7045),
+VS Code
+[`31bf337`](https://github.com/nomo-lang/vscode-nomo/commit/31bf337283485fe0c1684f99214cb5ca2fdd5fbf),
+IntelliJ
+[`bf3144e`](https://github.com/nomo-lang/intellij-nomo/commit/bf3144e3995bf3550f44bfcfb7e37ec4c5dde946),
+Zed
+[`38b9b82`](https://github.com/nomo-lang/zed-nomo/commit/38b9b82f326a01365e27556481a5f37786c38521),
+Playground
+[`8cf8ba5`](https://github.com/nomo-lang/nomo-playground/commit/8cf8ba507b90c9b825d997e8f1359dd9894f1b1d),
+website
+[`aa6f412`](https://github.com/nomo-lang/www.nomo-lang.org/commit/aa6f412bc279647ea6b6c1eb4b37743a3395baff),
+and governance
+[`99d6f14`](https://github.com/nomo-lang/rfcs/commit/99d6f14207b44a3162fcc61a3abf545c2a20c9e1).
+
+- Parser compatibility, canonical AST/formatter/scaffolder/doc rendering,
+  declaration-position coverage, callable/type/value preservation, C99, WASM,
+  and repository-wide source migration merged in
+  [nomo #62](https://github.com/nomo-lang/nomo/pull/62) and
+  [nomo #63](https://github.com/nomo-lang/nomo/pull/63). The applicable
+  platform and backend gates passed in
+  [core CI run 30307518265](https://github.com/nomo-lang/nomo/actions/runs/30307518265).
+- Shared hover, signature-help, symbol, and completion rendering merged in
+  [nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5), with the
+  protocol/release gate in
+  [LSP CI run 30308080643](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643).
+- Grammar and editor coverage merged through
+  [Tree-sitter #10](https://github.com/nomo-lang/tree-sitter-nomo/pull/10),
+  [VS Code #4](https://github.com/nomo-lang/vscode-nomo/pull/4),
+  [IntelliJ #3](https://github.com/nomo-lang/intellij-nomo/pull/3), and
+  [Zed #4](https://github.com/nomo-lang/zed-nomo/pull/4).
+- Canonical examples shipped through
+  [Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19) and
+  [website #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15); the
+  bilingual SPEC and executable declaration-drift/snippet gate merged in
+  [rfcs #54](https://github.com/nomo-lang/rfcs/pull/54).
+
+Acceptance records syntax convergence; it does not claim stable `v0.1.0` or
 production readiness.

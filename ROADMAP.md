@@ -37,11 +37,12 @@ and `nomo-lsp`
 [`f855514`](https://github.com/nomo-lang/nomo-lsp/commit/f8555148617efbc3b21fabd75f94773c3bccd959),
 with synchronized grammar/editor/Playground/website surfaces.
 
-RFCs 0021 and 0041 remain `Proposed` / `Not implemented` in the governance
-record until their separate acceptance PR links the complete code, tests,
-protected CI, migration, documentation, and ecosystem evidence. The current
-`.main` root compatibility branch is limited to one development snapshot and
-must not become permanent syntax.
+RFCs 0021 and 0041 are `Accepted` / `Implemented` for their declared Preview
+scope. Their evidence records the compiler, migration, platform, C99/WASM,
+LSP, grammar/editor, Playground, website, and executable documentation gates.
+The current `.main` root compatibility branch remains limited to one
+development snapshot and must not become permanent syntax. Acceptance does
+not imply stable `v0.1.0` or production readiness.
 
 ## Async Runtime: Proposed decisions with executable slices
 
