@@ -299,6 +299,7 @@ are mandatory mitigations.
 | Slice | Evidence | Remaining gate |
 | --- | --- | --- |
 | P2-GUARD: blocking compatibility quarantine | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) implements `E0891` for the HTTP/SSE and process operations in section 9.1 | true owner-affine suspend HTTP/SSE and process-pipe paths |
+| P2-PROC-A: process effect and lowering boundary | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) adds the Local/!Send process handle split, suspend ABI, explicit blocking migration, and ready zero-thread placeholder | bounded start jobs, native epoll/kqueue/IOCP process pipes, browser capability handling, and lifecycle/benchmark evidence |
 
 The implementation follows qualified, specifically imported, local
 transitive, and project-module transitive call paths. Compiler tests cover the
@@ -308,10 +309,13 @@ the source excerpt with a safe `operation(...)` label, so URL, token, command,
 and argument values do not reach stderr. Synchronous compatibility code
 remains accepted. Linux smoke plus native macOS and Windows CI passed.
 
-This evidence prevents known blocking compatibility I/O from occupying an
-async worker; it does not make any HTTP/SSE or process operation nonblocking.
-The RFC remains `Proposed` until the reactor-backed operations, ownership,
-cancellation, native platform, leak, and RFC 0034 benchmark gates are met.
+The quarantine evidence prevents known blocking compatibility I/O from
+occupying an async worker. P2-PROC-A additionally fixes the process suspend
+effect and C99 state-machine boundary without hiding the old registry behind
+it; its current native path is a ready `unsupported` placeholder. HTTP/SSE and
+native process I/O still need reactor-backed operations. The RFC remains
+`Proposed` until ownership, cancellation, native platform, leak, and RFC 0034
+benchmark gates are met.
 
 **Proposed decision:** adopt owner-affine current-thread/sharded executors,
 platform reactors, and a separate bounded blocking pool. Do not expand the

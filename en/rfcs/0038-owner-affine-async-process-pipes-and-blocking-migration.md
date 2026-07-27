@@ -411,7 +411,7 @@ error handling for a score.
 
 | Slice | Required behavior | Status |
 | --- | --- | --- |
-| P2-PROC-A | public effect/handle/migration contract, diagnostics, lowering ABI, benchmark fixture | Proposed |
+| P2-PROC-A | public effect/handle/migration contract, diagnostics, lowering ABI, benchmark fixture | Implemented by [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) |
 | P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Proposed |
 | P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Proposed |
 | P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Proposed |
@@ -420,6 +420,39 @@ error handling for a score.
 Each slice lands through a focused implementation PR and records evidence
 here. The RFC remains `Proposed` until all required native correctness,
 resource, compatibility, and benchmark gates pass.
+
+### 11.1 P2-PROC-A implementation evidence
+
+[`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) separates the public
+handle identities and migration paths. `ProcessChild` now belongs to the
+owner-affine suspend surface, while `BlockingProcessChild` and seven explicit
+`_blocking` operations preserve the RFC 0024 registry for the preview
+migration window. The compiler reports secret-safe `E0870` guidance for a
+synchronous call to `process.start` or `process.next_event`, keeps all shell
+helpers and `_blocking` calls behind `E0891`, and rejects `ProcessChild` at
+structured-spawn and bounded-channel publication boundaries.
+
+The C99 backend lowers `process.start` and `process.next_event` through typed
+start/resume/cancel registrations. A `ProcessCommand` operand is evaluated
+once, retained for the call, and released exactly once; completed `Result`
+ownership is transferred out of the frame or released by cancellation/drop.
+The P2-PROC-A host adapter intentionally completes inline with a secret-safe
+`unsupported` result. Generated-C gates prove this placeholder emits no RFC
+0024 process registry, helper thread, or atomic support. Linux, macOS, and
+Windows target lowering tests share this contract.
+
+The Nomo example `async_process_pipe_contract`, explicit blocking process/MCP
+migration examples, native generated-C execution, and a disabled RFC 0034
+process-pipe fixture lock the public and lowering contracts. Workspace tests,
+release WASM construction, and the Linux, macOS, and Windows PR CI groups
+passed. The workload remains disabled and ineligible for performance claims
+until P2-PROC-B supplies native registrations and lifecycle counters.
+
+This evidence completes only P2-PROC-A. Native bounded start jobs,
+epoll/kqueue pipes, process exit, cancellation, and close remain P2-PROC-B;
+IOCP, browser pre-evaluation capability handling, the async MCP example, and
+resource/performance evidence remain later slices. The RFC therefore remains
+`Proposed`.
 
 ## 12. Alternatives and Risks
 

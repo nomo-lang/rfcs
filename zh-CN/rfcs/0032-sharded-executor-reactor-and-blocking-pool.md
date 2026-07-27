@@ -272,6 +272,7 @@ task 或 handle leak。
 | 切片 | 证据 | 剩余门禁 |
 | --- | --- | --- |
 | P2-GUARD：blocking compatibility 隔离 | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) 已为第 9.1 节列出的 HTTP/SSE 与 process 操作实现 `E0891` | 真正 owner-affine 的 suspend HTTP/SSE 与 process-pipe path |
+| P2-PROC-A：process effect 与 lowering boundary | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 已增加 Local/!Send process handle 拆分、suspend ABI、显式 blocking migration 与 ready zero-thread 占位实现 | bounded start job、native epoll/kqueue/IOCP process pipe、browser capability handling 与 lifecycle/benchmark 证据 |
 
 实现会跟踪 qualified call、specific import call、本地 transitive call 与跨 project
 module 的 transitive call。Compiler test 覆盖完整隔离操作集，并保留明确无需
@@ -280,8 +281,10 @@ module 的 transitive call。Compiler test 覆盖完整隔离操作集，并保�
 进入 stderr。同步 compatibility code 仍可通过。Linux smoke 以及 macOS、
 Windows native CI 均已通过。
 
-这些证据能阻止已知 blocking compatibility I/O 占住 async worker，但不会把
-任何 HTTP/SSE 或 process 操作变成 nonblocking。只有 reactor-backed operation、
+隔离证据能阻止已知 blocking compatibility I/O 占住 async worker。
+P2-PROC-A 还固定了 process suspend effect 与 C99 state-machine boundary，且
+没有把旧 registry 藏在该边界之后；当前 native path 是 ready `unsupported`
+占位实现。HTTP/SSE 与 native process I/O 仍需 reactor-backed operation。只有
 ownership、cancellation、native platform、leak 与 RFC 0034 benchmark gate
 全部满足后，本 RFC 才能离开 `Proposed`。
 
