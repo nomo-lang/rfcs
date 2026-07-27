@@ -225,11 +225,15 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 | P2-TCP-A | bounded owner table、generation check、registration lifecycle、epoll/kqueue numeric-host nonblocking connect | 已由 [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) 实现 |
 | P2-TCP-B | epoll/kqueue 增量 bounded read 与完整 bounded write | 已由 [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) 实现 |
 | P2-TCP-C | bounded blocking pool hostname resolution | 已由 [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) 实现 |
-| P2-TCP-D | native Windows IOCP connect/read/write | 未实现 |
+| P2-TCP-D | native Windows IOCP connect/read/write | 数值 IPv4/IPv6 子切片已由 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) 实现；bounded hostname resolution 尚未完成 |
 | P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前 `runtime_unavailable` | 未实现 |
 
-A 到 C 阶段，Windows 必须可编译并返回 `Unsupported`，不得求值或记录 secret
-payload。这是显式 phase behavior，不等于 IOCP acceptance。Windows/browser
+数值地址 P2-TCP-D 子切片之前，Windows 可编译并对新 client call 返回
+`Unsupported`，且不求值或记录 secret payload。现在 Windows 已通过 IOCP
+原生执行数值 IPv4/IPv6 connect、read、write、cancellation、timeout、close
+与 late-completion path。bounded resolver 接入 owner reactor 前，Windows
+hostname 仍返回 `Unsupported`。该数值地址 milestone 是 native IOCP 证据，
+但不代表 P2-TCP-D 或 browser acceptance 已完整完成。剩余 Windows/browser
 证据完成前，RFC 0032 不能进入 `Accepted`。
 
 A/B/C 实现包含 bounded read/write payload、zero/positive timeout、structured
@@ -239,9 +243,16 @@ Windows 求值前明确拒绝与 Nomo example。hostname 使用一个惰性 work
 16 个 live-job slot，completion 通过 owner reactor 返回，最多复制 16 个
 candidate，并与按顺序的 connect attempt 共用一个 deadline。queued
 cancellation 会立即完成；已进入系统 resolver 的调用采用 cooperative detach，
-返回后再清理。`shutdown_write`、RFC 0032 的通用 blocking pool、native IOCP
-与 browser adapter 仍是后续切片。这些部分实现证据不会把本 RFC 从
-`Proposed` 提升为 `Accepted`。
+返回后再清理。
+
+数值地址 P2-TCP-D 子切片增加固定 64-slot owner-local IOCP operation table、
+位于 coroutine frame 之外的稳定 `OVERLAPPED` storage、`ConnectEx`、
+`WSARecv`、`WSASend`、一次性 socket association、`CancelIoEx` 与 bounded
+late-completion draining。Windows 原生 CI 覆盖 success、timeout、
+cancellation、close、slot reuse、saturation、secret-safe error 与精确
+operation/handle counter。`shutdown_write`、Windows hostname resolution、
+RFC 0032 的通用 blocking pool 与 browser adapter 仍是后续切片。这些部分
+实现证据不会把本 RFC 从 `Proposed` 提升为 `Accepted`。
 
 ## 9. Metrics 与 Limit
 
@@ -311,11 +322,12 @@ counter 用于降低这些风险。
 
 ## 13. v0.1 影响与后续问题
 
-P2-TCP-A/B/C 已作为 additive executable slice 更新 SPEC 与标准库：
-Linux/macOS 提供 numeric-address 或 bounded-hostname suspend connect 和
-bounded incremental read/write。preview migration window 内，旧 client 行为
-通过显式 `_blocking` compatibility 名称保留；listener accept 与 UDP 仍为
-blocking。
+P2-TCP-A/B/C 与数值地址 P2-TCP-D 子切片已经作为 additive executable slice
+更新 SPEC 与标准库：Linux/macOS 提供 numeric-address 或 bounded-hostname
+suspend connect 和 bounded incremental read/write；Windows 通过 native
+IOCP 提供 numeric-address connect/read/write。preview migration window 内，
+旧 client 行为通过显式 `_blocking` compatibility 名称保留。Windows hostname
+resolution 尚未完成，listener accept 与 UDP 仍为 blocking。
 
 未来 dedicated byte type 可以替代 `Array<u32>`，但不改变 reactor contract。
 listener/UDP migration、TLS 与 cross-shard stream transfer 都留给聚焦 follow-up，
