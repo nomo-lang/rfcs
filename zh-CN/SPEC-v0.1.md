@@ -1022,6 +1022,13 @@ child，并在 child 已退出时保持幂等。`close_child` 幂等，且会强
 Windows native adapter 由 toolchain 持有，应用代码不声明 C FFI。Browser WASM
 在参数求值前拒绝受控 API。
 
+在 suspend 调用图中，`process.spawn`、`status`、`exec`、`output`、`start`、
+`next_event`、`terminate` 与 `close_child` 会以 `E0891` 隔离，因为它们可能在
+当前 OS thread 上 spawn、wait、terminate 或 reap。`write_stdin`、
+`close_stdin` 与 `try_wait` 保留已规定的 non-waiting current-thread
+compatibility 行为；这并不使旧 handle 具备 `Send` 或 cross-shard safety。
+E0891 只渲染安全的 `operation(...)` source label，绝不回显 command 或参数值。
+
 ```rust
 process.exit(code: i64) -> void
 process.spawn(command: string) -> Result<i32, ProcessError>
@@ -1446,6 +1453,14 @@ exchange，`http.respond_string` 写入 string response。程序应使用
 handle，使正常返回与 `?` 早退都会清理资源。Streaming request body、binary
 response chunk、redirect、routing 与并发 server helper 留给后续 `std.http`
 切片。
+
+在 suspend 调用图中，`http.get`、`post`、`send`、`open_stream`、
+`read_text`、`next_sse`、`listen`、`accept` 与 `respond_string` 会以
+`E0891` 隔离。当前 adapter 同步驱动 network 或 server progress；把它们包进
+coroutine 并不是 nonblocking 实现。E0891 只渲染安全的 `operation(...)`
+source label，绝不回显 URL、header、body 或其他参数值。Close/cancel helper
+继续保持 immediate current-thread compatibility 行为，直到 owner-affine HTTP
+surface 完成规定与实现。
 
 ```rust
 pub struct HttpHeader {
