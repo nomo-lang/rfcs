@@ -230,7 +230,7 @@ authority.
 Each current-thread executor owns a fixed process table. The first
 implementation uses these hard bounds:
 
-- at most 64 live or draining child slots;
+- at most 16 live or draining child slots;
 - at most one pending `next_event` operation per child;
 - at most one pending stdin payload, limited to 1 MiB;
 - at most one bounded read buffer per stdout/stderr direction;
@@ -415,7 +415,7 @@ error handling for a score.
 | P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Implemented by [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) |
 | P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Implemented by [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) |
 | P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Implemented by [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) |
-| P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Proposed; async loop-carried state is gated by [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) |
+| P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Partially implemented by [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57); stress, low-memory, and benchmark gates remain |
 
 Each slice lands through a focused implementation PR and records evidence
 here. The RFC remains `Proposed` until all required native correctness,
@@ -507,10 +507,11 @@ generation-checked exit completion back to the owner IOCP, so one child does
 not consume a lifetime, reader, or writer thread.
 
 The runtime begins each overlapped named-pipe connection before opening the
-child endpoint and bounds the connection handshake. Stdin, stdout, and stderr
-use stable fixed-table `OVERLAPPED` storage. Cancellation calls `CancelIoEx`;
-late completion owns any detached buffer until the IOCP packet is drained, so
-dropping a coroutine frame cannot leave a dangling `OVERLAPPED` pointer.
+child endpoint and bounds the connection handshake. Submitted stdin, stdout,
+and stderr operations use stable fixed-table `OVERLAPPED` storage.
+Cancellation calls `CancelIoEx`; late completion owns any detached buffer
+until the IOCP packet is drained, so dropping a coroutine frame cannot leave a
+dangling `OVERLAPPED` pointer.
 Process-pool completion registration activates only while jobs are live and
 deactivates after the last owner-visible completion, preventing an idle
 registration from keeping the current-thread executor alive.
@@ -556,6 +557,38 @@ leak stress, a low-memory run, and claim-eligible RFC 0034 process measurements
 remain P2-PROC-E. The MCP composition depends on the bounded suspending-loop
 semantics proposed by [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md).
 The RFC therefore remains `Proposed`.
+
+### 11.5 Partial P2-PROC-E implementation evidence
+
+[`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) adds
+`examples/mcp_stdio_async`, a Nomo-only application that combines
+owner-affine `std.process` with bounded `std.jsonrpc` framing. It performs an
+initialize exchange and a tools-list exchange while carrying decoder and
+completion state through an unknown number of suspending loop iterations. The
+local no-key fixture deliberately fragments the first response, coalesces a
+notification and the second response, and emits stderr independently. No
+application C FFI or MCP-specific runtime intrinsic is used.
+
+The same PR fixes the Windows event-order race revealed by that fixture.
+Stdout and stderr reads now use persistent registrations and buffers owned by
+the fixed `ProcessChild` slot. Returning `StdinFlushed`, observing exit, or
+timing out one `next_event` call no longer cancels an unrelated output read
+whose data may already be in its overlapped buffer. Close and cancellation
+still call `CancelIoEx`, detach pending storage, and let the fixed IOCP
+operation slot own it until completion draining.
+
+Linux epoll/`pidfd`, macOS kqueue/`EVFILT_PROC`, and Windows IOCP jobs execute
+the fragmented/coalesced example and assert successful protocol output. The
+example's metrics require zero live process handles and operations, zero
+retained process bytes, zero blocking jobs, zero reactor registrations, and
+zero timers after close. Linux smoke also passes the release-WASM and existing
+P0/P1/P3 static and counter gates.
+
+This completes only the MCP composition and focused lifecycle part of
+P2-PROC-E. Saturation/leak stress over many children and cancellation races, a
+documented low-memory run, and the fair pinned-version RFC 0034 process-pipe
+comparison remain open. No Go-relative performance claim is eligible, and
+this RFC remains `Proposed`.
 
 ## 12. Alternatives and Risks
 

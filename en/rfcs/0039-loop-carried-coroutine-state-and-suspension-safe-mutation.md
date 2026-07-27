@@ -251,6 +251,47 @@ The implementation PRs must provide:
 
 The RFC stays `Proposed` until all applicable gates pass.
 
+### 5.1 Implementation evidence after `nomo#57`
+
+[`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) implements the first
+bounded slice without widening the source syntax. Validation accepts one flat
+top-level conditional loop with a synchronous condition, direct suspension
+sites, immutable resumed results, synchronous fallthrough, and assignment to
+owned mutable locals declared before the loop. Unsupported nested loops,
+suspending conditions, branch-nested suspension, `break`, `continue`, `?`,
+`defer`, panic, and early-exit shapes remain rejected with E0876.
+
+The C99 backend emits explicit condition and backedge labels in the existing
+stackless poll function. Scalar and managed ARC/COW values that remain live
+across a possible suspension are stored in the frame. Managed assignment
+retains or moves the replacement before releasing the previous slot, and loop
+cancellation releases the currently initialized value once. Compiler and CLI
+tests cover zero, one, and many iterations with two suspension sites;
+generated-C assertions lock the non-recursive backedge; and the cancellation
+path is checked with lifecycle counters and ASAN where available.
+
+The new `examples/mcp_stdio_async` program contains only Nomo application code
+and composes the public `std.process` and `std.jsonrpc` APIs. Its local fixture
+splits the first JSON-RPC response, coalesces a notification with the second
+response, and uses stderr independently. The same example passes Linux,
+macOS, and Windows pull-request jobs with zero live process handles,
+operations, retained process bytes, blocking jobs, reactor registrations, and
+timers.
+
+The Windows run exposed an IOCP race that was fixed in the same PR: stdout and
+stderr overlapped reads now belong to stable owner-affine `ProcessChild`
+slots, not to one temporary `next_event` pull. A stdin-flush or exit completion
+therefore cannot cancel and discard bytes that Windows has transferred before
+the read completion packet is dispatched. Close and cancellation detach the
+buffer until IOCP drains the late completion.
+
+This evidence satisfies the core bounded-loop and native MCP composition
+slices, but it does not complete every gate above. The full E0873
+borrow/guard/FFI-view matrix, per-suspension timeout/panic/error cleanup
+matrix, browser pure-loop evidence, stabilized minimal-frame proof, and focused
+RFC 0034 ready/pending cost report remain open. The RFC therefore remains
+`Proposed`.
+
 ## 6. Alternatives
 
 | Option | Approach | Advantages | Disadvantages |

@@ -971,6 +971,14 @@ pub struct ProcessCommand {
     pub inherit_env: bool
 }
 
+pub struct ProcessChild {
+    handle: u64
+}
+
+pub struct BlockingProcessChild {
+    handle: u64
+}
+
 pub struct ProcessExit {
     pub code: i32
     pub signal: i32
@@ -1001,35 +1009,53 @@ bare name 在最终 child `PATH` 中搜索。`cwd = None` 继承当前目录。
 时只传递显式 entry 与平台必需变量。Environment name 非空，不含 `=` 或 NUL，
 且不可重复；Windows 上按大小写不敏感比较。
 
-`ProcessChild` 是可复制的 opaque registry handle。`write_stdin` queue 一个非空、
-最大 1 MiB 的 UTF-8 payload；已有 pending payload 时返回 `busy`，
-`StdinFlushed` 表示完整送达。Timeout 保留 pending data。Flush 后
+`ProcessChild` 是当前 owner executor 固定表中的 opaque `Local`/`!Send`
+identity。复制出的 value 指向同一个带 generation 的 slot；它不会创建 shared
+polling authority，也不能跨 structured spawn、channel publication、frozen
+sharing 或 shard transfer。当前 native runtime 最多允许 16 个 live 或 draining
+child slot，每个 child 最多一个 pending event pull。
+
+`process.start` 是 suspend operation，timeout 必须为正且不超过 15 分钟。
+Deadline 覆盖 bounded blocking-pool queue、shell-free process creation、pipe
+setup 与 owner-handle delivery。`write_stdin` 会复制并 queue 一个非空、最大
+1 MiB 的 UTF-8 payload，而不等待 pipe capacity；已有 pending payload 时返回
+`busy`，`StdinFlushed` 表示完整送达。Timeout 保留 pending data。Flush 后
 `close_stdin` 幂等；仍有 pending data 时返回 `busy`。
 
-`next_event` 的 chunk bound 为 4 byte 到 1 MiB，timeout 为正且不超过 15 分钟。
-它多路复用 stdin progress、stdout、stderr 与 exit，保持每个 stream 内部顺序，
-不拆分 UTF-8 scalar，并仅在两个 output stream 都 EOF 后发出 `Exited`。
-非法 UTF-8 或 NUL 返回 `protocol` 并销毁 child entry；timeout 后 child 仍可用。
+`next_event` 是 suspend operation。它的 chunk bound 为 4 byte 到 1 MiB，
+timeout 为正且不超过 15 分钟。它多路复用 stdin progress、stdout、stderr 与
+exit，保持每个 stream 内部顺序，不拆分 UTF-8 scalar，并仅在两个 output stream
+都 EOF 且 buffered output 已全部返回后发出 `Exited`。非法 UTF-8 或 NUL 返回
+`protocol` 并关闭 child；timeout 后 child、pending stdin suffix、output buffer
+与 exit state 仍可用。
 
 `try_wait` 在不消费最终 event 的情况下观察退出。`terminate` 强制终止直接
 child，并在 child 已退出时保持幂等。`close_child` 幂等，且会强制终止并 reap
 仍在运行的 child。发出 `Exited` 后，再调用 `next_event` 返回
 `invalid_request`；在 close 前，`try_wait`、`terminate` 与 `close_child` 仍安全。
 
-`ProcessControlError.code` 为 `invalid_request`、`busy`、`spawn`、`io`、
-`timeout`、`protocol` 或 `runtime_unavailable`。Error 与默认 diagnostic 绝不
-包含 program、argv、environment、cwd、stdin、stdout 或 stderr。Unix-like 与
-Windows native adapter 由 toolchain 持有，应用代码不声明 C FFI。Browser WASM
-在参数求值前拒绝受控 API。Release artifact 不得 import 任何 host API，并且
-必须在求值 async `process.start` 的 command 或 timeout operand 前返回稳定的
-process-capability error。
+Async surface 的 `ProcessControlError.code` 为 `invalid_request`、
+`unsupported`、`closed`、`busy`、`limit`、`spawn`、`io`、`timeout`、
+`protocol` 或 `reactor`。Preview blocking compatibility path 还可返回
+`runtime_unavailable`。Error 与默认 diagnostic 绝不包含 program、argv、
+environment、cwd、stdin、stdout、stderr 或 JSON-RPC content。Unix-like 与
+Windows native adapter 由 toolchain 持有，应用代码不声明 C FFI。
 
-在 suspend 调用图中，`process.spawn`、`status`、`exec`、`output`、`start`、
-`next_event`、`terminate` 与 `close_child` 会以 `E0891` 隔离，因为它们可能在
-当前 OS thread 上 spawn、wait、terminate 或 reap。`write_stdin`、
-`close_stdin` 与 `try_wait` 保留已规定的 non-waiting current-thread
-compatibility 行为；这并不使旧 handle 具备 `Send` 或 cross-shard safety。
-E0891 只渲染安全的 `operation(...)` source label，绝不回显 command 或参数值。
+Linux 使用 epoll 与可用时的 `pidfd`；macOS 使用 kqueue 与 `EVFILT_PROC`；
+Windows 使用 overlapped named pipe 与 IOCP。Windows stdout/stderr read 会跨
+单次 `next_event` 返回继续保存在 persistent owner-handle slot 中，因此
+stdin-flush、exit 或 timeout 不会丢弃已经完成传输的 output buffer。Close 与
+cancellation 会保留 detached storage，直到 late completion 排空。
+
+Browser WASM 在参数求值前拒绝 async process capability。Release artifact
+不 import host API，并在求值 `process.start` 的 command 或 timeout operand
+前返回稳定 capability error。
+
+同步调用 `start` 或 `next_event` 会得到 E0870 suspend-effect 指引，不存在隐式
+blocking fallback。`spawn`、`status`、`exec`、`output` 与所有显式
+`_blocking` function 在 suspend 调用图中以 E0891 隔离。`write_stdin`、
+`close_stdin`、`try_wait`、`terminate` 与 `close_child` 只操作 owner-affine
+async handle，并在应用调用边界保持 non-waiting。
 
 ```rust
 process.exit(code: i64) -> void
@@ -1037,13 +1063,20 @@ process.spawn(command: string) -> Result<i32, ProcessError>
 process.status(command: string) -> Result<i32, ProcessError>
 process.exec(command: string) -> Result<string, ProcessError>
 process.output(command: string) -> Result<ProcessOutput, ProcessError>
-process.start(command: ProcessCommand) -> Result<ProcessChild, ProcessControlError>
+process.start(command: ProcessCommand, timeout_millis: u64) -> Result<ProcessChild, ProcessControlError>
 process.write_stdin(child: ProcessChild, data: string) -> Result<void, ProcessControlError>
 process.close_stdin(child: ProcessChild) -> Result<void, ProcessControlError>
 process.next_event(child: ProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
 process.try_wait(child: ProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate(child: ProcessChild) -> Result<void, ProcessControlError>
 process.close_child(child: ProcessChild) -> void
+process.start_blocking(command: ProcessCommand) -> Result<BlockingProcessChild, ProcessControlError>
+process.write_stdin_blocking(child: BlockingProcessChild, data: string) -> Result<void, ProcessControlError>
+process.close_stdin_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
+process.next_event_blocking(child: BlockingProcessChild, max_chunk_bytes: u64, timeout_millis: u64) -> Result<ProcessEvent, ProcessControlError>
+process.try_wait_blocking(child: BlockingProcessChild) -> Result<Option<ProcessExit>, ProcessControlError>
+process.terminate_blocking(child: BlockingProcessChild) -> Result<void, ProcessControlError>
+process.close_child_blocking(child: BlockingProcessChild) -> void
 ```
 
 ### 6.12 `std.path`
@@ -1821,6 +1854,26 @@ definition target，但不参与 rename。若原程序能够通过类型检查�
 
 共享声明身份、receiver owner 与重检 rename 契约由已接受的
 [RFC 0012](./rfcs/0012-shared-semantic-identities-and-verified-rename.md) 固化。
+
+### 7.2 Preview suspending-loop lowering boundary
+
+Preview compiler 已实现 RFC 0039 中仍为 `Proposed` 的 bounded loop-carried
+coroutine state 切片。Suspend function 可包含一个 flat top-level conditional
+`for` loop，condition 必须同步。Body 可包含 direct suspend call、immutable
+resumed-result binding、同步 `if`/`match` fallthrough，以及对 loop 前声明的
+owned task-local mutable local 直接赋值。
+
+Nested suspending loop、condition 或 conditional arm 内 suspension，以及跨 loop
+suspension 的 `break`、`continue`、`?`、`defer`、panic 与 early return 仍不
+支持，并报告 E0876。此切片不会使 mutable borrow、guard、raw/FFI view 或
+borrowed runtime buffer 变得 suspension-safe。
+
+C99 backend 把接受的 loop lowering 为同一个 non-recursive stackless poll
+function 内显式的 condition、resume 与 backedge label。跨可能挂起点仍存活的
+value 使用 frame slot。Managed assignment 会先安装新的 owned value，再释放旧
+slot；cancellation 对每个当前已初始化的 loop-carried value 恰好 drop 一次。
+该 preview 行为不会为普通 ARC/COW value 增加 atomic reference counting，也不
+会把 RFC 0039 从 `Proposed` 改为 `Accepted`。
 
 ---
 
