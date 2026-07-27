@@ -12,7 +12,7 @@
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | performance, memory, benchmark, Go comparison, low-end devices, cross-platform, correctness |
-| Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md) |
+| Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0040](./0040-owner-affine-async-http-and-sse-migration.md) |
 
 ## 1. Summary
 
@@ -284,3 +284,4 @@ claim. Keep all raw results and report misses without weakening the comparison.
 - [RFC 0031: Direct-style suspend functions and structured concurrency](./0031-direct-style-suspend-functions-and-structured-concurrency.md)
 - [RFC 0032: Sharded executor, reactor, and blocking pool](./0032-sharded-executor-reactor-and-blocking-pool.md)
 - [RFC 0033: Task ownership transfer and concurrent values](./0033-task-ownership-transfer-and-concurrent-values.md)
+- [RFC 0040: Owner-affine async HTTP/HTTPS, SSE, and blocking migration](./0040-owner-affine-async-http-and-sse-migration.md)

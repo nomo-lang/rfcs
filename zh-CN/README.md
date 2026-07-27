@@ -103,5 +103,6 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0037](./rfcs/0037-owner-affine-async-tcp-client-and-blocking-migration.md) | Owner-affine async TCP client 与 blocking migration | Proposed（已提案） | async TCP、reactor、owner affinity、bounded I/O、DNS | 定义 bounded suspend connect/read/write、generation-checked stream ownership、显式 blocking 迁移与 native platform gate。 |
 | [0038](./rfcs/0038-owner-affine-async-process-pipes-and-blocking-migration.md) | Owner-affine async process pipe 与 blocking migration | Proposed（已提案） | process、async pipe、reactor、MCP、owner affinity | 定义 bounded suspend process start/event progress、owner-local pipe、显式 blocking 迁移与 native platform gate。 |
 | [0039](./rfcs/0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) | Loop-carried coroutine state 与 suspension-safe mutation | Proposed（已提案） | suspend function、loop、mutable local、liveness、ARC、C99、MCP | 允许 task-local owned mutable state 穿过受限 suspending loop，同时禁止 borrow/guard 跨挂起且不增加 atomic 成本。 |
+| [0040](./rfcs/0040-owner-affine-async-http-and-sse-migration.md) | Owner-affine async HTTP/HTTPS、SSE 与 blocking migration | Proposed（已提案） | HTTP、HTTPS、TLS、SSE、reactor、owner affinity、connection reuse | 把受限 client 与 stream API 迁移为 suspend operation，采用 owner-local transport progress、显式 blocking compatibility 与 native platform gate。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
