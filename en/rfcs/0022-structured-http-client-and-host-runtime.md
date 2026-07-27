@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0022 |
 | Title | Structured HTTP client and toolchain-owned host runtime |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
 | Implementation | Implemented by [nomo PR #11](https://github.com/nomo-lang/nomo/pull/11); acceptance gates passed on 2026-07-24 |

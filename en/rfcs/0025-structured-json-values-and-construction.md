@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0025 |
 | Title | Structured JSON values, access, and construction |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
 | Topics | JSON, standard library, Agent, Unicode, limits, C backend, browser WASM |

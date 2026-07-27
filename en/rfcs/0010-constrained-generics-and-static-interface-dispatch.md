@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0010 |
 | Title | Constrained generics and static interface dispatch |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: interface/impl validation, one-bound generics, explicit concrete type arguments, constrained-body checking, monomorphization, and static dispatch have parser/compiler/codegen/LSP coverage |

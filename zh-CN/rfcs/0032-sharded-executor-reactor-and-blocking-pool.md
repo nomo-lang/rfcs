@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0032 |
 | 标题 | 分片 executor、reactor 与 blocking pool |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#44`](https://github.com/nomo-lang/nomo/pull/44) 至 [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 的 current-thread/reactor 与 native I/O slice；per-core shard 尚未实现 |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | executor、reactor、epoll、kqueue、IOCP、WASM、affinity、blocking pool、Agent I/O |

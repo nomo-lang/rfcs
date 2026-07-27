@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0033 |
 | 标题 | 任务所有权转移与并发值 |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41) 的 publication move，以及 [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42)/[`nomo#43`](https://github.com/nomo-lang/nomo/pull/43) 的 current-thread channel/select consumer |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | Send、Sync、Local、Freeze、move、channel、lock、concurrent collection、ARC、COW |

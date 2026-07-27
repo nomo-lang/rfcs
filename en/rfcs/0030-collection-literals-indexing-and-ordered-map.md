@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0030 |
 | Title | Collection literals, indexing, and ordered Map |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
+| Implementation Evidence | [`nomo#19`](https://github.com/nomo-lang/nomo/pull/19), merge [`8cb9fe1`](https://github.com/nomo-lang/nomo/commit/8cb9fe1cc39ca63c3bfeeda0dc2a11a35bfe5318) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | arrays, indexing, COW, generics, map, determinism, Agent |
@@ -96,7 +98,7 @@ map.contains_key<K, V>(map: Map<K, V>, key: K) -> bool
 map.get<K, V>(map: Map<K, V>, key: K) -> Option<V>
 map.set<K, V>(mut map: Map<K, V>, key: K, value: V) -> Option<V>
 map.remove<K, V>(mut map: Map<K, V>, key: K) -> Option<V>
-map.clear<K, V>(mut map: Map<K, V>) -> void
+map.clear<K, V>(mut map: Map<K, V>)
 map.keys<K, V>(map: Map<K, V>) -> Array<K>
 map.values<K, V>(map: Map<K, V>) -> Array<V>
 ```

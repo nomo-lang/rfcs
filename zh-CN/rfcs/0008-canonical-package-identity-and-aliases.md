@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0008 |
 | 标题 | Canonical 包身份与依赖别名分离 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：标准 TOML manifest、`owner/package` 校验、dependency alias import、保留 namespace 与旧 `std` 声明兼容均有 manifest/CLI 测试 |

@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0010 |
 | 标题 | 受约束泛型与 Interface 静态分派 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：interface/impl 校验、单 bound 泛型、显式 concrete type argument、函数体约束检查、单态化与静态方法分派均有 parser/compiler/codegen/LSP 测试 |

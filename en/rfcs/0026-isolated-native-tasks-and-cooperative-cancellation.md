@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0026 |
 | Title | Isolated native tasks and cooperative cancellation |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
+| Implementation Evidence | [`nomo#15`](https://github.com/nomo-lang/nomo/pull/15), merge [`8e48862`](https://github.com/nomo-lang/nomo/commit/8e4886217069b9ebc3617f70f6b971a80f869f44) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | concurrency, tasks, isolation, cancellation, C99 backend, Agent |
@@ -130,7 +132,7 @@ struct, enum, return type, local binding, public user API, or FFI declaration.
 ### 4.2 Worker Declaration and Spawn
 
 ```rust
-package parallel_agent_tools.main
+package parallel_agent_tools
 
 import std.http
 import std.task

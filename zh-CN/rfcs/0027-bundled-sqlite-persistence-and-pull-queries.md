@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0027 |
 | 标题 | 内置 SQLite 持久化与 Pull-Based Query |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | [`nomo#16`](https://github.com/nomo-lang/nomo/pull/16)，merge [`a6405a5`](https://github.com/nomo-lang/nomo/commit/a6405a55e9a98434ec95b536fc1585b8e381ebb4) |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 主题 | SQLite、持久化、database、标准库、C99 backend、Agent |

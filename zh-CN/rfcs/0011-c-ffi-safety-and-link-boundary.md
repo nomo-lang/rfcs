@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0011 |
 | 标题 | C FFI 的安全、所有权与链接边界 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：`extern "C"`、调用时 `unsafe`、primitive/CString/Opaque 映射、manifest linker metadata、package-relative C source、checksum/publish/vendor 聚合均有测试 |

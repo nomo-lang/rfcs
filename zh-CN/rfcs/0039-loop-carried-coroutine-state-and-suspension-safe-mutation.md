@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0039 |
 | 标题 | Loop-carried coroutine state 与 suspension-safe mutation |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) 的首个 bounded loop/MCP slice，以及 [`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) 的 stress lowering 修复 |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-27 |
 | 主题 | suspend function、loop、mutable local、liveness、ARC、C99、MCP |

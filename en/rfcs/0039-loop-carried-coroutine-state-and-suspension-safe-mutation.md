@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0039 |
 | Title | Loop-carried coroutine state and suspension-safe mutation |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | First bounded loop/MCP slice [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57), stress-discovered lowering fixes [`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-27 |
 | Topics | suspend functions, loops, mutable locals, liveness, ARC, C99, MCP |

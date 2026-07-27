@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0040 |
 | Title | Owner-affine async HTTP/HTTPS, SSE, and blocking migration |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | P2-HTTP-A public suspend ABI and migration boundary in [`nomo#61`](https://github.com/nomo-lang/nomo/pull/61); P2-HTTP-B–F remain open |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-27 |
 | Topics | HTTP, HTTPS, TLS, SSE, async I/O, reactor, owner affinity, connection reuse, migration |
@@ -153,8 +155,8 @@ pub suspend fn next_sse(
     max_event_bytes: u64
 ) -> Result<Option<SseEvent>, HttpError>
 
-pub fn cancel_stream(stream: HttpStream) -> void
-pub fn close_stream(stream: HttpStream) -> void
+pub fn cancel_stream(stream: HttpStream)
+pub fn close_stream(stream: HttpStream)
 ```
 
 Direct-style calls require a `suspend` caller. `get` and `post` retain the
@@ -195,8 +197,8 @@ http.next_sse_blocking(
     stream: BlockingHttpStream,
     max_event_bytes: u64
 ) -> Result<Option<SseEvent>, HttpError>
-http.cancel_stream_blocking(stream: BlockingHttpStream) -> void
-http.close_stream_blocking(stream: BlockingHttpStream) -> void
+http.cancel_stream_blocking(stream: BlockingHttpStream)
+http.close_stream_blocking(stream: BlockingHttpStream)
 ```
 
 Every `_blocking` request or pull operation remains rejected by `E0891` in a
@@ -471,17 +473,23 @@ gates pass.
 
 | Slice | Required behavior | Status |
 | --- | --- | --- |
-| P2-HTTP-A | public suspend/handle/migration contract, `E0870`/`E0890`/`E0891`, typed lowering ABI, blocking compatibility cleanup/sanitizer regression, and benchmark fixture | Planned |
+| P2-HTTP-A | public suspend/handle/migration contract, `E0870`/`E0890`/`E0891`, typed lowering ABI, blocking compatibility cleanup/sanitizer regression, and benchmark fixture | Implemented by [`nomo#61`](https://github.com/nomo-lang/nomo/pull/61) |
 | P2-HTTP-B | Unix buffered send/open through owner-local curl multi, bounded resolver, TLS fixture, connection reuse, timeout/cancel, and exact lifecycle counters | Planned |
 | P2-HTTP-C | Unix incremental text/SSE pulls, terminal cancellation, slot reuse, limits, and epoll/kqueue native stress | Planned |
 | P2-HTTP-D | asynchronous WinHTTP send/stream parity, owner wakeup, bounded connection reuse, late-callback drain, and native Windows stress | Planned |
 | P2-HTTP-E | browser pre-evaluation unsupported boundary and zero-import release-WASM evidence | Planned |
 | P2-HTTP-F | Nomo OpenAI-compatible buffered/SSE examples, saturation/low-memory storms, and RFC 0034 HTTP/SSE report | Planned |
 
-The RFC must merge as `Proposed` before P2-HTTP-A starts. Each implementation
+The RFC merged as `Proposed` before P2-HTTP-A started. Each later implementation
 slice lands through a focused signed branch/PR with Nomo examples, compiler and
 CLI tests, bilingual stdlib/SPEC/docs updates, native platform evidence, and
 exact cleanup counters.
+
+P2-HTTP-A establishes the public direct-style suspend ABI, Local owner handles,
+blocking compatibility names, diagnostics, typed lowering boundary, and a
+zero-thread ready placeholder. It does not implement native curl-multi or
+WinHTTP transport progress, browser capability closure, or the P2-HTTP-F
+resource/performance report. Those remain P2-HTTP-B–F.
 
 This RFC remains `Proposed` until every required platform, correctness,
 resource, compatibility, and fair benchmark gate passes. Landing the document

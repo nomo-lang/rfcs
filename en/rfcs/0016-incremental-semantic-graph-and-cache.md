@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0016 |
 | Title | Incremental Semantic Graph and Persistent Cache |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Accepted baseline: compiler-owned query keys, content fingerprints, dependency edges, transitive invalidation, statistics/snapshots, conservative semantic/LSP caches, schema-versioned persistent check and C-codegen values, atomic writes, capacity eviction, corruption recovery, and randomized clean-equivalence tests are implemented |

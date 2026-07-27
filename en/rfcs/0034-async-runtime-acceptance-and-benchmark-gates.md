@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0034 |
 | Title | Async runtime acceptance and benchmark gates |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | Harness/counters in [`nomo#21`](https://github.com/nomo-lang/nomo/pull/21) and [`nomo#27`](https://github.com/nomo-lang/nomo/pull/27), process evidence in [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59), CPU baseline in [`nomo#60`](https://github.com/nomo-lang/nomo/pull/60) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | performance, memory, benchmark, Go comparison, low-end devices, cross-platform, correctness |

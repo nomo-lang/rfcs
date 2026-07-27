@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0007 |
 | Title | Whether `Enum.Variant` can/should be simplified to an unqualified `Variant` |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: `Some`/`None`/`Ok`/`Err` may be unqualified; local names win; user enums remain qualified; qualified core variants stay compatible |

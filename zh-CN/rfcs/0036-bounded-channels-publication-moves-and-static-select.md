@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0036 |
 | 标题 | 有界 Channel、Publication Move 与静态 Select |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | P3-A [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41)、P3-B [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42)、P3-C [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43)；P3-D/P4 尚未实现 |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-26 |
 | 主题 | channel、select、move publication、Send、backpressure、cancellation、C99 |
@@ -111,7 +113,7 @@ pub suspend fn send<T>(
 pub suspend fn receive<T>(channel: Channel<T>) -> Option<T>
 pub fn try_send<T>(channel: Channel<T>, value: T) -> ChannelTrySend<T>
 pub fn try_receive<T>(channel: Channel<T>) -> ChannelTryReceive<T>
-pub fn close<T>(channel: Channel<T>) -> void
+pub fn close<T>(channel: Channel<T>)
 ```
 
 所有函数都是 RFC 0015 下拥有 source-defined signature 与文档的
@@ -452,17 +454,20 @@ storage、atomic shim call 或 select metadata。
 
 实现拆为可审查的小 PR：
 
-1. **P3-A capability 与 move dataflow：** compiler-known `Send` 推导、
+1. **P3-A capability 与 move dataflow——由
+   [`nomo#41`](https://github.com/nomo-lang/nomo/pull/41) 实现：** compiler-known `Send` 推导、
    publication move/use-after-move 分析、IR ownership bit 与测试；尚不公开
    channel。
-2. **P3-B current-thread channel：** constructor、send/receive、try operation、
+2. **P3-B current-thread channel——由
+   [`nomo#42`](https://github.com/nomo-lang/nomo/pull/42) 实现：** constructor、send/receive、try operation、
    close、managed-value detach/drop、counter 与 native/browser capability gate。
-3. **P3-C static receive/timer select：** 精确 parser/formatter form、immediate
+3. **P3-C static receive/timer select——由
+   [`nomo#43`](https://github.com/nomo-lang/nomo/pull/43) 实现：** 精确 parser/formatter form、immediate
    source ordering、pending registration、cancellation、deadline 与 loser
    cleanup。
-4. **P3-D send/join select：** staged moved value、affine join ownership、early
+4. **P3-D send/join select——计划中：** staged moved value、affine join ownership、early
    exit 与完整诊断。
-5. **P4 cross-shard publication：** 私有 atomic shim、owner wakeup、stress test
+5. **P4 cross-shard publication——计划中：** 私有 atomic shim、owner wakeup、stress test
    与 per-core 证据。
 
 在实现、cross-platform CI、sanitizer test、browser contract 和 RFC 0034

@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0028 |
 | Title | Bounded JSON-RPC and newline-framed standard I/O |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
+| Implementation Evidence | [`nomo#17`](https://github.com/nomo-lang/nomo/pull/17), merge [`04495f9`](https://github.com/nomo-lang/nomo/commit/04495f95cac0fa3c0c218869d7641e740f66f187) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | JSON-RPC, MCP, stdio, framing, process, JSON, Agent |

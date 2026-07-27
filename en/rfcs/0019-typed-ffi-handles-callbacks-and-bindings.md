@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0019 |
 | Title | Typed FFI Handles, Callbacks, and Bindings |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Implemented: nominal handles, explicit nullability and ownership metadata, restricted callbacks, target-aware `repr(C)` layout, deterministic header bindings, provenance, and real C integration tests are present |

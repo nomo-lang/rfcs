@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0038 |
 | 标题 | Owner-affine async process pipe 与 blocking migration |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 至 [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) 的 P2-PROC-A–E |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-27 |
 | 主题 | process、async pipe、reactor、MCP、owner affinity、blocking pool、migration |
@@ -150,7 +152,7 @@ pub fn terminate(
     child: ProcessChild
 ) -> Result<void, ProcessControlError>
 
-pub fn close_child(child: ProcessChild) -> void
+pub fn close_child(child: ProcessChild)
 ```
 
 `start` 在创建 runtime state 前校验 command。其 timeout 必须为正且不超过
@@ -200,7 +202,7 @@ process.try_wait_blocking(child: BlockingProcessChild)
     -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate_blocking(child: BlockingProcessChild)
     -> Result<void, ProcessControlError>
-process.close_child_blocking(child: BlockingProcessChild) -> void
+process.close_child_blocking(child: BlockingProcessChild)
 ```
 
 这些名称保留已接受的同步行为，并继续在 suspend 调用图中被 `E0891` 拒绝。

@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0009 |
 | Title | Reproducible workspace, package, and module graphs |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: `WorkspaceGraph -> PackageGraph -> ModuleGraph`, stable topological order, workspace lockfiles, checksums, locked/offline/frozen, vendor, and cycle/conflict tests |

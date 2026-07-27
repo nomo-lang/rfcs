@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0031 |
 | 标题 | 直写式挂起函数与结构化并发 |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#20`](https://github.com/nomo-lang/nomo/pull/20) 至 [`nomo#40`](https://github.com/nomo-lang/nomo/pull/40) 的 suspend/structured slice，以及 [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57) 的 loop-carried state |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-25 |
 | 关联主题 | suspend 函数、effect、stackless coroutine、结构化并发、取消、ARC、C99 |
@@ -79,7 +81,7 @@ effect 是函数类型与导出签名的一部分。可能挂起的函数值写�
 3. 名称解析和泛型单态化后传递地检查 effect；
 4. FFI 函数默认同步；只有 toolchain-owned runtime intrinsic 可以向
    `suspend fn` 提供可轮询操作；
-5. 程序入口可使用 `suspend fn main() -> void` 或
+5. 程序入口可使用 `suspend fn main()` 或
    `suspend fn main() -> Result<void, E>`。同步 `fn main` 沿用现有启动
    路径，不初始化 async runtime。
 
@@ -158,7 +160,7 @@ cancellation state，并由 child 继承。只有 ownership 与 cross-shard memo
 model 能在不让普通 task-local value 支付 atomic 成本的前提下表达 borrowed
 token observation 后，后续 RFC 才能增加公开 token。
 
-`task.check_cancelled() -> void` 只能在 `suspend fn` 内使用。它不 suspend、
+`task.check_cancelled()` 只能在 `suspend fn` 内使用。它不 suspend、
 allocation 或入队。没有观察到 cancellation 或 deadline expiry 时它是 no-op；
 否则执行生成式 child/frame cleanup，并以 structured `cancelled` 或 `timeout`
 runtime outcome 终止当前 task，不会返回下一条源码语句。这样 CPU loop 可以显式

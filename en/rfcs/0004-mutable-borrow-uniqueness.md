@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0004 |
 | Title | What checking strength should mutable-borrow uniqueness achieve in v0.1 |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: declaration/call-site `mut` pairing, within-call path alias checks, field-prefix conflicts, and immutable-value rejection are covered by tests |

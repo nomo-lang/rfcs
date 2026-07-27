@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0035 |
 | Title | Monotonic suspend timers and blocking sleep migration |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Implemented |
+| Implementation Evidence | Blocking gate [`nomo#26`](https://github.com/nomo-lang/nomo/pull/26), owner-local timer [`nomo#28`](https://github.com/nomo-lang/nomo/pull/28), deadline/cancellation [`nomo#40`](https://github.com/nomo-lang/nomo/pull/40) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-25 |
 | Topics | suspend functions, timers, monotonic clock, cancellation, blocking compatibility, C99 |
@@ -47,8 +49,8 @@ the already implemented synchronous `std.time` functions.
 
 The current implementation has:
 
-- synchronous `time.sleep(Duration) -> void`;
-- synchronous `time.sleep_millis(i64) -> void`;
+- synchronous `time.sleep(Duration)`;
+- synchronous `time.sleep_millis(i64)`;
 - `task.yield_now()` as the first suspend runtime primitive;
 - legacy `task fn` workers and cron examples that intentionally use blocking
   sleep outside the async executor;
@@ -80,7 +82,7 @@ pub suspend fn sleep(duration: Duration) -> Result<void, TaskError>
 Typical use remains direct-style:
 
 ```nomo
-package agent.main
+package agent
 
 import std.result
 import std.task

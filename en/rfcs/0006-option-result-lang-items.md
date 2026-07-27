@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0006 |
 | Title | Are `Option`/`Result` pure library types or compiler-owned carriers |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-06-18 |
 | Implementation | Landed: the compiler owns the `Option`/`Result` carrier identities, variants, `?` semantics, and C layouts; `std.option`/`std.result` are stable public module contracts and do not depend on a `#[lang]` attribute |

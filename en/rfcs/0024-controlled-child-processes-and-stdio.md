@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0024 |
 | Title | Controlled child processes and multiplexed standard I/O |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-24 |
 | Implementation | Implemented by [nomo PR #13](https://github.com/nomo-lang/nomo/pull/13); acceptance gates passed on 2026-07-24 |
@@ -138,7 +139,7 @@ process.terminate(
     child: ProcessChild
 ) -> Result<void, ProcessControlError>
 
-process.close_child(child: ProcessChild) -> void
+process.close_child(child: ProcessChild)
 ```
 
 `start` never invokes a shell. `program` identifies the executable and each

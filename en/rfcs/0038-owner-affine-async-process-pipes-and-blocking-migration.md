@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0038 |
 | Title | Owner-affine async process pipes and blocking migration |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Implemented |
+| Implementation Evidence | P2-PROC-A–E in [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) through [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-27 |
 | Topics | process, async pipe, reactor, MCP, owner affinity, blocking pool, migration |
@@ -153,7 +155,7 @@ pub fn terminate(
     child: ProcessChild
 ) -> Result<void, ProcessControlError>
 
-pub fn close_child(child: ProcessChild) -> void
+pub fn close_child(child: ProcessChild)
 ```
 
 `start` validates the command before creating runtime state. Its positive
@@ -208,7 +210,7 @@ process.try_wait_blocking(child: BlockingProcessChild)
     -> Result<Option<ProcessExit>, ProcessControlError>
 process.terminate_blocking(child: BlockingProcessChild)
     -> Result<void, ProcessControlError>
-process.close_child_blocking(child: BlockingProcessChild) -> void
+process.close_child_blocking(child: BlockingProcessChild)
 ```
 
 These names preserve the accepted synchronous behavior and remain rejected by

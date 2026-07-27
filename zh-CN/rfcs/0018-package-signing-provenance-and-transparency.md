@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0018 |
 | 标题 | 包签名、来源证明与透明日志 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已在 `nomo-supply-chain`、registry publish/owner-key API、resolver trust policy、lockfile evidence、独立 `nomo verify` CLI、双签名日志密钥轮换、signed-head gossip 与在线/离线 proof freshness 策略中实现 |

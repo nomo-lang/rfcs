@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0020 |
 | 标题 | Manifest v2、Workspace 成员资格与项目配置 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-17 |
 | 关联主题 | manifest、package management、workspace、migration、registry trust |

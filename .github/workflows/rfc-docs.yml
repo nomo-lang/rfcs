@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/rfc-docs.yml"
       - "scripts/check_rfc_docs.py"
+      - "scripts/check_nomo_snippets.py"
       - "**/*.md"
   push:
     branches:
@@ -12,6 +13,7 @@ on:
     paths:
       - ".github/workflows/rfc-docs.yml"
       - "scripts/check_rfc_docs.py"
+      - "scripts/check_nomo_snippets.py"
       - "**/*.md"
 
 permissions:
@@ -29,3 +31,15 @@ jobs:
         run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
       - name: Validate bilingual RFC documentation
         run: python3 scripts/check_rfc_docs.py
+      - name: Check out the reviewed Nomo compiler
+        uses: actions/checkout@v4
+        with:
+          repository: nomo-lang/nomo
+          ref: 085da513ff6c042bd00571c49a6eb061722acf6f
+          path: nomo
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build the reviewed Nomo compiler
+        run: cargo build --manifest-path nomo/Cargo.toml --locked --release -p nomo
+      - name: Compile marked Nomo snippets
+        run: python3 scripts/check_nomo_snippets.py --nomo nomo/target/release/nomo

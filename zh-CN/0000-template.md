@@ -9,14 +9,16 @@
 | --- | --- |
 | 编号 | NNNN |
 | 标题 | <一句话标题> |
-| 状态 | Draft（待决） |
+| 决策状态 | Draft（待决） |
+| 实现状态 | Not implemented（未实现） |
 | 作者 | <作者> |
 | 创建日期 | YYYY-MM-DD |
 | 关联主题 | <例如错误处理、模式匹配、名称解析> |
 | 关联 RFC | <例如 [RFC 0001](./0001-example.md)、无> |
 
-> 状态字段取值：`Draft` / `Proposed` / `Accepted` / `Rejected` / `Deferred`。
-> 各状态含义见本语言目录的流程 README。本模板默认 `Draft（待决）`。
+> 决策状态字段取值：`Draft` / `Proposed` / `Accepted` / `Rejected` / `Deferred`。
+> 实现状态字段取值：`Not implemented` / `Partially implemented` / `Implemented`。
+> 各决策状态含义见本语言目录的流程 README。本模板默认 `Draft（待决）`。
 > 复制到 `rfcs/NNNN-title.md` 后，同目录 RFC 引用使用 `./0001-example.md`，流程说明引用使用 `../README.md`。
 
 ---

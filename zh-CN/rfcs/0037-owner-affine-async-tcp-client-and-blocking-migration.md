@@ -8,7 +8,9 @@
 | --- | --- |
 | 编号 | 0037 |
 | 标题 | Owner-affine async TCP client 与 blocking migration |
-| 状态 | Proposed（已提案） |
+| 决策状态 | Proposed（已提案） |
+| 实现状态 | Partially implemented（部分已实现） |
+| 实现证据 | [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) 至 [`nomo#51`](https://github.com/nomo-lang/nomo/pull/51) 的 native/browser-boundary slice；host-driven browser TCP 尚未实现 |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-26 |
 | 主题 | async TCP、reactor、owner affinity、bounded I/O、DNS、迁移 |
@@ -133,7 +135,7 @@ impl TcpStream {
     ) -> Result<void, NetError>
 
     pub fn shutdown_write(self) -> Result<void, NetError>
-    pub fn close(self) -> void
+    pub fn close(self)
 }
 ```
 

@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0024 |
 | 标题 | 受控子进程与多路复用标准 I/O |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-24 |
 | 实现状态 | 由 [nomo PR #13](https://github.com/nomo-lang/nomo/pull/13) 实现；acceptance gate 于 2026-07-24 全部通过 |
@@ -132,7 +133,7 @@ process.terminate(
     child: ProcessChild
 ) -> Result<void, ProcessControlError>
 
-process.close_child(child: ProcessChild) -> void
+process.close_child(child: ProcessChild)
 ```
 
 `start` 永不调用 shell。`program` 标识 executable，每个 `args` element 都是一个

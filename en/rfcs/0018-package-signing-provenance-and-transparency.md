@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0018 |
 | Title | Package Signing, Provenance, and Transparency |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Implemented in `nomo-supply-chain`, registry publish/owner-key APIs, resolver trust policy, lockfile evidence, the independent `nomo verify` CLI, dual-signed log-key rotation, signed-head gossip, and online/offline proof-freshness enforcement |

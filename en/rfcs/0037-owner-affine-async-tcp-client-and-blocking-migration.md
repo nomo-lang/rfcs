@@ -8,7 +8,9 @@
 | --- | --- |
 | Number | 0037 |
 | Title | Owner-affine async TCP client and blocking migration |
-| Status | Proposed |
+| Decision Status | Proposed |
+| Implementation Status | Partially implemented |
+| Implementation Evidence | Native/browser-boundary slices from [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) through [`nomo#51`](https://github.com/nomo-lang/nomo/pull/51); host-driven browser TCP remains open |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-26 |
 | Topics | async TCP, reactor, owner affinity, bounded I/O, DNS, migration |
@@ -137,7 +139,7 @@ impl TcpStream {
     ) -> Result<void, NetError>
 
     pub fn shutdown_write(self) -> Result<void, NetError>
-    pub fn close(self) -> void
+    pub fn close(self)
 }
 ```
 

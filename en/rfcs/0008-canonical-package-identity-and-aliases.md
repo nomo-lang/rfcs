@@ -8,7 +8,8 @@
 | --- | --- |
 | Number | 0008 |
 | Title | Separating canonical package identity from dependency aliases |
-| Status | Accepted |
+| Decision Status | Accepted |
+| Implementation Status | Implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-11 |
 | Implementation | Landed: standard TOML manifests, `owner/package` validation, dependency-alias imports, reserved namespaces, and legacy `std` compatibility have manifest and CLI coverage |

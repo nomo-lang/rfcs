@@ -8,7 +8,8 @@
 | --- | --- |
 | 编号 | 0014 |
 | 标题 | 语义化版本求解与冲突解释 |
-| 状态 | Accepted（已接受） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-11 |
 | 实现状态 | 已落地：严格 constraint、项目/工作区确定性单版本选择、稳定最小冲突、registry index 缓存、lockfile 精确版本输出、range-aware locked 校验、受约束的 precise update，以及 locked/offline/yank/pre-release/conflict 测试 |
