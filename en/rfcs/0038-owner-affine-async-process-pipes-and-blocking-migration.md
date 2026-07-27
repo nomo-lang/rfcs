@@ -414,7 +414,7 @@ error handling for a score.
 | P2-PROC-A | public effect/handle/migration contract, diagnostics, lowering ABI, benchmark fixture | Implemented by [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) |
 | P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Implemented by [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) |
 | P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Implemented by [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) |
-| P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Proposed |
+| P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Implemented by [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) |
 | P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Proposed |
 
 Each slice lands through a focused implementation PR and records evidence
@@ -526,10 +526,34 @@ macOS regression, and the full Windows host-runtime CI group passed together.
 `examples/async_process_pipe_windows` exercises the public Nomo path without
 application C FFI.
 
-This completes P2-PROC-C only. Browser pre-evaluation/release-WASM evidence,
-the async MCP stdio composition, saturation and low-memory stress, and
-claim-eligible RFC 0034 process measurements remain P2-PROC-D and P2-PROC-E.
-The RFC therefore remains `Proposed`.
+This completes P2-PROC-C only. At that slice, browser
+pre-evaluation/release-WASM evidence, the async MCP stdio composition,
+saturation and low-memory stress, and claim-eligible RFC 0034 process
+measurements remained P2-PROC-D and P2-PROC-E. Later evidence is recorded
+below; the RFC remains `Proposed`.
+
+### 11.4 P2-PROC-D implementation evidence
+
+[`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) locks the browser
+process-capability boundary at both interpreter and final-artifact levels. A
+Nomo probe passes command and timeout functions that panic if evaluated to
+async `process.start`. The browser runtime returns secret-safe
+`NOMO-WASM-003` for the unavailable process capability before either operand
+runs; neither poison text nor the internal intrinsic name reaches the error or
+stderr.
+
+The release verifier builds the optimized `wasm32-unknown-unknown` module,
+requires an empty WebAssembly import table, instantiates that exact artifact,
+and executes the same poison-operand probe through the exported raw ABI. This
+gate is shared by pull-request, main-branch, and release workflows. The
+`nomo-wasm` suite covers the direct interpreter path, while Linux smoke and
+native macOS/Windows regressions passed together. The existing
+`async_process_pipe_contract` example remains the cross-target public Nomo
+surface; native examples cover real Unix and Windows child I/O.
+
+This completes P2-PROC-D only. Async MCP stdio composition, saturation and
+leak stress, a low-memory run, and claim-eligible RFC 0034 process measurements
+remain P2-PROC-E. The RFC therefore remains `Proposed`.
 
 ## 12. Alternatives and Risks
 

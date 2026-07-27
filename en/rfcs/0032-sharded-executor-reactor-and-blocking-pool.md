@@ -301,7 +301,8 @@ are mandatory mitigations.
 | P2-GUARD: blocking compatibility quarantine | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) implements `E0891` for the HTTP/SSE and process operations in section 9.1 | true owner-affine suspend HTTP/SSE and process-pipe paths |
 | P2-PROC-A: process effect and lowering boundary | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) adds the Local/!Send process handle split, suspend ABI, explicit blocking migration, and ready zero-thread placeholder | native implementation and platform evidence tracked by later process slices |
 | P2-PROC-B: owner-affine Unix process pipes | [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) adds one bounded lazy start/reap worker, epoll/`pidfd` on Linux, kqueue/`EVFILT_PROC` on macOS, owner-local nonblocking pipes, cancellation/timeout/close, exact counters, ASAN fixtures, and a native Nomo example | no open Unix correctness gate; cross-platform completion continues below |
-| P2-PROC-C: owner-affine Windows process pipes | [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) adds overlapped named pipes, owner-local IOCP completion, bounded process creation and exit notification, late-completion draining, exact lifecycle counters, native Windows fixtures, and a Nomo example without per-child I/O threads | browser capability evidence, async MCP, saturation/low-memory stress, and claim-eligible RFC 0034 measurements |
+| P2-PROC-C: owner-affine Windows process pipes | [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) adds overlapped named pipes, owner-local IOCP completion, bounded process creation and exit notification, late-completion draining, exact lifecycle counters, native Windows fixtures, and a Nomo example without per-child I/O threads | no open Windows correctness gate; browser and resource gates continue below |
+| P2-PROC-D: browser process capability boundary | [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) verifies the zero-import release WASM artifact rejects async `process.start` before evaluating or leaking poison command/timeout operands | async MCP composition, saturation/low-memory stress, and claim-eligible RFC 0034 measurements |
 
 The implementation follows qualified, specifically imported, local
 transitive, and project-module transitive call paths. Compiler tests cover the
@@ -320,10 +321,11 @@ progress remains on the owner reactor without per-child threads or owner
 polling. P2-PROC-C now replaces the Windows placeholder with owner-local
 overlapped named pipes, a fixed IOCP operation table, one lazy bounded
 process-creation worker, and a bounded system exit wait that posts completion
-back to the owner IOCP. Browser capability evidence, async MCP composition,
-low-memory and saturation stress, and RFC 0034 process measurements remain
-open. The RFC remains `Proposed` until those resource and benchmark gates are
-met.
+back to the owner IOCP. P2-PROC-D verifies the final zero-import browser WASM
+artifact returns the stable process-capability error before evaluating async
+command or timeout operands. Async MCP composition, low-memory and saturation
+stress, and RFC 0034 process measurements remain open. The RFC remains
+`Proposed` until those resource and benchmark gates are met.
 
 **Proposed decision:** adopt owner-affine current-thread/sharded executors,
 platform reactors, and a separate bounded blocking pool. Do not expand the
