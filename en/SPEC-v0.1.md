@@ -1395,10 +1395,12 @@ calculation behavior, and the pure operations are task-safe.
 ### 6.20 `std.net`
 
 `std.net` provides owner-affine suspend TCP client operations plus explicit
-blocking compatibility helpers. Linux and macOS execute numeric-address
-connect, bounded incremental reads, and complete bounded writes through
-epoll/kqueue. Hostname resolution, native Windows IOCP, browser raw TCP, and
-`shutdown_write` remain later RFC 0037 slices.
+blocking compatibility helpers. Linux and macOS execute connect, bounded
+incremental reads, and complete bounded writes through epoll/kqueue; Windows
+uses an owner-local fixed IOCP operation table. Native numeric addresses use a
+zero-thread path. Hostnames use one lazy bounded resolver worker and return
+completion through a nonblocking Unix pipe or posted Windows IOCP completion.
+Browser raw TCP and `shutdown_write` remain later RFC 0037 slices.
 
 ```nomo
 pub enum NetErrorKind {
@@ -1477,17 +1479,22 @@ error and never imply read-to-EOF. Binary chunks use `Array<u32>` values in
 `0..=255`; text chunks require valid UTF-8.
 
 One read/write payload is limited to 1,048,576 bytes and one timeout to
-900,000 milliseconds. Zero performs one immediate attempt without reactor
-registration. Positive operations use monotonic timeout/cancellation and
-one-shot readiness. Writes retain only the unsent suffix, advance at most
-64 KiB per executor poll, and either complete the whole input or fail.
-Cancellation and timeout release registrations and retained buffers exactly
-once while leaving the stream reusable; `close` invalidates its generation.
+900,000 milliseconds. Zero performs one immediate numeric attempt without
+reactor registration; a zero-timeout hostname returns `Timeout` without
+initializing the resolver pool or reactor. Positive operations use monotonic
+timeout/cancellation and one-shot readiness. Writes retain only the unsent
+suffix, advance at most 64 KiB per executor poll, and either complete the whole
+input or fail. Cancellation and timeout release registrations and retained
+buffers exactly once while leaving the stream reusable; `close` invalidates
+its generation.
 
-Hostnames and Windows return `Unsupported` in this slice; Windows rejects
-write payloads before evaluating them. For the preview migration window,
-`connect_blocking`, `read_to_string_blocking`, and
-`write_string_blocking` preserve the old client behavior. `listen`,
+A hostname is limited to 253 bytes. The resolver has 16 live-job slots, copies
+at most 16 IPv4/IPv6 candidates, and shares one overall deadline with ordered
+connect attempts; queue saturation returns `Limit`. Queued cancellation is
+immediate, while a running system resolver call is detached cooperatively and
+cleaned on completion. For the preview migration window, `connect_blocking`,
+`read_to_string_blocking`, and `write_string_blocking` preserve the old client
+behavior. Browser raw TCP remains unavailable; `listen`,
 `TcpListener.accept`, and UDP operations remain blocking.
 
 ### 6.21 `std.http`

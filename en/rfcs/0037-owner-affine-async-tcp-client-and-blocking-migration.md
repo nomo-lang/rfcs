@@ -234,37 +234,39 @@ milestone, not a complete Agent networking claim.
 | P2-TCP-A | bounded owner table, generation checks, registration lifecycle, numeric-host nonblocking connect on epoll/kqueue | Implemented by [`nomo#45`](https://github.com/nomo-lang/nomo/pull/45) |
 | P2-TCP-B | incremental bounded read and complete bounded write on epoll/kqueue | Implemented by [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) |
 | P2-TCP-C | hostname resolution through the bounded blocking pool | Implemented by [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) |
-| P2-TCP-D | IOCP connect/read/write with native Windows execution | Numeric IPv4/IPv6 sub-slice implemented by [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48); bounded hostname resolution remains |
+| P2-TCP-D | IOCP connect/read/write with native Windows execution | Implemented by numeric IPv4/IPv6 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) and bounded hostname [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) slices |
 | P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `runtime_unavailable` | Not implemented |
 
 Before the numeric P2-TCP-D sub-slice, Windows compiled and returned
 `Unsupported` for new client calls without evaluating or logging secret
 payloads. Windows now executes numeric IPv4/IPv6 connect, read, write,
 cancellation, timeout, close, and late-completion paths through IOCP. Hostnames
-remain `Unsupported` on Windows until the bounded resolver is connected to the
-owner reactor. This numeric milestone is native IOCP evidence, but it is not
-complete P2-TCP-D or browser acceptance. RFC 0032 cannot become `Accepted`
-before the remaining required Windows and browser evidence exists.
+use the same lazy 16-job resolver bound as Unix, post completion to the owner
+IOCP, and try at most 16 candidates under the original overall deadline. These
+native milestones complete P2-TCP-D, but they do not complete browser
+acceptance. RFC 0032 cannot become `Accepted` before the remaining required
+browser and later runtime evidence exists.
 
-The A/B/C implementation includes bounded read/write payloads, positive and
+The A/B/C/D implementation includes bounded read/write payloads, positive and
 zero timeouts, structured cancellation, one pending operation per stream
 direction, exact registration/retained-buffer lifecycle counters, native
-Linux/macOS execution, explicit pre-evaluation Windows rejection, and Nomo
-examples. Hostnames use one lazy worker and 16 live-job slots, return
-completion through the owner reactor, copy at most 16 candidates, and share
-one deadline with ordered connect attempts. Queued cancellation is immediate;
-an in-progress system resolver call is cooperatively detached and cleaned
-after it returns.
+Linux/macOS/Windows execution, and Nomo examples. Hostnames use one lazy worker
+and 16 live-job slots, return completion through the owner reactor, copy at
+most 16 candidates, and share one deadline with ordered connect attempts.
+Queued cancellation is immediate; an in-progress system resolver call is
+cooperatively detached and cleaned after it returns.
 
-The numeric P2-TCP-D sub-slice adds a fixed 64-slot owner-local IOCP operation
-table, stable `OVERLAPPED` storage outside coroutine frames, `ConnectEx`,
-`WSARecv`, `WSASend`, one-time socket association, `CancelIoEx`, and bounded
-late-completion draining. Native Windows CI covers success, timeout,
-cancellation, close, slot reuse, saturation, secret-safe errors, and exact
-operation/handle counters. `shutdown_write`, Windows hostname resolution, the
-general RFC 0032 blocking pool, and the browser adapter remain follow-up
-slices. These partial implementation results do not change this RFC from
-`Proposed`.
+P2-TCP-D adds a fixed 64-slot owner-local IOCP operation table, stable
+`OVERLAPPED` storage outside coroutine frames, `ConnectEx`, `WSARecv`,
+`WSASend`, one-time socket association, `CancelIoEx`, posted resolver
+completion, and bounded late-completion draining. Native Windows CI covers
+numeric and hostname success, zero and positive timeout, queued/running
+resolver cancellation, exact resolver saturation, close, slot reuse,
+secret-safe errors, and exact worker/reactor/operation/handle counters.
+Shutdown drains posted resolver notifications before releasing their
+completion keys. `shutdown_write`, the general RFC 0032 blocking pool, and the
+browser adapter remain follow-up slices. These implementation results do not
+change this RFC from `Proposed`.
 
 ## 9. Metrics and Limits
 
@@ -312,9 +314,10 @@ slot-reuse races, saturation, invalid UTF-8, numeric zero-thread execution,
 hostname success and zero-timeout no-initialization, queued/running resolver
 cancellation, exact resolver-capacity overflow, and secret-safe errors.
 
-Linux and macOS require native epoll/kqueue execution. Windows requires explicit
-unsupported behavior before P2-TCP-D and native IOCP execution afterward;
-cross-build alone is insufficient.
+Linux and macOS require native epoll/kqueue execution. Windows requires
+explicit unsupported behavior before P2-TCP-D and native IOCP execution,
+including bounded hostname resolution, afterward; cross-build alone is
+insufficient.
 
 RFC 0034 TCP echo, churn, cancellation storm, latency, CPU/RSS, descriptor, and
 buffer-leak workloads remain ineligible for performance claims until connect,
@@ -339,13 +342,13 @@ fixtures, and exact lifecycle counters mitigate them.
 
 ## 13. v0.1 Impact and Open Follow-Ups
 
-P2-TCP-A/B/C and the numeric P2-TCP-D sub-slice are additive executable slices.
-They update the SPEC and standard library with numeric-address or
-bounded-hostname suspend connect plus bounded incremental read/write on Linux
-and macOS, and numeric-address connect/read/write through native IOCP on
-Windows. The old client behavior remains available through explicit
-`_blocking` compatibility names for the preview migration window. Windows
-hostname resolution, listener accept, and UDP remain incomplete or blocking.
+P2-TCP-A/B/C/D are additive executable slices. They update the SPEC and
+standard library with numeric-address or bounded-hostname suspend connect plus
+bounded incremental read/write on Linux and macOS, and the same bounded client
+contract through native IOCP on Windows. The old client behavior remains
+available through explicit `_blocking` compatibility names for the preview
+migration window. Browser raw TCP remains unavailable; listener accept and UDP
+remain blocking.
 
 A dedicated byte type may later replace `Array<u32>` without changing the
 reactor contract. Listener/UDP migration, TLS, and cross-shard stream transfer

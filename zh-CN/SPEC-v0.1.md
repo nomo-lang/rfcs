@@ -1293,10 +1293,12 @@ range 时，它是 unrestricted。只有一个 day field restricted 时，该 fi
 ### 6.20 `std.net`
 
 `std.net` 提供 owner-affine suspend TCP client operation 与显式 blocking
-compatibility helper。Linux/macOS 通过 epoll/kqueue 执行 numeric-address
-connect、bounded incremental read 与 complete bounded write。hostname
-resolution、Windows native IOCP、browser raw TCP 与 `shutdown_write`
-留给 RFC 0037 后续切片。
+compatibility helper。Linux/macOS 通过 epoll/kqueue 执行 connect、bounded
+incremental read 与 complete bounded write；Windows 使用 owner-local 固定
+IOCP operation table。native numeric address 走零线程路径。hostname 使用一个
+惰性 bounded resolver worker，通过 Unix nonblocking pipe 或 Windows posted
+IOCP completion 返回 owner。browser raw TCP 与 `shutdown_write` 留给 RFC
+0037 后续切片。
 
 ```nomo
 pub enum NetErrorKind {
@@ -1374,15 +1376,19 @@ byte、EOF、timeout、cancellation 或 error 后返回，绝不隐含 read-to-E
 binary chunk 使用 `0..=255` 的 `Array<u32>`；text chunk 必须是合法 UTF-8。
 
 单次 read/write payload 上限为 1,048,576 bytes，timeout 上限为 900,000
-milliseconds。零值只做一次 immediate attempt，不注册 reactor；正 timeout
-使用 monotonic timeout/cancellation 与 one-shot readiness。write 只保留未发送
-suffix，每轮 executor poll 最多推进 64 KiB，并且要么完整写入，要么失败。
-cancellation/timeout 各自恰好一次释放 registration 与 retained buffer，同时
-stream 仍可复用；`close` 使 generation 失效。
+milliseconds。零值只做一次 immediate numeric attempt，不注册 reactor；
+zero-timeout hostname 返回 `Timeout`，且不初始化 resolver pool 或 reactor。
+正 timeout 使用 monotonic timeout/cancellation 与 one-shot readiness。write
+只保留未发送 suffix，每轮 executor poll 最多推进 64 KiB，并且要么完整写入，
+要么失败。cancellation/timeout 各自恰好一次释放 registration 与 retained
+buffer，同时 stream 仍可复用；`close` 使 generation 失效。
 
-本切片中 hostname 与 Windows 返回 `Unsupported`；Windows 在求值 write
-payload 前拒绝。preview migration window 内，`connect_blocking`、
-`read_to_string_blocking` 与 `write_string_blocking` 保留旧 client 行为。
+hostname 上限为 253 bytes。resolver 有 16 个 live-job slot，最多复制 16 个
+IPv4/IPv6 candidate，并与按顺序的 connect attempt 共用一个 overall deadline；
+queue saturation 返回 `Limit`。queued cancellation 立即完成，running system
+resolver call 采用 cooperative detach 并在返回后清理。preview migration
+window 内，`connect_blocking`、`read_to_string_blocking` 与
+`write_string_blocking` 保留旧 client 行为。browser raw TCP 仍不可用；
 `listen`、`TcpListener.accept` 与 UDP operation 仍为 blocking。
 
 ### 6.21 `std.http`
