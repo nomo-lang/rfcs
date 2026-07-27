@@ -101,5 +101,6 @@ RFC 的职责是讨论并修改这份规格基线中的待决问题；RFC 被 `A
 | [0035](./rfcs/0035-monotonic-suspend-timers-and-blocking-sleep-migration.md) | 单调时钟挂起 Timer 与阻塞 Sleep 迁移 | Proposed（已提案） | suspend function、timer、monotonic clock、blocking compatibility、C99 | 增加唯一有界 `task.sleep(Duration)` timer，并在不破坏 legacy 同步代码的前提下禁止 async worker 调用阻塞 `time.sleep*`。 |
 | [0036](./rfcs/0036-bounded-channels-publication-moves-and-static-select.md) | 有界 Channel、Publication Move 与静态 Select | Proposed（已提案） | channel、select、move publication、Send、backpressure、cancellation、C99 | 在实现前固定类型化 channel API、consuming publication boundary、确定性 static select 语法与分阶段 ownership/correctness 门禁。 |
 | [0037](./rfcs/0037-owner-affine-async-tcp-client-and-blocking-migration.md) | Owner-affine async TCP client 与 blocking migration | Proposed（已提案） | async TCP、reactor、owner affinity、bounded I/O、DNS | 定义 bounded suspend connect/read/write、generation-checked stream ownership、显式 blocking 迁移与 native platform gate。 |
+| [0038](./rfcs/0038-owner-affine-async-process-pipes-and-blocking-migration.md) | Owner-affine async process pipe 与 blocking migration | Proposed（已提案） | process、async pipe、reactor、MCP、owner affinity | 定义 bounded suspend process start/event progress、owner-local pipe、显式 blocking 迁移与 native platform gate。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
