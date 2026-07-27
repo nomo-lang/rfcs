@@ -8,8 +8,9 @@
 | --- | --- |
 | 编号 | 0041 |
 | 标题 | Canonical 隐式 `void` 返回声明 |
-| 决策状态 | Proposed（已提案） |
-| 实现状态 | Not implemented（未实现） |
+| 决策状态 | Accepted（已接受） |
+| 实现状态 | Implemented（已实现） |
+| 实现证据 | [nomo #62](https://github.com/nomo-lang/nomo/pull/62)、[nomo #63](https://github.com/nomo-lang/nomo/pull/63)、[核心 CI](https://github.com/nomo-lang/nomo/actions/runs/30307518265)、[nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5)、[LSP CI](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643)、[Tree-sitter #10](https://github.com/nomo-lang/tree-sitter-nomo/pull/10)、[VS Code #4](https://github.com/nomo-lang/vscode-nomo/pull/4)、[IntelliJ #3](https://github.com/nomo-lang/intellij-nomo/pull/3)、[Zed #4](https://github.com/nomo-lang/zed-nomo/pull/4)、[Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19)、[网站 #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15)、[治理 #54](https://github.com/nomo-lang/rfcs/pull/54) |
 | 作者 | Nomo 语言工作组 |
 | 创建日期 | 2026-07-27 |
 | 关联主题 | function declaration、method、suspend function、interface、extern declaration、formatter、doc、LSP、grammar |
@@ -195,7 +196,7 @@ example、standard library、test 与 Playground 来回震荡。刻意测试显�
 | 保持显式 `-> void` 为 canonical | 一致但冗长，不增加 declaration 信息 | 拒绝 |
 | 删除 `void` 并在所有位置推断 | 破坏 generic result、value、callable type 与 ABI description | 拒绝 |
 | 只允许普通 function 省略 | method、interface、suspend、extern、doc 与 LSP 继续不一致 | 拒绝 |
-| 只在 declaration context canonical 省略 | 声明简洁，同时保持 callable 与 generic type 完整 | 已提案 |
+| 只在 declaration context canonical 省略 | 声明简洁，同时保持 callable 与 generic type 完整 | 已接受 |
 
 ## 9. 风险
 
@@ -223,9 +224,48 @@ example、standard library、test 与 Playground 来回震荡。刻意测试显�
 
 ## 11. 决策与实现证据门禁
 
-本 RFC 首次合并时保持 `Proposed` 与 `Implementation Status: Not implemented`，
-不得仅凭文档声明让实现分支假定已经 Accepted。
+本 RFC 对声明的 Preview 范围已为 `Accepted` 与 `Implemented`。
 
-实现及所有适用受保护 CI 合并后，独立证据 PR 才可把决策改为 `Accepted`、实现改为
-`Implemented`。证据 PR 记录 compiler 与生态 merged commit 及精确验证命令，且不得
-把内部测试覆盖等同于 production readiness。
+评审使用的 merge baseline 为 `nomo`
+[`6acff2b`](https://github.com/nomo-lang/nomo/commit/6acff2bba0113efa3d49254ec2b9c72e1d442b33)
+与
+[`085da51`](https://github.com/nomo-lang/nomo/commit/085da513ff6c042bd00571c49a6eb061722acf6f)、
+`nomo-lsp`
+[`f855514`](https://github.com/nomo-lang/nomo-lsp/commit/f8555148617efbc3b21fabd75f94773c3bccd959)、
+Tree-sitter
+[`e62a073`](https://github.com/nomo-lang/tree-sitter-nomo/commit/e62a0736271074587dbcdb48768e08de3f7b7045)、
+VS Code
+[`31bf337`](https://github.com/nomo-lang/vscode-nomo/commit/31bf337283485fe0c1684f99214cb5ca2fdd5fbf)、
+IntelliJ
+[`bf3144e`](https://github.com/nomo-lang/intellij-nomo/commit/bf3144e3995bf3550f44bfcfb7e37ec4c5dde946)、
+Zed
+[`38b9b82`](https://github.com/nomo-lang/zed-nomo/commit/38b9b82f326a01365e27556481a5f37786c38521)、
+Playground
+[`8cf8ba5`](https://github.com/nomo-lang/nomo-playground/commit/8cf8ba507b90c9b825d997e8f1359dd9894f1b1d)、
+网站
+[`aa6f412`](https://github.com/nomo-lang/www.nomo-lang.org/commit/aa6f412bc279647ea6b6c1eb4b37743a3395baff)
+与治理
+[`99d6f14`](https://github.com/nomo-lang/rfcs/commit/99d6f14207b44a3162fcc61a3abf545c2a20c9e1)。
+
+- Parser 兼容、canonical AST/formatter/scaffolder/doc 展示、各声明位置覆盖、
+  callable/type/value 保留、C99、WASM 及全仓源码迁移已通过
+  [nomo #62](https://github.com/nomo-lang/nomo/pull/62) 和
+  [nomo #63](https://github.com/nomo-lang/nomo/pull/63) 合并；适用平台与 backend
+  门禁见
+  [核心 CI 30307518265](https://github.com/nomo-lang/nomo/actions/runs/30307518265)。
+- 共享 hover、signature help、symbol 与 completion 展示已通过
+  [nomo-lsp #5](https://github.com/nomo-lang/nomo-lsp/pull/5) 合并；protocol/release
+  门禁见
+  [LSP CI 30308080643](https://github.com/nomo-lang/nomo-lsp/actions/runs/30308080643)。
+- Grammar 与 editor 覆盖已通过
+  [Tree-sitter #10](https://github.com/nomo-lang/tree-sitter-nomo/pull/10)、
+  [VS Code #4](https://github.com/nomo-lang/vscode-nomo/pull/4)、
+  [IntelliJ #3](https://github.com/nomo-lang/intellij-nomo/pull/3) 与
+  [Zed #4](https://github.com/nomo-lang/zed-nomo/pull/4) 合并。
+- Canonical 示例已进入
+  [Playground #19](https://github.com/nomo-lang/nomo-playground/pull/19) 与
+  [网站 #15](https://github.com/nomo-lang/www.nomo-lang.org/pull/15)；双语 SPEC 与可执行
+  declaration drift/snippet 门禁已通过
+  [rfcs #54](https://github.com/nomo-lang/rfcs/pull/54) 合并。
+
+Accepted 记录语法收敛，不代表已有稳定 `v0.1.0` 或 production readiness。
