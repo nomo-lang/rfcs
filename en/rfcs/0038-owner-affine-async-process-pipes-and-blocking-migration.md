@@ -412,7 +412,7 @@ error handling for a score.
 | Slice | Required behavior | Status |
 | --- | --- | --- |
 | P2-PROC-A | public effect/handle/migration contract, diagnostics, lowering ABI, benchmark fixture | Implemented by [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) |
-| P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Proposed |
+| P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Implemented by [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) |
 | P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Proposed |
 | P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Proposed |
 | P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Proposed |
@@ -445,14 +445,55 @@ The Nomo example `async_process_pipe_contract`, explicit blocking process/MCP
 migration examples, native generated-C execution, and a disabled RFC 0034
 process-pipe fixture lock the public and lowering contracts. Workspace tests,
 release WASM construction, and the Linux, macOS, and Windows PR CI groups
-passed. The workload remains disabled and ineligible for performance claims
-until P2-PROC-B supplies native registrations and lifecycle counters.
+passed. At this slice the workload remained disabled and ineligible for
+performance claims; P2-PROC-B implementation evidence is recorded separately
+below.
 
-This evidence completes only P2-PROC-A. Native bounded start jobs,
-epoll/kqueue pipes, process exit, cancellation, and close remain P2-PROC-B;
-IOCP, browser pre-evaluation capability handling, the async MCP example, and
-resource/performance evidence remain later slices. The RFC therefore remains
-`Proposed`.
+This evidence completes only P2-PROC-A. It does not by itself establish native
+process I/O, IOCP, browser pre-evaluation capability handling, the async MCP
+example, or resource/performance evidence.
+
+### 11.2 P2-PROC-B implementation evidence
+
+[`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) replaces the Unix ready
+placeholder with a toolchain-owned native runtime. Process start and final
+reap use one lazy worker with fixed tables: at most 16 live handles, 16
+concurrent start jobs, and 32 total start/reap jobs. Command, argument, cwd,
+and environment storage is deep-copied before publication, bounded to 4096
+combined items and 1 MiB, and never appears in runtime errors or diagnostics.
+The worker resolves and starts the executable without a shell. No child owns a
+dedicated reader, writer, or lifetime thread.
+
+Child stdin, stdout, and stderr are nonblocking and remain owner-affine. Linux
+registers them with epoll and observes exit through `pidfd` when available;
+older kernels use the same bounded worker watch table and one owner wake pipe.
+macOS registers pipes and `EVFILT_PROC` with kqueue; an exit-registration race
+falls back to that bounded watch source. The fallback never adds an owner-side
+polling timer. Generation-tagged handle slots prevent late reap completion
+from closing or releasing a reused process identity.
+
+Native fixtures verify `StdinFlushed`, incremental stdout/stderr, and final
+`Exited` ordering; timeout followed by child reuse; queued-start cancellation;
+termination and nonwaiting close; invalid UTF-8 protocol closure; exact frame,
+timer, reactor, process, blocking-job, retained-byte, and zero-live counters;
+and ASAN-clean cancellation/drop paths where the host supports ASAN. Runtime
+shutdown first detaches watches and joins the worker, then resolves remaining
+children, so `waitpid` and PID reuse cannot race late completion delivery.
+`examples/async_process_pipe_unix` exercises the public Nomo path with no
+application C FFI.
+
+The PR passed native Linux epoll/`pidfd`, macOS kqueue/`EVFILT_PROC`, and
+Windows CI groups. Windows intentionally continues to return a typed,
+secret-safe `unsupported` result, while cross-target C99 tests lock that
+capability split. Clean-checkout P1 and P3 benchmark harness runs accepted all
+enabled static/counter gates and continued to reject performance claims. The
+cross-language process workload remains disabled until it owns a
+self-contained cross-platform child fixture and a fair pinned-Go comparison.
+
+This completes the Unix P2-PROC-B slice only. Windows IOCP process pipes,
+browser pre-evaluation/release-WASM evidence, async MCP composition,
+saturation/low-memory stress, and claim-eligible RFC 0034 measurements remain
+P2-PROC-C through P2-PROC-E. The RFC therefore remains `Proposed`.
 
 ## 12. Alternatives and Risks
 
