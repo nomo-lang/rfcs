@@ -1051,6 +1051,16 @@ Browser WASM 在参数求值前拒绝 async process capability。Release artifac
 不 import host API，并在求值 `process.start` 的 command 或 timeout operand
 前返回稳定 capability error。
 
+Preview conformance 证据会填满 16-child native table，要求第 17 次 start 返回
+类型化 `limit`，关闭全部 slot，然后完成 32 次 reuse round trip。另一个
+bounded-worker 门禁会让 16 个已提交 job 中 1 个启动，并在交付前取消其余
+15 个。两者都要求 shutdown 时 live process handle/operation、retained byte、
+blocking job、reactor registration 与 timer 为零。版本化 process-pipe report
+让 Nomo 与固定 Go 1.25.12 对同一个 fixture 执行 256 次相同的 63-byte
+stdin/stdout/stderr exchange，记录五次 sample，并使用显式单核、内存与 resource
+control。这些 measurement 只作为证据，不会把 RFC 从 `Proposed` 改为
+`Accepted`，也不会产生性能声明。
+
 同步调用 `start` 或 `next_event` 会得到 E0870 suspend-effect 指引，不存在隐式
 blocking fallback。`spawn`、`status`、`exec`、`output` 与所有显式
 `_blocking` function 在 suspend 调用图中以 E0891 隔离。`write_stdin`、

@@ -258,6 +258,14 @@ read 现在属于稳定、owner-affine 的 `ProcessChild` slot，不再属于一
 已经写入 buffer、但 read completion packet 尚未分发的字节。Close 与
 cancellation 会 detach buffer，直到 IOCP 排空 late completion。
 
+[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) 增加 process stress
+程序暴露的两个聚焦 lowering 回归。已接受 loop 内的 transitive suspend call
+现在使用完整 global call graph，不再进行第二次 single-function validation。
+在 loop condition 恢复的 frame alias 还会按 last use 过滤，因此一个跨过更早
+suspension、但在 loop 前已经死亡的 managed local，不会作为未声明或 stale 的
+C99 local 被重新引入。16-child saturation 与 32-round slot-reuse 示例会在
+Linux、macOS、Windows 上执行该修正路径。
+
 这些证据完成了 bounded-loop 核心与 native MCP 组合切片，但尚未满足上面的
 全部门禁。完整 E0873 borrow/guard/FFI-view 矩阵、每个 suspension site 的
 timeout/panic/error cleanup 矩阵、browser pure-loop 证据、稳定的最小 frame

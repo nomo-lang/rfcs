@@ -303,6 +303,7 @@ are mandatory mitigations.
 | P2-PROC-B: owner-affine Unix process pipes | [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) adds one bounded lazy start/reap worker, epoll/`pidfd` on Linux, kqueue/`EVFILT_PROC` on macOS, owner-local nonblocking pipes, cancellation/timeout/close, exact counters, ASAN fixtures, and a native Nomo example | no open Unix correctness gate; cross-platform completion continues below |
 | P2-PROC-C: owner-affine Windows process pipes | [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) adds overlapped named pipes, owner-local IOCP completion, bounded process creation and exit notification, late-completion draining, exact lifecycle counters, native Windows fixtures, and a Nomo example without per-child I/O threads | no open Windows correctness gate; browser and resource gates continue below |
 | P2-PROC-D: browser process capability boundary | [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) verifies the zero-import release WASM artifact rejects async `process.start` before evaluating or leaking poison command/timeout operands | async MCP composition, saturation/low-memory stress, and claim-eligible RFC 0034 measurements |
+| P2-PROC-E: MCP/resource/measurement closure | [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57), [`nomo#58`](https://github.com/nomo-lang/nomo/pull/58), and [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) add the native async MCP loop, 16-child saturation and 15-job cancellation stress, one-core/128 MiB resource gates, and the pinned Go 1.25.12 process-pipe report | process slice complete; controlled-host targets and the broader HTTP/SSE/TCP/platform benchmark matrix remain |
 
 The implementation follows qualified, specifically imported, local
 transitive, and project-module transitive call paths. Compiler tests cover the
@@ -323,9 +324,13 @@ overlapped named pipes, a fixed IOCP operation table, one lazy bounded
 process-creation worker, and a bounded system exit wait that posts completion
 back to the owner IOCP. P2-PROC-D verifies the final zero-import browser WASM
 artifact returns the stable process-capability error before evaluating async
-command or timeout operands. Async MCP composition, low-memory and saturation
-stress, and RFC 0034 process measurements remain open. The RFC remains
-`Proposed` until those resource and benchmark gates are met.
+command or timeout operands. P2-PROC-E adds the Nomo-native MCP loop, bounded
+saturation/cancellation cleanup, and a versioned process-pipe comparison under
+Linux affinity, address-space, RSS, fd, and thread controls. The passing
+hosted-runner result was near parity but missed the RFC 0034 throughput and
+RSS design targets. This RFC remains `Proposed` while the HTTP/SSE/TCP paths,
+per-core shards, controlled-host repetition, and the broader platform
+benchmark matrix remain open.
 
 **Proposed decision:** adopt owner-affine current-thread/sharded executors,
 platform reactors, and a separate bounded blocking pool. Do not expand the

@@ -415,7 +415,7 @@ error handling for a score.
 | P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Implemented by [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) |
 | P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Implemented by [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) |
 | P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Implemented by [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) |
-| P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Partially implemented by [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57); stress, low-memory, and benchmark gates remain |
+| P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Implemented by [`nomo#57`](https://github.com/nomo-lang/nomo/pull/57), [`nomo#58`](https://github.com/nomo-lang/nomo/pull/58), and [`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) |
 
 Each slice lands through a focused implementation PR and records evidence
 here. The RFC remains `Proposed` until all required native correctness,
@@ -589,6 +589,37 @@ P2-PROC-E. Saturation/leak stress over many children and cancellation races, a
 documented low-memory run, and the fair pinned-version RFC 0034 process-pipe
 comparison remain open. No Go-relative performance claim is eligible, and
 this RFC remains `Proposed`.
+
+### 11.6 P2-PROC-E resource and benchmark completion evidence
+
+[`nomo#58`](https://github.com/nomo-lang/nomo/pull/58) adds a cross-platform
+controlled-process fixture and `examples/async_process_stress`. The Nomo
+program fills the fixed 16-child table, requires the seventeenth start to
+return `limit`, closes every child, and then completes 32 sequential
+stdin/stdout/exit round trips through reused slots. A focused cancellation
+storm submits 16 process starts to the single bounded worker, lets one start,
+cancels the other 15 queued jobs, and requires exact cancellation counters.
+Both gates require zero live process handles/operations, retained process
+bytes, blocking jobs, reactor registrations, and timers at exit. Linux,
+macOS, and Windows CI passed.
+
+[`nomo#59`](https://github.com/nomo-lang/nomo/pull/59) enables the versioned
+RFC 0034 process-pipe report. Nomo and pinned Go 1.25.12 launch the same C99
+fixture and perform 256 exchanges of the same 63-byte line over stdin, stdout,
+and stderr. Result schema 2 records five wall/CPU/RSS samples, p50/p99/p999,
+operations per second, and Linux fd/thread peaks. Linux pins both
+implementations to one CPU, applies a 2 GiB address-space ceiling, and rejects
+any measured sample above 128 MiB peak RSS. The gate also requires one start,
+256 writes, 769 typed process events, and zero live runtime resources.
+
+The passing pull-request artifact recorded Nomo/Go throughput `0.958986`, p99
+wall ratio `1.004829`, and peak-RSS ratio `0.997620`. Both peaks were about
+15.5 MiB; peak fd counts were 10/10 and peak thread counts 2/3. These are
+hosted-runner observations, not a marketing claim. They do not meet the RFC
+0034 design targets of throughput at least 1.10 and RSS at most 0.80, and the
+versioned collector is still POSIX-only. P2-PROC-E is implemented, but this
+RFC remains `Proposed` pending controlled-host repetition, broader platform
+performance evidence, and the remaining RFC 0034 acceptance matrix.
 
 ## 12. Alternatives and Risks
 
