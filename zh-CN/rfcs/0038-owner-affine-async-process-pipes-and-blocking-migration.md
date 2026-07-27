@@ -397,7 +397,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 | --- | --- | --- |
 | P2-PROC-A | public effect/handle/migration contract、diagnostic、lowering ABI、benchmark fixture | 已由 [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 实现 |
 | P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | 已由 [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 实现 |
-| P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | Proposed |
+| P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | 已由 [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 实现 |
 | P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | Proposed |
 | P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | Proposed |
 
@@ -467,10 +467,41 @@ benchmark harness 已接受全部 enabled static/counter gate，并继续拒绝�
 声明。Cross-language process workload 在拥有自包含的跨平台 child fixture
 与公平、固定版本的 Go 对照前仍保持 disabled。
 
-这只完成 Unix P2-PROC-B 切片。Windows IOCP process pipe、browser
+这只完成 Unix P2-PROC-B 切片。在当时，Windows IOCP process pipe、browser
 pre-evaluation/release-WASM 证据、async MCP 组合、saturation/low-memory
 stress 与可参与声明的 RFC 0034 measurement 仍属于 P2-PROC-C 至
-P2-PROC-E。因此本 RFC 继续保持 `Proposed`。
+P2-PROC-E；后续证据记录如下，本 RFC 继续保持 `Proposed`。
+
+### 11.3 P2-PROC-C 实现证据
+
+[`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 已用关联到当前 owner
+IOCP 的 toolchain-owned overlapped named pipe 替换 Windows ready 占位实现。
+现有固定 process table 继续保持 owner-local；唯一的惰性 bounded worker
+只负责创建 process，不读取或写入 child pipe。一个受限的
+`RegisterWaitForSingleObject` callback 会把带 generation 校验的 exit
+completion 回投 owner IOCP，因此每个 child 都不占用 lifetime、reader 或
+writer thread。
+
+Runtime 会在打开 child endpoint 前启动每条 overlapped named-pipe connection，
+并限制 connection handshake。Stdin、stdout 与 stderr 使用固定表中的稳定
+`OVERLAPPED` storage。Cancellation 调用 `CancelIoEx`；late completion 在
+IOCP packet 排空前继续拥有 detached buffer，因此 coroutine frame drop 不会
+留下悬空 `OVERLAPPED` 指针。Process-pool completion registration 只在存在
+live job 时激活，并在最后一个 owner-visible completion 后停用，避免 idle
+registration 让 current-thread executor 永不退出。
+
+Windows native fixture 已验证 stdin flush、incremental output 与 exit 顺序；
+start/protocol failure；timeout 与 handle reuse；capability rejection；process、
+blocking-job、reactor、timer 与 IOCP state 全部归零；registration/deregistration
+平衡；以及每条已提交 IOCP operation 都被完整排空。IOCP counter 会区分临时
+预留的固定 slot 与已被系统接受、后续交付 completion 的操作，因此同步 EOF
+不会虚构一条已提交操作。Linux smoke、macOS native regression 与完整 Windows
+host-runtime CI 组已一起通过。`examples/async_process_pipe_windows` 通过
+public Nomo path 执行，应用不写 C FFI。
+
+这只完成 P2-PROC-C。Browser pre-evaluation/release-WASM 证据、async MCP
+stdio 组合、saturation/low-memory stress 与可参与声明的 RFC 0034 process
+measurement 仍属于 P2-PROC-D 与 P2-PROC-E，因此本 RFC 继续保持 `Proposed`。
 
 ## 12. 备选与风险
 
