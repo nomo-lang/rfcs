@@ -58,10 +58,10 @@ single-threaded CLI call, but it cannot run on an async executor worker:
   the compatibility implementation has no stable completion slot;
 - wrapping any existing operation in a coroutine would still block unrelated
   tasks;
-- the current Unix stream cleanup template invokes easy-handle cleanup twice,
-  and the SSE size-error template repeats one message fragment. The blocking
-  migration must add regression coverage and one cleanup owner rather than
-  carrying these defects into the async table.
+- the compatibility registry has no lifecycle counters or sanitizer gate that
+  could prove one cleanup owner under future cancellation/completion races.
+  The blocking migration must preserve its current single-threaded behavior
+  while adding that regression evidence before the async table lands.
 
 The current `E0891` quarantine is therefore correct. A real replacement must
 integrate transport readiness/completion with the executor, preserve all
@@ -471,7 +471,7 @@ gates pass.
 
 | Slice | Required behavior | Status |
 | --- | --- | --- |
-| P2-HTTP-A | public suspend/handle/migration contract, `E0870`/`E0890`/`E0891`, typed lowering ABI, blocking cleanup regression, and benchmark fixture | Planned |
+| P2-HTTP-A | public suspend/handle/migration contract, `E0870`/`E0890`/`E0891`, typed lowering ABI, blocking compatibility cleanup/sanitizer regression, and benchmark fixture | Planned |
 | P2-HTTP-B | Unix buffered send/open through owner-local curl multi, bounded resolver, TLS fixture, connection reuse, timeout/cancel, and exact lifecycle counters | Planned |
 | P2-HTTP-C | Unix incremental text/SSE pulls, terminal cancellation, slot reuse, limits, and epoll/kqueue native stress | Planned |
 | P2-HTTP-D | asynchronous WinHTTP send/stream parity, owner wakeup, bounded connection reuse, late-callback drain, and native Windows stress | Planned |
@@ -500,7 +500,7 @@ or one implementation slice does not make it `Accepted`.
 
 Risks include dynamic libcurl capability differences, resolver and callback
 races, backend-specific connection reuse, early-cancel TLS state, retained
-secret buffers, duplicate cleanup, and preview source breakage. Explicit
+secret buffers, cleanup-owner mistakes, and preview source breakage. Explicit
 compatibility names, fixed owner slots, generation checks, bounded resolver
 jobs, one normalized operation state machine, native fixtures, sanitizer
 evidence, and exact counters mitigate them.
