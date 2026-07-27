@@ -273,7 +273,8 @@ task 或 handle leak。
 | --- | --- | --- |
 | P2-GUARD：blocking compatibility 隔离 | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) 已为第 9.1 节列出的 HTTP/SSE 与 process 操作实现 `E0891` | 真正 owner-affine 的 suspend HTTP/SSE 与 process-pipe path |
 | P2-PROC-A：process effect 与 lowering boundary | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 已增加 Local/!Send process handle 拆分、suspend ABI、显式 blocking migration 与 ready zero-thread 占位实现 | native 实现与平台证据由后续 process 切片跟踪 |
-| P2-PROC-B：owner-affine Unix process pipe | [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 已增加唯一的 bounded lazy start/reap worker、Linux epoll/`pidfd`、macOS kqueue/`EVFILT_PROC`、owner-local nonblocking pipe、cancellation/timeout/close、精确 counter、ASAN fixture 与 native Nomo 示例 | Windows IOCP process pipe、browser capability 证据、async MCP、saturation/low-memory stress 与可参与声明的 RFC 0034 measurement |
+| P2-PROC-B：owner-affine Unix process pipe | [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 已增加唯一的 bounded lazy start/reap worker、Linux epoll/`pidfd`、macOS kqueue/`EVFILT_PROC`、owner-local nonblocking pipe、cancellation/timeout/close、精确 counter、ASAN fixture 与 native Nomo 示例 | Unix correctness 无剩余门禁；cross-platform completion 继续在下方跟踪 |
+| P2-PROC-C：owner-affine Windows process pipe | [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 已增加 overlapped named pipe、owner-local IOCP completion、受限 process creation 与 exit notification、late-completion draining、精确 lifecycle counter、Windows native fixture，以及没有 per-child I/O thread 的 Nomo 示例 | browser capability 证据、async MCP、saturation/low-memory stress 与可参与声明的 RFC 0034 measurement |
 
 实现会跟踪 qualified call、specific import call、本地 transitive call 与跨 project
 module 的 transitive call。Compiler test 覆盖完整隔离操作集，并保留明确无需
@@ -287,10 +288,12 @@ P2-PROC-A 还固定了 process suspend effect 与 C99 state-machine boundary，�
 没有把旧 registry 藏在该边界之后。P2-PROC-B 已在 Unix 替换该占位实现：唯一
 的 bounded worker 负责 start/reap 与已记录的 portability fallback exit
 watch，pipe progress 则保持在 owner reactor，没有 per-child thread 或 owner
-polling。Windows 仍返回 typed `unsupported`；其 IOCP process path、browser
-capability 证据、async MCP 组合、low-memory stress 与 RFC 0034 process
-measurement 仍未完成。剩余 native、resource 与 benchmark gate 全部满足前，
-本 RFC 保持 `Proposed`。
+polling。P2-PROC-C 已用 owner-local overlapped named pipe、固定 IOCP
+operation table、唯一的惰性 bounded process-creation worker，以及把
+completion 回投 owner IOCP 的受限 system exit wait 替换 Windows 占位实现。
+Browser capability 证据、async MCP 组合、low-memory/saturation stress 与
+RFC 0034 process measurement 仍未完成；这些 resource 与 benchmark gate
+全部满足前，本 RFC 保持 `Proposed`。
 
 **提议决定：**采用 owner-affine current-thread/sharded executor、platform
 reactor 与独立 bounded blocking pool；不扩张现有 thread-per-task 或 unguarded

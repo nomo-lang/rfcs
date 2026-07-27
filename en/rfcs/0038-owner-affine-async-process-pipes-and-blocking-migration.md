@@ -413,7 +413,7 @@ error handling for a score.
 | --- | --- | --- |
 | P2-PROC-A | public effect/handle/migration contract, diagnostics, lowering ABI, benchmark fixture | Implemented by [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) |
 | P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Implemented by [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) |
-| P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Proposed |
+| P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Implemented by [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) |
 | P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Proposed |
 | P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Proposed |
 
@@ -490,10 +490,46 @@ enabled static/counter gates and continued to reject performance claims. The
 cross-language process workload remains disabled until it owns a
 self-contained cross-platform child fixture and a fair pinned-Go comparison.
 
-This completes the Unix P2-PROC-B slice only. Windows IOCP process pipes,
-browser pre-evaluation/release-WASM evidence, async MCP composition,
-saturation/low-memory stress, and claim-eligible RFC 0034 measurements remain
-P2-PROC-C through P2-PROC-E. The RFC therefore remains `Proposed`.
+This completes the Unix P2-PROC-B slice only. At that slice, Windows IOCP
+process pipes, browser pre-evaluation/release-WASM evidence, async MCP
+composition, saturation/low-memory stress, and claim-eligible RFC 0034
+measurements remained P2-PROC-C through P2-PROC-E. Later evidence is recorded
+below; the RFC remains `Proposed`.
+
+### 11.3 P2-PROC-C implementation evidence
+
+[`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) replaces the Windows
+ready placeholder with toolchain-owned overlapped named pipes associated with
+the current owner IOCP. The existing fixed process table remains owner-local.
+One lazy bounded worker performs process creation; it neither reads nor writes
+child pipes. A bounded `RegisterWaitForSingleObject` callback posts a
+generation-checked exit completion back to the owner IOCP, so one child does
+not consume a lifetime, reader, or writer thread.
+
+The runtime begins each overlapped named-pipe connection before opening the
+child endpoint and bounds the connection handshake. Stdin, stdout, and stderr
+use stable fixed-table `OVERLAPPED` storage. Cancellation calls `CancelIoEx`;
+late completion owns any detached buffer until the IOCP packet is drained, so
+dropping a coroutine frame cannot leave a dangling `OVERLAPPED` pointer.
+Process-pool completion registration activates only while jobs are live and
+deactivates after the last owner-visible completion, preventing an idle
+registration from keeping the current-thread executor alive.
+
+Native Windows fixtures verify stdin flush, incremental output and exit
+ordering; start and protocol failures; timeout and handle reuse; capability
+rejection; zero live process, blocking-job, reactor, timer, and IOCP state;
+balanced registration/deregistration; and complete draining of every
+submitted IOCP operation. The IOCP counters distinguish a temporarily
+reserved fixed slot from an operation accepted for completion delivery, so a
+synchronous EOF does not fabricate a submitted operation. Linux smoke, native
+macOS regression, and the full Windows host-runtime CI group passed together.
+`examples/async_process_pipe_windows` exercises the public Nomo path without
+application C FFI.
+
+This completes P2-PROC-C only. Browser pre-evaluation/release-WASM evidence,
+the async MCP stdio composition, saturation and low-memory stress, and
+claim-eligible RFC 0034 process measurements remain P2-PROC-D and P2-PROC-E.
+The RFC therefore remains `Proposed`.
 
 ## 12. Alternatives and Risks
 
