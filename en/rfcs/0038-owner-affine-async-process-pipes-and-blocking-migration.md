@@ -12,7 +12,7 @@
 | Author | Nomo Language Working Group |
 | Created | 2026-07-27 |
 | Topics | process, async pipe, reactor, MCP, owner affinity, blocking pool, migration |
-| Related RFCs | [RFC 0024](./0024-controlled-child-processes-and-stdio.md), [RFC 0028](./0028-bounded-json-rpc-and-newline-stdio-framing.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md), [RFC 0037](./0037-owner-affine-async-tcp-client-and-blocking-migration.md) |
+| Related RFCs | [RFC 0024](./0024-controlled-child-processes-and-stdio.md), [RFC 0028](./0028-bounded-json-rpc-and-newline-stdio-framing.md), [RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md), [RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md), [RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md), [RFC 0037](./0037-owner-affine-async-tcp-client-and-blocking-migration.md), [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) |
 
 ## 1. Summary
 
@@ -415,7 +415,7 @@ error handling for a score.
 | P2-PROC-B | bounded start jobs plus epoll/kqueue pipes, exit, cancellation, close, and native Unix examples/tests | Implemented by [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) |
 | P2-PROC-C | overlapped named pipes, IOCP completion, process wait, cancellation, and native Windows tests without per-child threads | Implemented by [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) |
 | P2-PROC-D | browser pre-evaluation unsupported boundary and release-WASM evidence | Implemented by [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) |
-| P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Proposed |
+| P2-PROC-E | MCP stdio example, saturation/leak stress, low-memory run, and RFC 0034 benchmark report | Proposed; async loop-carried state is gated by [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) |
 
 Each slice lands through a focused implementation PR and records evidence
 here. The RFC remains `Proposed` until all required native correctness,
@@ -553,7 +553,9 @@ surface; native examples cover real Unix and Windows child I/O.
 
 This completes P2-PROC-D only. Async MCP stdio composition, saturation and
 leak stress, a low-memory run, and claim-eligible RFC 0034 process measurements
-remain P2-PROC-E. The RFC therefore remains `Proposed`.
+remain P2-PROC-E. The MCP composition depends on the bounded suspending-loop
+semantics proposed by [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md).
+The RFC therefore remains `Proposed`.
 
 ## 12. Alternatives and Risks
 

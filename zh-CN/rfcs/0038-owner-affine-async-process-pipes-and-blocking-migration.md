@@ -12,7 +12,7 @@
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-27 |
 | 主题 | process、async pipe、reactor、MCP、owner affinity、blocking pool、migration |
-| 相关 RFC | [RFC 0024](./0024-controlled-child-processes-and-stdio.md)、[RFC 0028](./0028-bounded-json-rpc-and-newline-stdio-framing.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0037](./0037-owner-affine-async-tcp-client-and-blocking-migration.md) |
+| 相关 RFC | [RFC 0024](./0024-controlled-child-processes-and-stdio.md)、[RFC 0028](./0028-bounded-json-rpc-and-newline-stdio-framing.md)、[RFC 0031](./0031-direct-style-suspend-functions-and-structured-concurrency.md)、[RFC 0032](./0032-sharded-executor-reactor-and-blocking-pool.md)、[RFC 0033](./0033-task-ownership-transfer-and-concurrent-values.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md)、[RFC 0037](./0037-owner-affine-async-tcp-client-and-blocking-migration.md)、[RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) |
 
 ## 1. 摘要
 
@@ -399,7 +399,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 | P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | 已由 [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 实现 |
 | P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | 已由 [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 实现 |
 | P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | 已由 [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) 实现 |
-| P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | Proposed |
+| P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | Proposed；async loop-carried state 由 [RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) 门禁 |
 
 每个切片通过聚焦 implementation PR 落地，并在此记录证据。全部 required native
 correctness、resource、compatibility 与 benchmark gate 通过前，本 RFC 保持
@@ -523,7 +523,9 @@ native 示例则覆盖真实 Unix 与 Windows child I/O。
 
 这只完成 P2-PROC-D。Async MCP stdio 组合、saturation/leak stress、low-memory
 run 与可参与声明的 RFC 0034 process measurement 仍属于 P2-PROC-E，因此本
-RFC 继续保持 `Proposed`。
+RFC 继续保持 `Proposed`。其中 MCP 组合依赖
+[RFC 0039](./0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md)
+所提案的受限 suspending-loop 语义。
 
 ## 12. 备选与风险
 
