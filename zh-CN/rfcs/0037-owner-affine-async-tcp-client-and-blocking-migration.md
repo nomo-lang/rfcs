@@ -232,16 +232,16 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 | P2-TCP-B | epoll/kqueue 增量 bounded read 与完整 bounded write | 已由 [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) 实现 |
 | P2-TCP-C | bounded blocking pool hostname resolution | 已由 [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) 实现 |
 | P2-TCP-D | native Windows IOCP connect/read/write | 数值 IPv4/IPv6 子切片由 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) 实现，bounded hostname 子切片由 [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) 实现 |
-| P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前返回 `NetErrorKind.Unsupported`（`runtime_unavailable` capability category） | 未实现 |
+| P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前返回 `NetErrorKind.Unsupported`（`runtime_unavailable` capability category） | 无 raw-TCP sandbox 分支已由 [`nomo#50`](https://github.com/nomo-lang/nomo/pull/50) 实现；host-driven raw-TCP adapter 尚未完成 |
 
 数值地址 P2-TCP-D 子切片之前，Windows 可编译并对新 client call 返回
 `Unsupported`，且不求值或记录 secret payload。现在 Windows 已通过 IOCP
 原生执行数值 IPv4/IPv6 connect、read、write、cancellation、timeout、close
 与 late-completion path。hostname 使用与 Unix 相同的惰性 16-job resolver
 bound，向 owner IOCP 投递 completion，并在原始 overall deadline 内最多尝试
-16 个 candidate。这些 native milestone 已完成 P2-TCP-D，但不代表 browser
-acceptance 已完成。剩余 browser 与后续 runtime 证据完成前，RFC 0032 不能进入
-`Accepted`。
+16 个 candidate。这些 native milestone 已完成 P2-TCP-D，但没有实现
+host-driven browser raw-TCP adapter。剩余 runtime 与 benchmark 证据完成前，
+RFC 0032 不能进入 `Accepted`。
 
 A/B/C/D 实现包含 bounded read/write payload、zero/positive timeout、structured
 cancellation、每个 stream direction 一个 pending operation、精确
@@ -261,6 +261,13 @@ reactor/operation/handle counter。shutdown 会在释放 completion key 前排�
 posted resolver notification。`shutdown_write`、RFC 0032 的通用 blocking
 pool 与 browser adapter 仍是后续切片。这些实现证据不会把本 RFC 从
 `Proposed` 提升为 `Accepted`。
+
+P2-TCP-E 的无 raw-TCP 分支会在 browser interpreter 求值任何 operand 前拦截
+`net.connect` 并返回 typed `Unsupported`。browser-WASM test 会执行包含 secret
+marker、若被求值就 panic 的 Nomo operand，证明它们既不会运行也不会进入
+diagnostic。CI 还会构建没有 host import 的 release
+`wasm32-unknown-unknown` artifact。这是当前 sandbox capability boundary 的真实
+证据，不代表 raw-TCP adapter 已实现。
 
 ## 9. Metrics 与 Limit
 
@@ -307,7 +314,9 @@ timeout operand 的 browser capability rejection。
 
 Linux/macOS 必须 native 执行 epoll/kqueue。P2-TCP-D 前 Windows 验证显式
 unsupported，之后必须通过包含 bounded hostname resolution 的 native IOCP
-执行；cross-build 不能替代 native gate。
+执行；cross-build 不能替代 native gate。没有 raw TCP 的 browser sandbox
+必须通过 typed pre-evaluation rejection 与真实 browser-WASM build；未来 host
+adapter 仍需独立的 execution/lifecycle evidence。
 
 connect/read/write/cancellation 与所有必需 backend 完成前，RFC 0034 的 TCP
 echo、churn、cancellation storm、latency、CPU/RSS、descriptor 与 buffer-leak
@@ -337,7 +346,8 @@ Linux/macOS 提供 numeric-address 或 bounded-hostname suspend connect 和
 bounded incremental read/write；Windows 通过 native IOCP 提供相同的 bounded
 client contract。preview migration window 内，旧 client 行为通过显式
 `_blocking` compatibility 名称保留。browser raw TCP 仍不可用，listener accept
-与 UDP 仍为 blocking。
+与 UDP 仍为 blocking。browser sandbox 会在不求值 connect operand 的情况下
+返回 typed `Unsupported`；未来 host-driven raw-TCP adapter 仍是独立实现切片。
 
 未来 dedicated byte type 可以替代 `Array<u32>`，但不改变 reactor contract。
 listener/UDP migration、TLS 与 cross-shard stream transfer 都留给聚焦 follow-up，

@@ -241,7 +241,7 @@ milestone, not a complete Agent networking claim.
 | P2-TCP-B | incremental bounded read and complete bounded write on epoll/kqueue | Implemented by [`nomo#46`](https://github.com/nomo-lang/nomo/pull/46) |
 | P2-TCP-C | hostname resolution through the bounded blocking pool | Implemented by [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) |
 | P2-TCP-D | IOCP connect/read/write with native Windows execution | Implemented by numeric IPv4/IPv6 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) and bounded hostname [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) slices |
-| P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `NetErrorKind.Unsupported` (`runtime_unavailable` capability category) | Not implemented |
+| P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `NetErrorKind.Unsupported` (`runtime_unavailable` capability category) | No-raw-TCP sandbox branch implemented by [`nomo#50`](https://github.com/nomo-lang/nomo/pull/50); host-driven raw-TCP adapter remains |
 
 Before the numeric P2-TCP-D sub-slice, Windows compiled and returned
 `Unsupported` for new client calls without evaluating or logging secret
@@ -249,9 +249,9 @@ payloads. Windows now executes numeric IPv4/IPv6 connect, read, write,
 cancellation, timeout, close, and late-completion paths through IOCP. Hostnames
 use the same lazy 16-job resolver bound as Unix, post completion to the owner
 IOCP, and try at most 16 candidates under the original overall deadline. These
-native milestones complete P2-TCP-D, but they do not complete browser
-acceptance. RFC 0032 cannot become `Accepted` before the remaining required
-browser and later runtime evidence exists.
+native milestones complete P2-TCP-D, but they do not implement a host-driven
+browser raw-TCP adapter. RFC 0032 cannot become `Accepted` before the remaining
+runtime and benchmark evidence exists.
 
 The A/B/C/D implementation includes bounded read/write payloads, positive and
 zero timeouts, structured cancellation, one pending operation per stream
@@ -273,6 +273,14 @@ Shutdown drains posted resolver notifications before releasing their
 completion keys. `shutdown_write`, the general RFC 0032 blocking pool, and the
 browser adapter remain follow-up slices. These implementation results do not
 change this RFC from `Proposed`.
+
+The no-raw-TCP P2-TCP-E branch intercepts `net.connect` in the browser
+interpreter before evaluating any operand and returns typed `Unsupported`.
+Browser-WASM tests execute Nomo operands that would panic with secret markers
+and prove none runs or reaches diagnostics. CI also builds the release
+`wasm32-unknown-unknown` artifact with no host imports. This is real evidence
+for the current sandbox capability boundary, not evidence of a raw-TCP
+adapter.
 
 ## 9. Metrics and Limits
 
@@ -325,7 +333,9 @@ operands.
 Linux and macOS require native epoll/kqueue execution. Windows requires
 explicit unsupported behavior before P2-TCP-D and native IOCP execution,
 including bounded hostname resolution, afterward; cross-build alone is
-insufficient.
+insufficient. A browser sandbox without raw TCP requires typed pre-evaluation
+rejection plus a real browser-WASM build; a future host adapter requires its
+own execution and lifecycle evidence.
 
 RFC 0034 TCP echo, churn, cancellation storm, latency, CPU/RSS, descriptor, and
 buffer-leak workloads remain ineligible for performance claims until connect,
@@ -356,7 +366,9 @@ bounded incremental read/write on Linux and macOS, and the same bounded client
 contract through native IOCP on Windows. The old client behavior remains
 available through explicit `_blocking` compatibility names for the preview
 migration window. Browser raw TCP remains unavailable; listener accept and UDP
-remain blocking.
+remain blocking. The browser sandbox reports typed `Unsupported` without
+evaluating connect operands; a future host-driven raw-TCP adapter remains a
+separate implementation slice.
 
 A dedicated byte type may later replace `Array<u32>` without changing the
 reactor contract. Listener/UDP migration, TLS, and cross-shard stream transfer
