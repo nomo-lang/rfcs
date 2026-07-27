@@ -395,7 +395,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 
 | 切片 | 必需行为 | 状态 |
 | --- | --- | --- |
-| P2-PROC-A | public effect/handle/migration contract、diagnostic、lowering ABI、benchmark fixture | Proposed |
+| P2-PROC-A | public effect/handle/migration contract、diagnostic、lowering ABI、benchmark fixture | 已由 [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 实现 |
 | P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | Proposed |
 | P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | Proposed |
 | P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | Proposed |
@@ -404,6 +404,36 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 每个切片通过聚焦 implementation PR 落地，并在此记录证据。全部 required native
 correctness、resource、compatibility 与 benchmark gate 通过前，本 RFC 保持
 `Proposed`。
+
+### 11.1 P2-PROC-A 实现证据
+
+[`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 已拆分 public handle
+identity 与 migration path。`ProcessChild` 现在只属于 owner-affine suspend
+surface；`BlockingProcessChild` 与七个显式 `_blocking` operation 则在 preview
+migration window 内保留 RFC 0024 registry。Compiler 对同步调用
+`process.start` 或 `process.next_event` 给出 secret-safe `E0870` 指引，继续用
+`E0891` 隔离全部 shell helper 与 `_blocking` call，并在 structured spawn 与
+bounded channel publication boundary 拒绝 `ProcessChild`。
+
+C99 backend 通过类型化 start/resume/cancel registration lowering
+`process.start` 与 `process.next_event`。`ProcessCommand` operand 只求值一次，
+为调用 retain，并且恰好 release 一次；完成的 `Result` ownership 会移出 frame，
+或由 cancellation/drop 释放。P2-PROC-A host adapter 有意 inline 返回
+secret-safe `unsupported` result。generated-C gate 证明此占位实现不会发出
+RFC 0024 process registry、helper thread 或 atomic support；Linux、macOS 与
+Windows target lowering test 共享这一 contract。
+
+Nomo 示例 `async_process_pipe_contract`、显式 blocking process/MCP migration
+示例、native generated-C execution，以及 disabled 的 RFC 0034 process-pipe
+fixture 已锁定 public 与 lowering contract。Workspace test、release WASM
+构建，以及 Linux、macOS、Windows PR CI 组均已通过。在 P2-PROC-B 提供 native
+registration 与 lifecycle counter 前，该 workload 保持 disabled，且不能用于
+性能声明。
+
+这些证据只完成 P2-PROC-A。Native bounded start job、epoll/kqueue pipe、
+process exit、cancellation 与 close 仍属于 P2-PROC-B；IOCP、browser
+pre-evaluation capability handling、async MCP 示例以及 resource/performance
+证据仍是后续切片。因此本 RFC 继续保持 `Proposed`。
 
 ## 12. 备选与风险
 
