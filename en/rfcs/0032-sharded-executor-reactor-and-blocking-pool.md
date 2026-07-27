@@ -294,6 +294,25 @@ are mandatory mitigations.
 5. per-core shards and bounded cross-shard channels;
 6. only then optional stealing, `io_uring`, batching, and slab tuning.
 
+### 12.1 Delivered evidence
+
+| Slice | Evidence | Remaining gate |
+| --- | --- | --- |
+| P2-GUARD: blocking compatibility quarantine | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) implements `E0891` for the HTTP/SSE and process operations in section 9.1 | true owner-affine suspend HTTP/SSE and process-pipe paths |
+
+The implementation follows qualified, specifically imported, local
+transitive, and project-module transitive call paths. Compiler tests cover the
+complete quarantined operation set and preserve the explicitly non-waiting
+compatibility exclusions. CLI tests prove the rendered diagnostic replaces
+the source excerpt with a safe `operation(...)` label, so URL, token, command,
+and argument values do not reach stderr. Synchronous compatibility code
+remains accepted. Linux smoke plus native macOS and Windows CI passed.
+
+This evidence prevents known blocking compatibility I/O from occupying an
+async worker; it does not make any HTTP/SSE or process operation nonblocking.
+The RFC remains `Proposed` until the reactor-backed operations, ownership,
+cancellation, native platform, leak, and RFC 0034 benchmark gates are met.
+
 **Proposed decision:** adopt owner-affine current-thread/sharded executors,
 platform reactors, and a separate bounded blocking pool. Do not expand the
 existing thread-per-task or unguarded global-registry architecture.

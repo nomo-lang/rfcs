@@ -267,6 +267,24 @@ task 或 handle leak。
 5. per-core shard 与 bounded cross-shard channel；
 6. 最后才是可选 stealing、`io_uring`、batching 与 slab tuning。
 
+### 12.1 已交付证据
+
+| 切片 | 证据 | 剩余门禁 |
+| --- | --- | --- |
+| P2-GUARD：blocking compatibility 隔离 | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) 已为第 9.1 节列出的 HTTP/SSE 与 process 操作实现 `E0891` | 真正 owner-affine 的 suspend HTTP/SSE 与 process-pipe path |
+
+实现会跟踪 qualified call、specific import call、本地 transitive call 与跨 project
+module 的 transitive call。Compiler test 覆盖完整隔离操作集，并保留明确无需
+等待的 compatibility 例外；CLI test 证明 rendered diagnostic 会把源码摘录
+替换为安全的 `operation(...)` 标签，因此 URL、token、command 与参数值不会
+进入 stderr。同步 compatibility code 仍可通过。Linux smoke 以及 macOS、
+Windows native CI 均已通过。
+
+这些证据能阻止已知 blocking compatibility I/O 占住 async worker，但不会把
+任何 HTTP/SSE 或 process 操作变成 nonblocking。只有 reactor-backed operation、
+ownership、cancellation、native platform、leak 与 RFC 0034 benchmark gate
+全部满足后，本 RFC 才能离开 `Proposed`。
+
 **提议决定：**采用 owner-affine current-thread/sharded executor、platform
 reactor 与独立 bounded blocking pool；不扩张现有 thread-per-task 或 unguarded
 global-registry 架构。

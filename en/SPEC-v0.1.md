@@ -1113,6 +1113,14 @@ Native Unix-like and Windows adapters are toolchain-owned; application code
 declares no C FFI. Browser WASM rejects the controlled API before argument
 evaluation.
 
+In a suspend call graph, `process.spawn`, `status`, `exec`, `output`, `start`,
+`next_event`, `terminate`, and `close_child` are quarantined with `E0891`
+because they may spawn, wait, terminate, or reap on the current OS thread.
+`write_stdin`, `close_stdin`, and `try_wait` retain their specified
+non-waiting current-thread compatibility behavior; that does not make their
+legacy handles `Send` or cross-shard safe. E0891 renders only a safe
+`operation(...)` source label and never reproduces command or argument values.
+
 ```rust
 process.exit(code: i64) -> void
 process.spawn(command: string) -> Result<i32, ProcessError>
@@ -1561,6 +1569,15 @@ should close handles with `defer http.close_exchange(exchange)` and
 `defer http.close_server(server)` so cleanup runs on both normal returns and `?`
 early returns. Streaming request bodies, binary response chunks, redirects,
 routing, and concurrent server helpers remain later `std.http` slices.
+
+In a suspend call graph, `http.get`, `post`, `send`, `open_stream`,
+`read_text`, `next_sse`, `listen`, `accept`, and `respond_string` are
+quarantined with `E0891`. The current adapters drive network or server progress
+synchronously; wrapping them in a coroutine is not a nonblocking
+implementation. E0891 renders only a safe `operation(...)` source label and
+never reproduces URL, header, body, or other argument values. Close and cancel
+helpers retain their immediate current-thread compatibility behavior until the
+owner-affine HTTP surface is specified and implemented.
 
 ```rust
 pub struct HttpHeader {
