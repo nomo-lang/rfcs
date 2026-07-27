@@ -8,10 +8,10 @@
 | --- | --- |
 | Number | 0021 |
 | Title | Manifest-derived module roots and dependency alias mapping |
-| Status | Proposed |
+| Decision Status | Proposed |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-23 |
-| Implementation | Not implemented; this RFC fixes the migration order and compatibility boundary |
+| Implementation Status | Not implemented |
 | Related topics | package declaration, module identity, dependency alias, manifest migration, LSP |
 | Related RFCs | [RFC 0008](./0008-canonical-package-identity-and-aliases.md), [RFC 0009](./0009-reproducible-workspace-and-package-graphs.md), [RFC 0020](./0020-manifest-v2-workspace-and-project-configuration.md) |
 
@@ -36,14 +36,22 @@ current loader conflates dependency aliases with source declarations. The same
 
 ## 3. Name derivation
 
-The source root is a deterministic `lower_snake` projection:
+The source root is a deterministic `lower_snake_case` projection of
+`[package].name` only. The package `namespace`, canonical `owner/package`
+identity, and every consumer-selected dependency alias are excluded.
 
-- ASCII uppercase letters become lowercase, inserting `_` at a lower/digit to
-  uppercase boundary;
-- `-` becomes `_`;
-- repeated `_` is collapsed;
-- Manifest v2 continues to prefer lowercase kebab names. CamelCase conversion
-  primarily serves legacy migration.
+For an already validated Manifest v2 package name, the projection:
+
+1. converts `-` to `_`;
+2. inserts `_` before an ASCII uppercase letter when the preceding character
+   is lowercase/digit, or when an uppercase run is followed by lowercase;
+3. lowercases ASCII uppercase letters;
+4. collapses repeated `_`; and
+5. validates the result as one non-reserved Nomo identifier.
+
+Manifest v2 continues to prefer lowercase kebab names. CamelCase handling is
+deterministic migration behavior, not permission to broaden the manifest
+grammar.
 
 Examples:
 
@@ -52,8 +60,10 @@ Examples:
 | `hello` | `hello` |
 | `hello-world` | `hello_world` |
 | legacy `HelloWorld` | `hello_world` |
+| legacy `HTTPServer` | `http_server` |
 
-The result must be a valid Nomo identifier.
+The manifest is rejected before source loading when the projection cannot
+produce a valid identifier.
 
 ## 4. File mapping
 
@@ -66,8 +76,22 @@ For `name = "hello-world"`:
 | `src/http/client.nomo` | `package hello_world.http.client` |
 | `src/http/main.nomo` | `package hello_world.http` |
 
-The entry file does not append `.main`. A mismatch continues to use `E0904`,
-with LSP quick fixes for updating the declaration or moving the file.
+The compiler computes the expected declaration by removing the `src/` prefix
+and `.nomo` suffix:
+
+- `src/main.nomo` maps directly to the manifest root;
+- a nested `main.nomo` maps to the containing directory path; and
+- every other file maps to its relative directory path plus file stem.
+
+The entry file therefore does not append `.main`. Project discovery loads the
+manifest before validating any source declaration. The compiler must not
+infer or replace the project root from the first segment written in
+`src/main.nomo`.
+
+`E0904` covers both entry and imported-module mismatches. Its diagnostic
+includes the manifest-derived expected declaration, actual declaration, source
+path, manifest path, and safe fixes for updating the declaration or moving the
+file. The CLI, compiler, docs, formatter, and LSP use the same mapping helper.
 
 ## 5. Dependency alias mapping
 
@@ -92,13 +116,35 @@ Implementation order:
    separate module-graph fields.
 3. Share file mapping across CLI, compiler, LSP, docs, and formatting.
 4. Add `nomo fix module-roots [path] [--check]` with atomic updates.
-5. Accept legacy `app.*` for one development snapshot with a migration
-   diagnostic, then remove compatibility in the following snapshot.
+5. Accept the legacy entry declarations `package app.main` and
+   `package <root>.main`, plus the corresponding `app.<relative-path>` package
+   layout, for exactly one development snapshot with migration diagnostic
+   `W0904`.
 6. Migrate the standard library, examples, Playground, LSP fixtures, and
    editor documentation.
 
-Dependency alias imports are not rewritten unless they actually refer to the
-current package's legacy `app.*` root.
+The migration command discovers exactly one current package from `path`
+(default `.`), computes all changes before writing, and then atomically
+replaces that package's Nomo source files. If any file cannot be read,
+validated, formatted, or staged, no source file changes. `--check` performs the
+same discovery and validation, writes nothing, exits successfully when no
+changes are needed, and exits unsuccessfully with the files that require
+migration otherwise. A second normal run is a no-op.
+
+Only declarations and self-imports that resolve to the current package are
+eligible. Dependency source trees, dependency aliases, generated/vendor/cache
+directories, and imports resolved through dependency aliases are never
+rewritten. Workspace invocation migrates only the selected member unless each
+member is explicitly selected.
+
+The compatibility window begins with the first snapshot containing both the
+new validator and `nomo fix module-roots`. `W0904` names the accepted legacy
+form, canonical replacement, migration command, and removal snapshot. The
+following development snapshot removes the compatibility path only after the
+standard library, templates, examples, fixtures, benchmark probes,
+`nomo-hello`, Playground, LSP, and editor surfaces are canonical and the
+repository gate finds no legacy declaration outside intentionally negative
+fixtures.
 
 ## 7. Alternatives
 
@@ -126,9 +172,29 @@ decision and its implementation without adding language expressiveness.
 ## 10. Acceptance
 
 - `nomo new hello-world` generates `package hello_world`.
-- A main declaration inconsistent with the manifest produces `E0904`.
-- Two consumers can use different aliases for unchanged dependency source.
+- `src/main.nomo`, `src/math.nomo`, and `src/http/main.nomo` map to
+  `hello_world`, `hello_world.math`, and `hello_world.http`.
+- A mismatched entry or imported module produces `E0904` from the manifest
+  mapping, even when the entry's first segment looks internally consistent.
+- Workspace members derive roots from their own manifests.
+- Two consumers can use different aliases for unchanged dependency source,
+  while canonical identities still keep equal source roots distinct.
 - Navigation, rename, and docs remain correct across local modules,
   dependencies, and workspace members.
-- Migration supports `--check`, is idempotent, and leaves no partial writes.
+- Migration `--check` writes nothing, normal migration is idempotent, an
+  injected failure leaves no partial writes, and dependency source/alias
+  imports remain byte-for-byte unchanged.
+- Legacy entry forms compile only during the documented compatibility snapshot
+  and emit `W0904`; a removal-gate fixture proves the next snapshot rejects
+  them.
+- C99 and browser-WASM example gates compile canonical module roots.
 
+## 11. Decision and implementation gate
+
+This RFC remains `Proposed` and `Not implemented` while the contract is under
+review. It may move to `Accepted` only in a separate evidence PR after the
+compiler, migration command, formatter, scaffolder, docs, LSP, grammars,
+editors, examples, standard library, C99/WASM paths, and documentation gates
+above pass protected CI. Acceptance records the relevant merged commits and
+snapshot/removal condition; internal tests alone are not production-readiness
+evidence.
