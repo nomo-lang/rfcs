@@ -1111,7 +1111,9 @@ After `Exited`, another `next_event` returns `invalid_request`, while
 never include the program, argv, environment, cwd, stdin, stdout, or stderr.
 Native Unix-like and Windows adapters are toolchain-owned; application code
 declares no C FFI. Browser WASM rejects the controlled API before argument
-evaluation.
+evaluation. The release artifact must import no host API and must return the
+stable process-capability error before evaluating async `process.start`
+command or timeout operands.
 
 In a suspend call graph, `process.spawn`, `status`, `exec`, `output`, `start`,
 `next_event`, `terminate`, and `close_child` are quarantined with `E0891`

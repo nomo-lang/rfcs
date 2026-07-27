@@ -1020,7 +1020,9 @@ child，并在 child 已退出时保持幂等。`close_child` 幂等，且会强
 `timeout`、`protocol` 或 `runtime_unavailable`。Error 与默认 diagnostic 绝不
 包含 program、argv、environment、cwd、stdin、stdout 或 stderr。Unix-like 与
 Windows native adapter 由 toolchain 持有，应用代码不声明 C FFI。Browser WASM
-在参数求值前拒绝受控 API。
+在参数求值前拒绝受控 API。Release artifact 不得 import 任何 host API，并且
+必须在求值 async `process.start` 的 command 或 timeout operand 前返回稳定的
+process-capability error。
 
 在 suspend 调用图中，`process.spawn`、`status`、`exec`、`output`、`start`、
 `next_event`、`terminate` 与 `close_child` 会以 `E0891` 隔离，因为它们可能在

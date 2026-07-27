@@ -398,7 +398,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 | P2-PROC-A | public effect/handle/migration contract、diagnostic、lowering ABI、benchmark fixture | 已由 [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 实现 |
 | P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | 已由 [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 实现 |
 | P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | 已由 [`nomo#55`](https://github.com/nomo-lang/nomo/pull/55) 实现 |
-| P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | Proposed |
+| P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | 已由 [`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) 实现 |
 | P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | Proposed |
 
 每个切片通过聚焦 implementation PR 落地，并在此记录证据。全部 required native
@@ -499,9 +499,31 @@ blocking-job、reactor、timer 与 IOCP state 全部归零；registration/deregi
 host-runtime CI 组已一起通过。`examples/async_process_pipe_windows` 通过
 public Nomo path 执行，应用不写 C FFI。
 
-这只完成 P2-PROC-C。Browser pre-evaluation/release-WASM 证据、async MCP
-stdio 组合、saturation/low-memory stress 与可参与声明的 RFC 0034 process
-measurement 仍属于 P2-PROC-D 与 P2-PROC-E，因此本 RFC 继续保持 `Proposed`。
+这只完成 P2-PROC-C。在当时，browser pre-evaluation/release-WASM 证据、
+async MCP stdio 组合、saturation/low-memory stress 与可参与声明的 RFC 0034
+process measurement 仍属于 P2-PROC-D 与 P2-PROC-E；后续证据记录如下，本 RFC
+继续保持 `Proposed`。
+
+### 11.4 P2-PROC-D 实现证据
+
+[`nomo#56`](https://github.com/nomo-lang/nomo/pull/56) 已在 interpreter 与最终
+artifact 两层锁定 browser process-capability boundary。一个 Nomo probe 把
+一旦求值就会 panic 的 command 与 timeout function 传给 async
+`process.start`。Browser runtime 会在任一 operand 运行前，为不可用的 process
+capability 返回 secret-safe `NOMO-WASM-003`；poison text 与内部 intrinsic
+名称都不会进入 error 或 stderr。
+
+Release verifier 会构建优化后的 `wasm32-unknown-unknown` module，要求
+WebAssembly import table 为空，实例化该精确 artifact，并通过 exported raw ABI
+执行同一 poison-operand probe。Pull-request、main-branch 与 release workflow
+共享此门禁。`nomo-wasm` suite 覆盖直接 interpreter path，Linux smoke 与
+macOS/Windows native regression 也一同通过。现有
+`async_process_pipe_contract` 示例继续作为 cross-target public Nomo surface；
+native 示例则覆盖真实 Unix 与 Windows child I/O。
+
+这只完成 P2-PROC-D。Async MCP stdio 组合、saturation/leak stress、low-memory
+run 与可参与声明的 RFC 0034 process measurement 仍属于 P2-PROC-E，因此本
+RFC 继续保持 `Proposed`。
 
 ## 12. 备选与风险
 
