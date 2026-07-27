@@ -254,7 +254,7 @@ timeout。resolver queue saturation 返回 `Limit`。numeric-only 只是 milesto
 | P2-TCP-C | bounded blocking pool hostname resolution | 已由 [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) 实现 |
 | P2-TCP-D | native Windows IOCP connect/read/write | 数值 IPv4/IPv6 子切片由 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) 实现，bounded hostname 子切片由 [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) 实现 |
 | P2-TCP-E | raw TCP 可用时接 host-driven browser adapter，否则在求值前返回 `NetErrorKind.Unsupported`（`runtime_unavailable` capability category） | 无 raw-TCP sandbox 分支已由 [`nomo#50`](https://github.com/nomo-lang/nomo/pull/50) 实现；host-driven raw-TCP adapter 尚未完成 |
-| P2-TCP-F | 同步、幂等的 write half-close，排除 pending write 并保留 read | contract 已固定；实现待完成 |
+| P2-TCP-F | 同步、幂等的 write half-close，排除 pending write 并保留 read | 已由 [`nomo#51`](https://github.com/nomo-lang/nomo/pull/51) 实现 |
 
 数值地址 P2-TCP-D 子切片之前，Windows 可编译并对新 client call 返回
 `Unsupported`，且不求值或记录 secret payload。现在 Windows 已通过 IOCP
@@ -280,9 +280,9 @@ bounded late-completion draining。Windows 原生 CI 覆盖 numeric/hostname
 success、zero/positive timeout、queued/running resolver cancellation、精确
 resolver saturation、close、slot reuse、secret-safe error 与精确 worker/
 reactor/operation/handle counter。shutdown 会在释放 completion key 前排空
-posted resolver notification。`shutdown_write`、RFC 0032 的通用 blocking
-pool 与 browser adapter 仍是后续切片。这些实现证据不会把本 RFC 从
-`Proposed` 提升为 `Accepted`。
+posted resolver notification。RFC 0032 的通用 blocking pool 与 browser
+adapter 仍是后续切片。这些实现证据不会把本 RFC 从 `Proposed` 提升为
+`Accepted`。
 
 P2-TCP-E 的无 raw-TCP 分支会在 browser interpreter 求值任何 operand 前拦截
 `net.connect` 并返回 typed `Unsupported`。browser-WASM test 会执行包含 secret
@@ -290,6 +290,16 @@ marker、若被求值就 panic 的 Nomo operand，证明它们既不会运行也
 diagnostic。CI 还会构建没有 host import 的 release
 `wasm32-unknown-unknown` artifact。这是当前 sandbox capability boundary 的真实
 证据，不代表 raw-TCP adapter 已实现。
+
+P2-TCP-F 在每个 bounded owner slot 中增加一个 write-half bit，并在 opaque
+stream ABI 中增加同步 callback。[`nomo#51`](https://github.com/nomo-lang/nomo/pull/51)
+在 Linux/macOS 执行 `SHUT_WR`、在 Windows 执行 `SD_SEND`；write direction
+已被占用时返回 `Busy`，后续 write 返回 `Closed`，同时 read direction 与最终
+`close` 仍有效。native fixture 覆盖 peer 观察到 EOF、继续 read、重复调用、
+blocking compatibility、stale generation、slot reuse 与精确 zero-live
+lifecycle counter。compiler/codegen test 覆盖 pending-write 与 native-failure
+state guard；Linux、macOS 与 Windows CI 均已通过。browser build 仍无 raw-TCP
+import，也无法构造 stream。
 
 ## 9. Metrics 与 Limit
 
@@ -373,8 +383,8 @@ client contract。preview migration window 内，旧 client 行为通过显式
 `_blocking` compatibility 名称保留。browser raw TCP 仍不可用，listener accept
 与 UDP 仍为 blocking。browser sandbox 会在不求值 connect operand 的情况下
 返回 typed `Unsupported`；未来 host-driven raw-TCP adapter 仍是独立实现切片。
-P2-TCP-F 已固定 cross-platform half-close contract，但在 native Linux/macOS/
-Windows execution 与 lifecycle fixture 通过前仍未实现。
+P2-TCP-F 现已通过 native Linux/macOS/Windows execution 与 lifecycle fixture
+提供 cross-platform half-close。
 
 未来 dedicated byte type 可以替代 `Array<u32>`，但不改变 reactor contract。
 listener/UDP migration、TLS 与 cross-shard stream transfer 都留给聚焦 follow-up，

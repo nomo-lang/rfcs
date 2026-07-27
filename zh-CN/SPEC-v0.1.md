@@ -1298,7 +1298,8 @@ incremental read 与 complete bounded write；Windows 使用 owner-local 固定
 IOCP operation table。native numeric address 走零线程路径。hostname 使用一个
 惰性 bounded resolver worker，通过 Unix nonblocking pipe 或 Windows posted
 IOCP completion 返回 owner。browser raw TCP 留给 RFC 0037 后续切片。RFC
-0037 已固定同步、幂等的 `shutdown_write` 语义；实现证据仍待补齐。
+0037 已固定同步、幂等的 `shutdown_write` 语义，并由
+[`nomo#51`](https://github.com/nomo-lang/nomo/pull/51) 实现。
 
 ```nomo
 pub enum NetErrorKind {

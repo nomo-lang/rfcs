@@ -266,7 +266,7 @@ milestone, not a complete Agent networking claim.
 | P2-TCP-C | hostname resolution through the bounded blocking pool | Implemented by [`nomo#47`](https://github.com/nomo-lang/nomo/pull/47) |
 | P2-TCP-D | IOCP connect/read/write with native Windows execution | Implemented by numeric IPv4/IPv6 [`nomo#48`](https://github.com/nomo-lang/nomo/pull/48) and bounded hostname [`nomo#49`](https://github.com/nomo-lang/nomo/pull/49) slices |
 | P2-TCP-E | host-driven browser adapter where raw TCP exists, otherwise pre-evaluation `NetErrorKind.Unsupported` (`runtime_unavailable` capability category) | No-raw-TCP sandbox branch implemented by [`nomo#50`](https://github.com/nomo-lang/nomo/pull/50); host-driven raw-TCP adapter remains |
-| P2-TCP-F | synchronous idempotent write half-close with pending-write exclusion and preserved reads | Contract fixed; implementation pending |
+| P2-TCP-F | synchronous idempotent write half-close with pending-write exclusion and preserved reads | Implemented by [`nomo#51`](https://github.com/nomo-lang/nomo/pull/51) |
 
 Before the numeric P2-TCP-D sub-slice, Windows compiled and returned
 `Unsupported` for new client calls without evaluating or logging secret
@@ -295,9 +295,9 @@ numeric and hostname success, zero and positive timeout, queued/running
 resolver cancellation, exact resolver saturation, close, slot reuse,
 secret-safe errors, and exact worker/reactor/operation/handle counters.
 Shutdown drains posted resolver notifications before releasing their
-completion keys. `shutdown_write`, the general RFC 0032 blocking pool, and the
-browser adapter remain follow-up slices. These implementation results do not
-change this RFC from `Proposed`.
+completion keys. The general RFC 0032 blocking pool and browser adapter remain
+follow-up slices. These implementation results do not change this RFC from
+`Proposed`.
 
 The no-raw-TCP P2-TCP-E branch intercepts `net.connect` in the browser
 interpreter before evaluating any operand and returns typed `Unsupported`.
@@ -306,6 +306,17 @@ and prove none runs or reaches diagnostics. CI also builds the release
 `wasm32-unknown-unknown` artifact with no host imports. This is real evidence
 for the current sandbox capability boundary, not evidence of a raw-TCP
 adapter.
+
+P2-TCP-F adds one write-half bit to each bounded owner slot and a synchronous
+callback in the opaque stream ABI. [`nomo#51`](https://github.com/nomo-lang/nomo/pull/51)
+executes `SHUT_WR` on Linux/macOS and `SD_SEND` on Windows, rejects a claimed
+write direction as `Busy`, makes later writes `Closed`, and keeps the read
+direction and terminal `close` valid. Native fixtures cover peer-observed EOF,
+continued reads, repetition, blocking compatibility, stale generations, slot
+reuse, and exact zero-live lifecycle counters. Compiler/codegen tests cover
+the pending-write and native-failure state guards; Linux, macOS, and Windows
+CI all passed. The browser build still has no raw-TCP imports and cannot
+construct a stream.
 
 ## 9. Metrics and Limits
 
@@ -396,9 +407,9 @@ available through explicit `_blocking` compatibility names for the preview
 migration window. Browser raw TCP remains unavailable; listener accept and UDP
 remain blocking. The browser sandbox reports typed `Unsupported` without
 evaluating connect operands; a future host-driven raw-TCP adapter remains a
-separate implementation slice. P2-TCP-F fixes the cross-platform half-close
-contract but remains unimplemented until native Linux/macOS/Windows execution
-and lifecycle fixtures pass.
+separate implementation slice. P2-TCP-F now provides the cross-platform
+half-close through native Linux/macOS/Windows execution and lifecycle
+fixtures.
 
 A dedicated byte type may later replace `Array<u32>` without changing the
 reactor contract. Listener/UDP migration, TLS, and cross-shard stream transfer

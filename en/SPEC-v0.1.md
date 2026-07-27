@@ -1401,7 +1401,8 @@ uses an owner-local fixed IOCP operation table. Native numeric addresses use a
 zero-thread path. Hostnames use one lazy bounded resolver worker and return
 completion through a nonblocking Unix pipe or posted Windows IOCP completion.
 Browser raw TCP remains a later RFC 0037 slice. RFC 0037 fixes synchronous,
-idempotent `shutdown_write` semantics; implementation evidence remains pending.
+idempotent `shutdown_write` semantics, implemented by
+[`nomo#51`](https://github.com/nomo-lang/nomo/pull/51).
 
 ```nomo
 pub enum NetErrorKind {
