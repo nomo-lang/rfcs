@@ -299,7 +299,8 @@ are mandatory mitigations.
 | Slice | Evidence | Remaining gate |
 | --- | --- | --- |
 | P2-GUARD: blocking compatibility quarantine | [`nomo#52`](https://github.com/nomo-lang/nomo/pull/52) implements `E0891` for the HTTP/SSE and process operations in section 9.1 | true owner-affine suspend HTTP/SSE and process-pipe paths |
-| P2-PROC-A: process effect and lowering boundary | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) adds the Local/!Send process handle split, suspend ABI, explicit blocking migration, and ready zero-thread placeholder | bounded start jobs, native epoll/kqueue/IOCP process pipes, browser capability handling, and lifecycle/benchmark evidence |
+| P2-PROC-A: process effect and lowering boundary | [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) adds the Local/!Send process handle split, suspend ABI, explicit blocking migration, and ready zero-thread placeholder | native implementation and platform evidence tracked by later process slices |
+| P2-PROC-B: owner-affine Unix process pipes | [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) adds one bounded lazy start/reap worker, epoll/`pidfd` on Linux, kqueue/`EVFILT_PROC` on macOS, owner-local nonblocking pipes, cancellation/timeout/close, exact counters, ASAN fixtures, and a native Nomo example | Windows IOCP process pipes, browser capability evidence, async MCP, saturation/low-memory stress, and claim-eligible RFC 0034 measurements |
 
 The implementation follows qualified, specifically imported, local
 transitive, and project-module transitive call paths. Compiler tests cover the
@@ -312,10 +313,13 @@ remains accepted. Linux smoke plus native macOS and Windows CI passed.
 The quarantine evidence prevents known blocking compatibility I/O from
 occupying an async worker. P2-PROC-A additionally fixes the process suspend
 effect and C99 state-machine boundary without hiding the old registry behind
-it; its current native path is a ready `unsupported` placeholder. HTTP/SSE and
-native process I/O still need reactor-backed operations. The RFC remains
-`Proposed` until ownership, cancellation, native platform, leak, and RFC 0034
-benchmark gates are met.
+it. P2-PROC-B replaces that placeholder on Unix: one bounded worker handles
+start/reap and the documented portability fallback exit watch, while pipe
+progress remains on the owner reactor without per-child threads or owner
+polling. Windows remains typed `unsupported`; its IOCP process path, browser
+capability evidence, async MCP composition, low-memory stress, and RFC 0034
+process measurements are still open. The RFC remains `Proposed` until the
+remaining native, resource, and benchmark gates are met.
 
 **Proposed decision:** adopt owner-affine current-thread/sharded executors,
 platform reactors, and a separate bounded blocking pool. Do not expand the

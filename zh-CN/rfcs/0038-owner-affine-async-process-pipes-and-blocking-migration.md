@@ -396,7 +396,7 @@ p50/p99/p999。比较必须语义等价，不能为了分数丢弃 stderr 或 er
 | 切片 | 必需行为 | 状态 |
 | --- | --- | --- |
 | P2-PROC-A | public effect/handle/migration contract、diagnostic、lowering ABI、benchmark fixture | 已由 [`nomo#53`](https://github.com/nomo-lang/nomo/pull/53) 实现 |
-| P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | Proposed |
+| P2-PROC-B | bounded start job，加 epoll/kqueue pipe、exit、cancellation、close 与 Unix native example/test | 已由 [`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 实现 |
 | P2-PROC-C | overlapped named pipe、IOCP completion、process wait、cancellation，以及无 per-child thread 的 Windows native test | Proposed |
 | P2-PROC-D | browser pre-evaluation unsupported boundary 与 release-WASM 证据 | Proposed |
 | P2-PROC-E | MCP stdio example、saturation/leak stress、low-memory run 与 RFC 0034 benchmark report | Proposed |
@@ -426,14 +426,51 @@ Windows target lowering test 共享这一 contract。
 Nomo 示例 `async_process_pipe_contract`、显式 blocking process/MCP migration
 示例、native generated-C execution，以及 disabled 的 RFC 0034 process-pipe
 fixture 已锁定 public 与 lowering contract。Workspace test、release WASM
-构建，以及 Linux、macOS、Windows PR CI 组均已通过。在 P2-PROC-B 提供 native
-registration 与 lifecycle counter 前，该 workload 保持 disabled，且不能用于
-性能声明。
+构建，以及 Linux、macOS、Windows PR CI 组均已通过。在本切片，该 workload
+保持 disabled，且不能用于性能声明；P2-PROC-B 的实现证据在下节单独记录。
 
-这些证据只完成 P2-PROC-A。Native bounded start job、epoll/kqueue pipe、
-process exit、cancellation 与 close 仍属于 P2-PROC-B；IOCP、browser
-pre-evaluation capability handling、async MCP 示例以及 resource/performance
-证据仍是后续切片。因此本 RFC 继续保持 `Proposed`。
+这些证据只完成 P2-PROC-A；它本身并不能证明 native process I/O、IOCP、
+browser pre-evaluation capability handling、async MCP 示例或
+resource/performance evidence。
+
+### 11.2 P2-PROC-B 实现证据
+
+[`nomo#54`](https://github.com/nomo-lang/nomo/pull/54) 已用 toolchain-owned
+native runtime 替换 Unix ready 占位实现。Process start 与最终 reap 共用一个
+惰性 worker 和固定表：最多 16 个 live handle、16 个并发 start job、32 个
+start/reap 总 job。Command、argument、cwd 与 environment storage 在
+publication 前完成 deep-copy，combined item 上限为 4096，storage 上限为
+1 MiB，且 runtime error 与 diagnostic 都不会包含这些内容。Worker 不通过
+shell 解析和启动 executable；每个 child 都没有专属 reader、writer 或
+lifetime thread。
+
+Child stdin、stdout 与 stderr 均为 nonblocking，并保持 owner-affine。Linux
+把它们注册到 epoll，并在可用时通过 `pidfd` 观察退出；旧内核回退到同一个
+bounded worker watch table 与唯一的 owner wake pipe。macOS 把 pipe 与
+`EVFILT_PROC` 注册到 kqueue；exit-registration race 也回退到该 bounded watch
+source。Fallback 不会增加 owner-side polling timer。带 generation 的 handle
+slot 会阻止 late reap completion 关闭或释放已复用的 process identity。
+
+Native fixture 已验证 `StdinFlushed`、incremental stdout/stderr 与最终
+`Exited` 顺序；timeout 后复用 child；queued-start cancellation；termination
+与 nonwaiting close；invalid UTF-8 protocol closure；精确 frame、timer、
+reactor、process、blocking-job、retained-byte 与 zero-live counter；以及 host
+支持 ASAN 时 cancellation/drop path 的 ASAN-clean。Runtime shutdown 会先
+detach watch 并 join worker，再处理剩余 child，因此 `waitpid` 与 PID reuse
+不会和 late completion delivery 竞态。`examples/async_process_pipe_unix`
+通过 public Nomo path 执行，应用不写 C FFI。
+
+该 PR 的 native Linux epoll/`pidfd`、macOS kqueue/`EVFILT_PROC` 与 Windows
+CI 组均已通过。Windows 有意继续返回 typed、secret-safe `unsupported`；
+cross-target C99 test 会锁定该 capability split。Clean-checkout P1 与 P3
+benchmark harness 已接受全部 enabled static/counter gate，并继续拒绝性能
+声明。Cross-language process workload 在拥有自包含的跨平台 child fixture
+与公平、固定版本的 Go 对照前仍保持 disabled。
+
+这只完成 Unix P2-PROC-B 切片。Windows IOCP process pipe、browser
+pre-evaluation/release-WASM 证据、async MCP 组合、saturation/low-memory
+stress 与可参与声明的 RFC 0034 measurement 仍属于 P2-PROC-C 至
+P2-PROC-E。因此本 RFC 继续保持 `Proposed`。
 
 ## 12. 备选与风险
 
