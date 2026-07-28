@@ -56,6 +56,22 @@ ZIP/checksum, and attestation evidence. Windows x64-to-ARM64 cross-build is a
 separate compile/link gate and cannot replace native runtime tests. Existing
 Windows-wide path, Regex, and large-file limitations remain explicit.
 
+## Proposed C99 optimization and performance contract
+
+RFC 0043 is `Proposed` / `Not implemented`. It defines the public
+`nomo build/run/test --release` and `nomoc build --release` contract, fixed
+portable C optimization flags, and a typed IR/HIR to CFG MIR path for
+proof-based optimization without weakening bounds, overflow, division, COW,
+evaluation-order, ownership, or cleanup semantics.
+
+Its performance target is deliberately narrow: the three frozen scalar
+Benchmarks Game workloads must satisfy separate C, equivalent C++20, and
+candidate/main log-ratio gates in two qualified canonical-host batches. Shared
+CI validates correctness and the measurement machinery but does not gate PRs on
+runner wall time. The existing exploratory baseline is not implementation or
+parity evidence, and no general C/C++ performance or release-readiness claim is
+recorded as delivered.
+
 ## Async Runtime: Proposed decisions with executable slices
 
 RFCs 0031–0040 remain Proposed. Their implementation status is independent:
@@ -78,14 +94,18 @@ continue to reject unsupported control flow or capabilities explicitly.
 
 ## Next delivery order
 
-1. Continue RFC 0040 P2-HTTP-B through P2-HTTP-F as focused signed PRs.
-2. Implement RFC 0036 P4 cross-shard publication together with the required
+1. Implement RFC 0043's public release profile and semantics-preserving
+   HIR/MIR optimizer as independently reviewed slices.
+2. After the release path exists, implement the independent benchmark v2
+   harness and collect canonical evidence without shared-runner timing gates.
+3. Continue RFC 0040 P2-HTTP-B through P2-HTTP-F as focused signed PRs.
+4. Implement RFC 0036 P4 cross-shard publication together with the required
    RFC 0032/0033 private-atomic-shim, owner-wakeup, and ownership-transfer
    slices.
-3. Add further RFC 0032/0033 shard and ownership-transfer slices only with
+5. Add further RFC 0032/0033 shard and ownership-transfer slices only with
    bounded lifecycle and low-memory evidence.
-4. Run the full RFC 0034 platform/performance matrix on controlled hosts.
-5. Close installer, editor, packaging, external-use, and ecosystem release
+6. Run the full RFC 0034 platform/performance matrix on controlled hosts.
+7. Close installer, editor, packaging, external-use, and ecosystem release
    gates before any stable-version claim.
 
 ## Stability boundary

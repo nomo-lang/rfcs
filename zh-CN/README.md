@@ -80,5 +80,6 @@ RFC 文件名使用 `NNNN-hyphenated-title.md`，编号单调分配且不复用�
 | [0040](./rfcs/0040-owner-affine-async-http-and-sse-migration.md) | Owner-affine async HTTP/HTTPS、SSE 与 blocking migration | Proposed（已提案） | Partially implemented（部分已实现） | HTTP、HTTPS、TLS、SSE、reactor、owner affinity、connection reuse | 把受限 client 与 stream API 迁移为 suspend operation，采用 owner-local transport progress、显式 blocking compatibility 与 native platform gate。 |
 | [0041](./rfcs/0041-canonical-implicit-void-return-declarations.md) | Canonical 隐式 `void` 返回声明 | Accepted（已接受） | Implemented（已实现） | function declaration、method、suspend、interface、extern、formatter、LSP | Declaration canonical 省略 `-> void`，同时保留显式 parser 兼容与完整 callable/type/value use。 |
 | [0042](./rfcs/0042-windows-arm64-preview-platform-support.md) | Windows ARM64 Preview 平台支持 | Proposed（已提案） | Not implemented（未实现） | Windows 11、ARM64、target triple、MSVC ABI、release | 要求 ARM64 原生 build/run/release parity 与生态证据；x64→ARM64 cross-build 永远不能替代原生 Runtime test。 |
+| [0043](./rfcs/0043-c99-backend-optimization-and-c-cpp-performance-parity.md) | C99 后端优化与 C/C++ 性能持平 | Proposed（已提案） | Not implemented（未实现） | C99 后端、release 模式、CFG MIR、基于证明的优化、C/C++20 benchmark | 增加保持语义的 release optimizer，并要求两批合格测量同时通过冻结 C、C++20 与 main-relative 统计门禁。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。
