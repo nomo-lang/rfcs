@@ -12,7 +12,7 @@
 | 实现状态 | Not implemented（未实现） |
 | 作者 | Nomo Language Working Group |
 | 创建日期 | 2026-07-28 |
-| 关联主题 | C99 后端、release build、CFG MIR、基于证明的优化、Benchmarks Game、C、C++20、性能证据 |
+| 关联主题 | C99 后端、release build、CFG MIR、基于证明的优化、Benchmarks Game、C、ISO C++20、性能证据 |
 | 关联 RFC | [RFC 0003](./0003-arc-cow-runtime-cost.md)、[RFC 0016](./0016-incremental-semantic-graph-and-cache.md)、[RFC 0017](./0017-target-triples-and-cross-compilation.md)、[RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md) |
 
 ## 1. 摘要
@@ -241,15 +241,36 @@ SHA，并审查语义等价性。
 
 - C comparator 是已经冻结并记录 upstream URL、license、抓取日期与 SHA 的官方
   naive `gcc #8` 源码；
-- C++ comparator 是从该 C 源码逐行、算法等价派生的 C++20 实现；
-- C++ 版本仅可在工作量与分配行为等价时使用 C++ spelling 与 RAII，不能换用更强
-  的库算法、容器、SIMD 实现、线程或预计算结果；
-- C 与 C++ 使用同一 Clang family、target 与固定 release flag；以及
+- C++ comparator 是从该 C 源码逐行、算法等价派生的 ISO C++20 实现；
+- C++ 版本必须使用匹配的 LLVM driver，并以固定命令形态
+  `clang++ -std=c++20 -pedantic-errors -O3 -DNDEBUG -fomit-frame-pointer ...`
+  在不依赖语言扩展的条件下编译；
+- C `#8` 源码使用固定长度数组时，C++ 派生实现使用等价的标准固定长度表示；
+- C `#8` 源码使用运行时长度 VLA 时，ISO C++20 无法保留其栈存储类别。派生实现可
+  使用 `std::vector<T>` 或 `std::unique_ptr<T[]>` 等标准连续 RAII 表示，但必须
+  保持相同数组数量、元素类型、逻辑元素容量、词法生命周期、每次调用的分配频率、
+  初始化工作与访问顺序；
+- 每个标准动态表示必须在对应 VLA 求值点按最终逻辑元素数量恰好构造一次，之后不
+  得增长或重新分配。对当前冻结 suite，这一规则适用于 `spectral-norm` 与
+  `fannkuch-redux` 中的运行时长度数组；
+- 每次 VLA 替换都必须在 derivation metadata 与 result provenance 中明确记录 C
+  栈存储变为标准 C++ 动态存储，并记录原始 count expression、所选表示、元素类型、
+  逻辑容量、生命周期与分配频率；
+- 标准容器只可用作 storage representation。派生实现不得使用更强的库算法、
+  预计算、容量增长、自定义 allocator、SIMD 实现或线程；
+- C 与 C++ 使用版本、target 相匹配的 Clang/Clang++ 以及相同的固定 release
+  optimization flag；以及
 - Nomo、C、C++ 的正式输出都必须与冻结 fixture 完全相同。
 
 C++20 文件目前尚不存在。它们的首个实现 PR 必须包含 BSD 3-Clause
 attribution/derivation 说明、source SHA、可审查的 C `#8` 映射与正确性测试，之后
 timing result 才具备资格。
+共享 CI 必须用 `-std=c++20 -pedantic-errors` 编译每份 C++ reference；若接受
+Clang VLA 或其他非标准 C++ 扩展，则 reference gate 失败。
+
+冻结的官方 C `#8` 实现继续作为独立决策性 comparator。C++ 中允许且已披露的
+stack→standard dynamic storage 替换不会改变或放宽任何对 C 的单项或 suite gate，
+也不会改变本 RFC 冻结的 workload、输入、统计方法、阈值或 comparator 角色。
 
 Go 仍可作为 diagnostic lane 与历史 v1 对照，但不参与本 RFC 的 C/C++ parity 判定。
 semantic-C 实验只能标记为非决策性 diagnostic control，不能进入 workload 或 suite
@@ -264,8 +285,10 @@ candidate 与 `main` 分别从独立 clean checkout 通过真实
 release 模式。它必须记录两个 Nomo binary、commit、dirty state、generated-C SHA、
 final binary SHA、命令、compiler version 与 target。
 
-C 与 C++ 使用同一个 Clang executable 与第 3.2 节固定 flag。同一 workload 的 link
-library 必须等价。全部 build 在计时前完成，compile time 不进入运行计时。
+C 使用所选 `clang` driver；C++ 使用同一 LLVM 安装和版本中匹配的 `clang++`
+driver，并在第 3.2 节固定 flag 之外增加 `-std=c++20 -pedantic-errors`。二者使用
+相同 target；同一 workload 的 link library 必须等价。全部 build 在计时前完成，
+compile time 不进入运行计时。
 
 canonical host record 包含 OS/kernel、architecture、CPU model/topology、memory、
 power mode、适用时的 frequency/governor、thermal state、virtualization、clock

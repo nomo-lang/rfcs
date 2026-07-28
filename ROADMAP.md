@@ -65,11 +65,14 @@ proof-based optimization without weakening bounds, overflow, division, COW,
 evaluation-order, ownership, or cleanup semantics.
 
 Its performance target is deliberately narrow: the three frozen scalar
-Benchmarks Game workloads must satisfy separate C, equivalent C++20, and
-candidate/main log-ratio gates in two qualified canonical-host batches. Shared
-CI validates correctness and the measurement machinery but does not gate PRs on
-runner wall time. The existing exploratory baseline is not implementation or
-parity evidence, and no general C/C++ performance or release-readiness claim is
+Benchmarks Game workloads must satisfy separate C, ISO C++20, and candidate/main
+log-ratio gates in two qualified canonical-host batches. ISO C++20 references
+are compiled with `-pedantic-errors`; where frozen C uses a VLA, derivation and
+provenance disclose the permitted standard contiguous RAII storage
+substitution without relaxing the independent C gate. Shared CI validates
+correctness and the measurement machinery but does not gate PRs on runner wall
+time. The existing exploratory baseline is not implementation or parity
+evidence, and no general C/C++ performance or release-readiness claim is
 recorded as delivered.
 
 ## Async Runtime: Proposed decisions with executable slices
