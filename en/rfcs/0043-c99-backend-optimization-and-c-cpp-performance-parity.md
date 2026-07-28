@@ -12,7 +12,7 @@
 | Implementation Status | Not implemented |
 | Author | Nomo Language Working Group |
 | Created | 2026-07-28 |
-| Related topics | C99 backend, release builds, CFG MIR, proof-based optimization, Benchmarks Game, C, C++20, performance evidence |
+| Related topics | C99 backend, release builds, CFG MIR, proof-based optimization, Benchmarks Game, C, ISO C++20, performance evidence |
 | Related RFCs | [RFC 0003](./0003-arc-cow-runtime-cost.md), [RFC 0016](./0016-incremental-semantic-graph-and-cache.md), [RFC 0017](./0017-target-triples-and-cross-compilation.md), [RFC 0034](./0034-async-runtime-acceptance-and-benchmark-gates.md) |
 
 ## 1. Summary
@@ -270,17 +270,46 @@ For each workload:
 
 - the C comparator is the frozen official naive `gcc #8` source already
   recorded with its upstream URL, license, retrieval date, and SHA;
-- the C++ comparator is a line- and algorithm-equivalent C++20 derivative of
-  that C source;
-- the C++ version may use C++ spelling and RAII only where it performs the same
-  work and allocation behavior; it must not substitute a stronger library
-  algorithm, container, SIMD implementation, thread, or precomputed result;
-- C and C++ use the same Clang family, target, and fixed release flags; and
+- the C++ comparator is a line- and algorithm-equivalent ISO C++20 derivative
+  of that C source;
+- the C++ version must compile without language extensions using the matching
+  LLVM driver and the fixed command shape
+  `clang++ -std=c++20 -pedantic-errors -O3 -DNDEBUG -fomit-frame-pointer ...`;
+- where the C `#8` source uses a fixed-size array, the C++ derivative uses an
+  equivalent standard fixed-size representation;
+- where the C `#8` source uses a runtime-sized VLA, ISO C++20 cannot preserve
+  its stack storage class. The derivative may use a standard contiguous RAII
+  representation such as `std::vector<T>` or `std::unique_ptr<T[]>`, provided
+  it preserves the same number of arrays, element type, logical element
+  capacity, lexical lifetime, allocation frequency per invocation,
+  initialization work, and access order;
+- each standard dynamic representation must be constructed exactly once at the
+  corresponding VLA evaluation, with its final logical element count, and must
+  not grow or reallocate. For the frozen suite this rule applies to the
+  runtime-sized arrays in `spectral-norm` and `fannkuch-redux`;
+- every VLA substitution must state in derivation metadata and result
+  provenance that C stack storage became standard C++ dynamic storage, and
+  must record the original count expression, chosen representation, element
+  type, logical capacity, lifetime, and allocation frequency;
+- a standard container is permitted only as the storage representation. The
+  derivative must not use a stronger library algorithm, precomputation,
+  capacity growth, custom allocator, SIMD implementation, or thread; and
+- C and C++ use matching Clang/Clang++ versions, target, and fixed release
+  optimization flags; and
 - all Nomo, C, and C++ formal outputs must match the frozen fixture exactly.
 
 The C++20 files do not yet exist. Their initial implementation PR must include
 BSD 3-Clause attribution/derivation notes, source SHA values, a reviewable
 mapping to C `#8`, and correctness tests before any timing result is eligible.
+Shared CI must compile every C++ reference with `-std=c++20 -pedantic-errors`;
+acceptance of a Clang VLA or any other non-standard C++ extension fails the
+reference gate.
+
+The frozen official C `#8` implementation remains a separate decisive
+comparator. An allowed, disclosed stack-to-standard-dynamic-storage
+substitution in C++ neither changes nor relaxes any per-workload or suite gate
+against C. It also does not change the frozen workloads, inputs, statistical
+method, thresholds, or comparator roles in this RFC.
 
 Go remains a useful diagnostic lane and historical v1 comparison, but it does
 not decide the C/C++ parity gates in this RFC. A semantic-C experiment may be
@@ -297,9 +326,11 @@ separate clean checkouts. The harness must not emulate release mode by invoking
 commits, dirty state, generated-C SHA, final binary SHA, commands, compiler
 versions, and target.
 
-C and C++ use the same selected Clang executable and the fixed flags in section
-3.2. Link libraries must be equivalent for the same workload. Builds are
-completed before timing and compile time is excluded.
+C uses the selected `clang` driver. C++ uses the matching `clang++` driver from
+the same LLVM installation and version, with `-std=c++20 -pedantic-errors` plus
+the fixed flags in section 3.2. Both use the same target; link libraries must be
+equivalent for the same workload. Builds are completed before timing and
+compile time is excluded.
 
 A canonical host record includes OS/kernel, architecture, CPU model/topology,
 memory, power mode, frequency/governor where applicable, thermal state,
