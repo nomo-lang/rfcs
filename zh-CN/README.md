@@ -79,5 +79,6 @@ RFC 文件名使用 `NNNN-hyphenated-title.md`，编号单调分配且不复用�
 | [0039](./rfcs/0039-loop-carried-coroutine-state-and-suspension-safe-mutation.md) | Loop-carried coroutine state 与 suspension-safe mutation | Proposed（已提案） | Partially implemented（部分已实现） | suspend function、loop、mutable local、liveness、ARC、C99、MCP | 允许 task-local owned mutable state 穿过受限 suspending loop，同时禁止 borrow/guard 跨挂起且不增加 atomic 成本。 |
 | [0040](./rfcs/0040-owner-affine-async-http-and-sse-migration.md) | Owner-affine async HTTP/HTTPS、SSE 与 blocking migration | Proposed（已提案） | Partially implemented（部分已实现） | HTTP、HTTPS、TLS、SSE、reactor、owner affinity、connection reuse | 把受限 client 与 stream API 迁移为 suspend operation，采用 owner-local transport progress、显式 blocking compatibility 与 native platform gate。 |
 | [0041](./rfcs/0041-canonical-implicit-void-return-declarations.md) | Canonical 隐式 `void` 返回声明 | Accepted（已接受） | Implemented（已实现） | function declaration、method、suspend、interface、extern、formatter、LSP | Declaration canonical 省略 `-> void`，同时保留显式 parser 兼容与完整 callable/type/value use。 |
+| [0042](./rfcs/0042-windows-arm64-preview-platform-support.md) | Windows ARM64 Preview 平台支持 | Proposed（已提案） | Not implemented（未实现） | Windows 11、ARM64、target triple、MSVC ABI、release | 要求 ARM64 原生 build/run/release parity 与生态证据；x64→ARM64 cross-build 永远不能替代原生 Runtime test。 |
 
 > 注：`0000-template.md` 为模板，不计入上表。

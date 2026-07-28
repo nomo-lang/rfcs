@@ -6,7 +6,7 @@ the protected `main` branches and timestamped release sets, interpreted through
 [`RELEASE-GATE.md`](RELEASE-GATE.md).
 
 Last reviewed against `nomo`
-[`085da513`](https://github.com/nomo-lang/nomo/commit/085da513ff6c042bd00571c49a6eb061722acf6f).
+[`c6712c1`](https://github.com/nomo-lang/nomo/commit/c6712c1da1f65fcbdf0ce037224d11482b6a7e35).
 
 ## Delivered implementation baseline
 
@@ -43,6 +43,18 @@ LSP, grammar/editor, Playground, website, and executable documentation gates.
 The current `.main` root compatibility branch remains limited to one
 development snapshot and must not become permanent syntax. Acceptance does
 not imply stable `v0.1.0` or production readiness.
+
+## Proposed Windows ARM64 platform contract
+
+RFC 0042 is `Proposed` / `Not implemented`. It defines Windows 11 ARM64 as a
+candidate Preview target using `aarch64-pc-windows-msvc`, the LLVM Clang
+GNU-style driver, the MSVC ABI, and ARM64 Visual Studio/Windows SDK inputs.
+
+No Windows ARM64 platform or release gate is recorded as delivered. Acceptance
+requires native ARM64 compiler, generated-application, Runtime, LSP, installer,
+ZIP/checksum, and attestation evidence. Windows x64-to-ARM64 cross-build is a
+separate compile/link gate and cannot replace native runtime tests. Existing
+Windows-wide path, Regex, and large-file limitations remain explicit.
 
 ## Async Runtime: Proposed decisions with executable slices
 
